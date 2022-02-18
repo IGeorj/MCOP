@@ -1,0 +1,136 @@
+﻿using Serilog;
+using SkiaSharp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MCOP.Services
+{
+    public static class ImageProcessorService
+    {
+        public static Task<bool> SaveAsJpgAsync(SKBitmap bitmap, string path, int quality)
+        {
+            try
+            {
+                using (SKImage image = SKImage.FromBitmap(bitmap))
+                {
+                    using (SKData data = image.Encode(SKEncodedImageFormat.Jpeg, quality))
+                    {
+                        using (var stream = File.OpenWrite(path))
+                        {
+                            data.SaveTo(stream);
+                            return Task.FromResult(true);
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                Log.Error($"SkiaSharp can't save image as jpg. Path:{path}");
+                return Task.FromResult(true);
+            }
+        }
+
+        public static Task<bool> SaveAsJpgAsync(byte[] bytes, string path, int quality)
+        {
+            using (SKBitmap bitmap = SKBitmap.Decode(bytes))
+            {
+                return SaveAsJpgAsync(bitmap, path, quality);
+            }
+
+        }
+
+        public static Task<bool> SaveAsJpgAsync(string pathFrom, string pathTo, int quality)
+        {
+            using (FileStream fstream = File.OpenRead(pathFrom))
+            {
+                using (SKBitmap bitmap = SKBitmap.Decode(fstream))
+                {
+                    return SaveAsJpgAsync(bitmap, pathTo, quality);
+                }
+            }
+        }
+
+
+
+        public static double GetPercentageDifference(SKBitmap img1, SKBitmap img2, int threshold = 3)
+        {
+            return GetPercentageDifference(GetBitmapHash(img1), GetBitmapHash(img2), threshold);
+        }
+
+        public static double GetPercentageDifference(byte[] img1, byte[] img2, int threshold = 3)
+        {
+            byte[] differences = GetDifferences(img1, img2);
+
+            int numberOfPixels = differences.Length;
+            int diffAmount = differences.Count(p => p < threshold);
+
+            double proc = (double)diffAmount / (double)numberOfPixels * 100;
+
+            return Math.Round(proc, 2);
+        }
+        
+        public static byte[] GetBitmapHash(this SKBitmap bitmap, int arraySize = 16)
+        {
+            bitmap = GrayScaleBitmap(bitmap);
+            bitmap = ResizeBitmap(bitmap, 16, 16);
+
+            byte[] grayScale = new byte[arraySize * arraySize];
+
+            int index = 0;
+            foreach (var pixel in bitmap.Pixels)
+            {
+                grayScale[index] = (byte)Math.Abs(pixel.Red);
+                index++;
+            }
+
+            return grayScale;
+        }
+
+        public static SKBitmap GrayScaleBitmap(SKBitmap bitmap)
+        {
+            SKImageInfo info = bitmap.Info;
+            SKSurface surface = SKSurface.Create(info);
+            SKCanvas canvas = surface.Canvas;
+            SKBitmap resultBitmap;
+
+            using (SKPaint paint = new())
+            {
+                paint.ColorFilter =
+                    SKColorFilter.CreateColorMatrix(new float[]
+                    {
+                        0.21f, 0.72f, 0.07f, 0, 0,
+                        0.21f, 0.72f, 0.07f, 0, 0,
+                        0.21f, 0.72f, 0.07f, 0, 0,
+                        0,     0,     0,     1, 0
+                    });
+
+                canvas.DrawBitmap(bitmap, info.Rect, paint: paint);
+                SKImage sanpshot = surface.Snapshot();
+                resultBitmap = SKBitmap.Decode(sanpshot.Encode());
+            }
+
+            return resultBitmap;
+        }
+
+        public static SKBitmap ResizeBitmap(SKBitmap bitmap, int width, int height)
+        {
+            return bitmap.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+        }
+
+
+        private static byte[] GetDifferences(byte[] firstGray, byte[] secondGray)
+        {
+            byte[] differences = new byte[firstGray.Length];
+
+            for (int i = 0; i < firstGray.Length; i++)
+            {
+                differences[i] = (byte)Math.Abs(firstGray[i] - secondGray[i]);
+            }
+            return differences;
+        }
+
+    }
+}
