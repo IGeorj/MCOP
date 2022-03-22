@@ -92,7 +92,7 @@ namespace MCOP.Modules.Nsfw.Common
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to update token. Error: {ex.Message}");
+                Log.Error("Failed to update token. Error: {error}", ex.Message);
             }
         }
         #endregion

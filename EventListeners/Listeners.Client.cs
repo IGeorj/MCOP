@@ -73,7 +73,7 @@ internal static partial class Listeners
     [AsyncEventListener(DiscordEventType.UnknownEvent)]
     public static Task UnknownEventHandlerAsync(Bot _, UnknownEventArgs e)
     {
-        Log.Error("Unknown event ({UnknownEvent}) occured: {@UnknownEventJson}", e.EventName, e.Json);
+        Log.Error("Unknown event ({UnknownEvent}) occured", e.EventName);
         return Task.CompletedTask;
     }
 

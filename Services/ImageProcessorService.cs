@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using MCOP.Modules.POE.Common;
+using Serilog;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,55 @@ namespace MCOP.Services
 {
     public static class ImageProcessorService
     {
+        public static SKImage CreateLine(string text, string value)
+        {
+            var info = new SKImageInfo(400, 18);
+            using var surface = SKSurface.Create(info);
+            using SKCanvas canvas = surface.Canvas;
+            canvas.Clear(SKColors.Black);
+            using var font = SKTypeface.FromFile("Fonts/Fontin-SmallCaps.otf");
+            using var textPaint = new SKPaint();
+            using var valuePaint = new SKPaint();
+            textPaint.Typeface = font;
+            textPaint.TextSize = 14.0f;
+            textPaint.IsAntialias = true;
+            textPaint.Color = SKColor.Parse("#827a6c");
+            valuePaint.Typeface = font;
+            valuePaint.TextSize = 14.0f;
+            valuePaint.IsAntialias = true;
+            valuePaint.Color = SKColor.Parse("#8787fe");
+            SKRect textBounds = new SKRect();
+            SKRect valueBounds = new SKRect();
+            textPaint.MeasureText(text, ref textBounds);
+            valuePaint.MeasureText(value, ref valueBounds);
+            var offsetX = (info.Width - (textBounds.Width + valueBounds.Width)) / 2.0f;
+            canvas.DrawText(text, offsetX, 11, textPaint);
+            canvas.DrawText(value, offsetX + textBounds.Width, 11, valuePaint);
+            return surface.Snapshot();
+        }
+
+        public static Task GenerateImageAsync(this Armour item)
+        {
+            using var qualityImage = CreateLine("Quality:", $" {item.Quality}%");
+            using var armourImage = CreateLine("armour:", $" {item.ArmourRating}");
+            using var evasionImage = CreateLine("evasion:", $" {item.EvasionRating}");
+            using var energyShieldImage = CreateLine("energy shield:", $" {item.EnergyShield}");
+            var info = new SKImageInfo(qualityImage.Width,
+                qualityImage.Height + armourImage.Height + evasionImage.Height + energyShieldImage.Height);
+            using var surface = SKSurface.Create(info);
+            using var canvas = surface.Canvas;
+            canvas.DrawImage(qualityImage, 0f, 0f, null);
+            canvas.DrawImage(armourImage, 0f, qualityImage.Height, null);
+            canvas.DrawImage(evasionImage, 0f, qualityImage.Height + armourImage.Height, null);
+            canvas.DrawImage(energyShieldImage, 0f, qualityImage.Height + armourImage.Height + evasionImage.Height, null);
+            using var snapshot = surface.Snapshot();
+            using var data = snapshot.Encode();
+            using var stream = File.OpenWrite("Images/POE/generate.png");
+            data.SaveTo(stream);
+            
+            return Task.CompletedTask;
+        }
+
         public static Task<bool> SaveAsJpgAsync(SKBitmap bitmap, string path, int quality)
         {
             try
@@ -28,17 +78,15 @@ namespace MCOP.Services
             }
             catch (Exception)
             {
-                Log.Error($"SkiaSharp can't save image as jpg. Path:{path}");
+                Log.Error("SkiaSharp failed to save image as jpg. Path: {path}", path);
                 return Task.FromResult(true);
             }
         }
 
         public static Task<bool> SaveAsJpgAsync(byte[] bytes, string path, int quality)
         {
-            using (SKBitmap bitmap = SKBitmap.Decode(bytes))
-            {
-                return SaveAsJpgAsync(bitmap, path, quality);
-            }
+            using SKBitmap bitmap = SKBitmap.Decode(bytes);
+            return SaveAsJpgAsync(bitmap, path, quality);
 
         }
 

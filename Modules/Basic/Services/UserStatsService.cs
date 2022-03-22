@@ -19,7 +19,7 @@ namespace MCOP.Modules.Basic.Services
             => bds.Where(bd => bd.GuildIdDb == (long)gid);
         public override ulong EntityGroupSelector(UserStats bd)
             => bd.GuildId;
-        public override UserStats EntityFactory(ulong gid, ulong uid) => new UserStats { GuildId = gid, UserId = uid };
+        public override UserStats EntityFactory(ulong gid, ulong uid) => new() { GuildId = gid, UserId = uid };
         public override ulong EntityIdSelector(UserStats entity) => entity.UserId;
         public override object[] EntityPrimaryKeySelector(ulong gid, ulong uid) => new object[] { (long)gid, (long)uid };
 

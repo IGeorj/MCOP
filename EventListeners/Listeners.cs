@@ -6,10 +6,10 @@ namespace MCOP.EventListeners;
 internal static partial class Listeners
 {
     // nsfw-помойка
-    static ulong nsfwAnimeChannelId = 586295440358506496;
+    static readonly ulong nsfwAnimeChannelId = 586295440358506496;
 
     // lewd-bot
-    static ulong lewdBotChannelId = 857354195866615808;
+    static readonly ulong lewdBotChannelId = 857354195866615808;
 
     public static IEnumerable<ListenerMethod> ListenerMethods { get; private set; } = Enumerable.Empty<ListenerMethod>();
 

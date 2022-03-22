@@ -180,6 +180,9 @@ public sealed class AsyncEventListenerAttribute : Attribute
             case DiscordEventType.SlashCommandErrored:
                 bot.CSlash.SlashCommandErrored += OnEventWithArgs;
                 break;
+            case DiscordEventType.SlashCommandExecuted:
+                bot.CSlash.SlashCommandExecuted += OnEventWithArgs;
+                break;
             case DiscordEventType.SocketClosed:
                 bot.Client.SocketClosed += OnEventWithArgs;
                 break;

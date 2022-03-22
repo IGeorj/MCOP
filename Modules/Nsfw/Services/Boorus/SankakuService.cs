@@ -99,7 +99,7 @@ namespace MCOP.Modules.Nsfw.Services
                 }
                 catch (Exception)
                 {
-                    Log.Warning($"Failed to send file {post.MD5}.jpg");
+                    Log.Warning("Failed to send file: {MD5}", post.MD5);
                 }
             }
 

@@ -77,7 +77,6 @@ namespace MCOP.Modules.Nsfw.Services
         public async Task<List<DiscordMessage>> SendSearchResultAsync(DiscordChannel channel, SearchResult result)
         {
             var posts = result.ToSortedList();
-            var authToken = Sankaku.GetAcessToken();
             List<DiscordMessage> messages = new();
 
             foreach (var post in posts)
@@ -90,7 +89,7 @@ namespace MCOP.Modules.Nsfw.Services
                 }
                 catch (Exception)
                 {
-                    Log.Warning($"Sankaku. Failed to send images");
+                    Log.Warning($"Gelbooru. Failed to send images");
                 }
             }
 

@@ -26,7 +26,7 @@ namespace MCOP.Modules.Basic.Services
                 using (BotDbContext db = this.dbb.CreateContext())
                 {
                     hashes = new ConcurrentHashSet<ImageHash>(db.ImageHashes.Include(m => m.Message).AsEnumerable());
-                    Log.Information($"Loaded ImageHashes: {hashes.Count}");
+                    Log.Information("Image Hash loaded: {count}", hashes.Count);
                 }
             }
         }
@@ -51,16 +51,19 @@ namespace MCOP.Modules.Basic.Services
             return await base.AddAsync(entities);
         }
 
-        public void RemoveFromHashByMessageId(ulong guildId, ulong messageId)
+        public int RemoveFromHashByMessageId(ulong guildId, ulong messageId)
         {
+            var count = 0;
             var toRemove = hashes.Where(m => m.GuildId == guildId && m.MessageId == messageId);
             if (toRemove.Any())
             {
                 foreach (var item in toRemove)
                 {
-                    hashes.TryRemove(item);
+                    var isRemoved = hashes.TryRemove(item);
+                    if (isRemoved) { count += 1; }
                 }
             }
+            return count;
         }
 
         public bool TryGetSimilar(byte[] hash, double minProcent, out ulong messageId, out double procent)

@@ -22,7 +22,7 @@ namespace MCOP.Modules.Basic.Services
             => bds.Where(bd => bd.GuildIdDb == (long)gid);
         public override ulong EntityGroupSelector(UserMessage bd)
             => bd.GuildId;
-        public override UserMessage EntityFactory(ulong gid, ulong mid) => new UserMessage { GuildId = gid, MessageId = mid };
+        public override UserMessage EntityFactory(ulong gid, ulong mid) => new() { GuildId = gid, MessageId = mid };
         public override ulong EntityIdSelector(UserMessage entity) => entity.MessageId;
         public override object[] EntityPrimaryKeySelector(ulong gid, ulong mid) => new object[] { (long)gid, (long)mid };
 
@@ -35,7 +35,7 @@ namespace MCOP.Modules.Basic.Services
                 return message;
             }
 
-            UserMessage createdMessage = new UserMessage()
+            UserMessage createdMessage = new()
             {
                 GuildId = gid,
                 MessageId = mid

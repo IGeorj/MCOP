@@ -19,8 +19,8 @@ namespace MCOP.Modules.Basic
     [SlashCooldown(1, 5, CooldownBucketType.Channel)]
     public sealed class FunModule : ApplicationCommandModule
     {
-        private static readonly Dictionary<string, string> _nouns = new Dictionary<string, string>
-            {
+        private static readonly Dictionary<string, string> _nouns = new()
+        {
                 {"яйца", "НЕ ТРОГАЙ ЯЯЯЯЯИИИЦАААААА"},
                 {"крысу", "Крыса укусила за жэпу"},
                 {"cum", "Выпил cum"},
@@ -85,12 +85,9 @@ namespace MCOP.Modules.Basic
                 var hashService = ctx.Services.GetRequiredService<ImageHashService>();
                 var messageService = ctx.Services.GetRequiredService<UserMessageService>();
 
-
-                ulong outMessageId;
-
                 foreach (var hash in hashes)
                 {
-                    bool result = hashService.TryGetSimilar(hash, 90, out outMessageId, out _);
+                    bool result = hashService.TryGetSimilar(hash, 90, out ulong outMessageId, out _);
 
                     if (result)
                     {
@@ -128,7 +125,7 @@ namespace MCOP.Modules.Basic
 
             try
             {
-                SecureRandom rng = new SecureRandom();
+                SecureRandom rng = new();
 
                 string strTimeout = rng.Next(19, 120).ToString();
 
@@ -152,12 +149,22 @@ namespace MCOP.Modules.Basic
 
                 if (user is not null)
                 {
+                    member2 = (DiscordMember)user;
+
                     if (ctx.User.Id == user.Id)
                     {
-                        await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("https://tenor.com/view/idk-i-dont-know-sebastian-stan-lol-wtf-gif-5364867"));
+                        var durka = await ctx.Guild.GetEmojiAsync(839771710265229314); //:durka:
+
+                        embed.AddField("Победитель", durka);
+                        embed.WithThumbnail(member2.AvatarUrl);
+
+                        await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
+
+                        await member2.TimeoutAsync(DateTime.Now.AddMinutes(int.Parse(strTimeout)), randomNoun.Value);
+                        return;
                     }
 
-                    member2 = (DiscordMember)user;
+                    
 
                     embed.WithThumbnail(member2.AvatarUrl);
 
@@ -194,7 +201,7 @@ namespace MCOP.Modules.Basic
                         return;
                     }
 
-                    member2 = (DiscordMember)res.Result.User;
+                    member2 = await ctx.Guild.GetMemberAsync(res.Result.User.Id);
 
                     embed.WithThumbnail(member2.AvatarUrl);
                     await duelMessage.ModifyAsync("", embed.Build());

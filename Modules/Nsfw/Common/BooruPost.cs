@@ -35,7 +35,7 @@ namespace MCOP.Modules.Nsfw.Common
 
                 if (!responce.IsSuccessStatusCode)
                 {
-                    Log.Error($"Can't download image. Url:{ImageUrl}");
+                    Log.Error("Failed to download image: {Url}", ImageUrl);
                     return false;
                 }
 

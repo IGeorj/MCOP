@@ -30,7 +30,7 @@ public static class DiscordMessageExtensions
         {
             string type = item.MediaType;
 
-            if (type.Contains("png") || type.Contains("jpeg"))
+            if (type.Contains("png") || type.Contains("jpeg") || type.Contains("webp"))
             {
                 byte[] imgBytes = await HttpService.GetByteArrayAsync(item.Url);
 

@@ -28,7 +28,7 @@ public sealed class BotActivityService : DbAbstractionServiceBase<BotStatus, int
 
     private bool statusRotationEnabled;
     private bool isBotListening;
-    private readonly object lck = new object();
+    private readonly object lck = new();
 
 
     public BotActivityService(BotDbContextBuilder dbb)
@@ -60,7 +60,7 @@ public sealed class BotActivityService : DbAbstractionServiceBase<BotStatus, int
     }
 
     public override DbSet<BotStatus> DbSetSelector(BotDbContext db) => db.BotStatuses;
-    public override BotStatus EntityFactory(int id) => new BotStatus { Id = id };
+    public override BotStatus EntityFactory(int id) => new() { Id = id };
     public override int EntityIdSelector(BotStatus entity) => entity.Id;
     public override object[] EntityPrimaryKeySelector(int id) => new object[] { id };
 }

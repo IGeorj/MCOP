@@ -15,11 +15,16 @@ namespace MCOP.Modules.Basic
     {
         [SlashCommand("stats", "Показывает статистику")]
         public async Task Stats(InteractionContext ctx,
-            [Option("user", "Пользователь")] DiscordUser? user = null)
+        [Option("user", "Пользователь")] DiscordUser? user = null)
         {
             await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
 
             var member = user is null ? ctx.Member : user as DiscordMember;
+            if (member is null)
+            {
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Пользователь не найден"));
+                return;
+            }
 
             UserStatsService statsService = ctx.Services.GetRequiredService<UserStatsService>();
             UserStats stats = await statsService.GetOrAddAsync(ctx.Guild.Id, member.Id);
@@ -35,32 +40,46 @@ namespace MCOP.Modules.Basic
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));
         }
         
+
         [SlashCommand("top", "Топ 5 сервера")]
         public async Task StatsTop(InteractionContext ctx)
         {
             await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
 
             UserStatsService statsService = ctx.Services.GetRequiredService<UserStatsService>();
-            var likeStats = await statsService.GetTopLikedUsersAsync(ctx.Guild.Id);
-            var duelStats = await statsService.GetTopDuelUsersAsync(ctx.Guild.Id);
-            var kekStats = await statsService.GetKekDuelUserAsync(ctx.Guild.Id);
+            IReadOnlyList<UserStats> likeStats = await statsService.GetTopLikedUsersAsync(ctx.Guild.Id);
+            IReadOnlyList<UserStats> duelStats = await statsService.GetTopDuelUsersAsync(ctx.Guild.Id);
+            UserStats? kekStats = await statsService.GetKekDuelUserAsync(ctx.Guild.Id);
 
             StringBuilder topLikes = new();
+            StringBuilder topDuels = new();
+            string kek = "5 дуелей минимум";
+
             foreach (var item in likeStats)
             {
-                topLikes.Append($"<@!{item.UserId}>\n:heart: {item.Like}\n");
+                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
+                if (member != null)
+                {
+                    topLikes.Append($"{member.DisplayName}\n:heart: {item.Like}\n");
+                }
             }
 
-            StringBuilder topDuels = new();
             foreach (var item in duelStats)
             {
-                topDuels.Append($"<@!{item.UserId}>\n:crossed_swords: {item.DuelWin} - {item.DuelLose}\n");
+                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
+                if (member != null)
+                {
+                    topDuels.Append($"{member.DisplayName}\n:crossed_swords: {item.DuelWin} - {item.DuelLose}\n");
+                }
             }
 
-            string kek = "???";
             if (kekStats is not null)
             {
-                kek = $"<@!{kekStats.UserId}>\n:crossed_swords: {kekStats.DuelWin} - {kekStats.DuelLose}";
+                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(kekStats.UserId);
+                if (member != null)
+                {
+                    kek = $"{member.DisplayName}\n:crossed_swords: {kekStats.DuelWin} - {kekStats.DuelLose}";
+                }
             }
 
 

@@ -25,6 +25,27 @@ internal static partial class Listeners
             return;
         }
 
+        if (e.Message.Content.Contains("@everyone"))
+        {
+            var member = e.Author as DiscordMember;
+            if (member is not null && !member.IsAdmin())
+            {
+                await e.Message.DeleteAsync();
+
+                DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
+                    .WithAuthor(member.ToDiscriminatorString(), null, member.AvatarUrl)
+                    .WithColor(DiscordColor.Yellow)
+                    .AddField("Пользователь", $"<@!{member.Id}>", true)
+                    .AddField("Модератор", bot.Client.CurrentUser.Mention, true)
+                    .AddField("Результат", "Вадана роль САСЁШЬ", true)
+                    .AddField("Канал", $"<#{e.Channel.Id}>")
+                    .AddField("Сообщение", e.Message.Content);
+
+                await e.Guild.PublicUpdatesChannel.SendMessageAsync(embed.Build());
+                await member.GrantRoleAsync(e.Guild.GetRole(622772942761361428)); // САСЁШЬ
+            }
+        }
+
         if (!e.Message.Content.StartsWith(bot.Config.CurrentConfiguration.Prefix))
         {
             if (e.Channel.Id == nsfwAnimeChannelId)
@@ -34,7 +55,7 @@ internal static partial class Listeners
 					return;
 				}
 
-                bool withImage = e.Message.Attachments.Any(a => a.MediaType.Contains("png") || a.MediaType.Contains("jpeg"));
+                bool withImage = e.Message.Attachments.Any(a => a.MediaType.Contains("png") || a.MediaType.Contains("jpeg") || a.MediaType.Contains("webp"));
 
                 if (withImage)
                 {
@@ -46,12 +67,10 @@ internal static partial class Listeners
                     var messageService = bot.Services.GetRequiredService<UserMessageService>();
 
                     int added = 0;
-                    ulong messageId;
-                    double procent;
 
                     foreach (var hash in hashes)
                     {
-                        bool result = hashService.TryGetSimilar(hash, 90, out messageId, out procent);
+                        bool result = hashService.TryGetSimilar(hash, 90, out ulong messageId, out double procent);
 
                         if (result)
                         {
@@ -97,8 +116,8 @@ internal static partial class Listeners
 
                         added += await hashService.AddAsync(imageHash);
                     }
-                    Log.Information($"Added {added} hashes. Total:{hashService.GetTotalHashes()}");
 
+                    Log.Information("Added {Amount} hashes ({Total} total)", added, hashService.GetTotalHashes());
                 }
 
             }
@@ -118,8 +137,9 @@ internal static partial class Listeners
 
             if (await messageService.ContainsAsync(gid, mid))
             {
-                await messageService.RemoveAsync(gid, mid);
-                hashService.RemoveFromHashByMessageId(gid, mid);
+                var countDB = await messageService.RemoveAsync(gid, mid);
+                var countHash = hashService.RemoveFromHashByMessageId(gid, mid);
+                Log.Debug("Removed from DB messages: {countDB}, hashes: {countHash}", countDB, countHash);
             }
         }
     }

@@ -17,7 +17,7 @@ public static class CSharpCompilationService
             "System", "System.Collections.Generic", "System.Linq", "System.Text",
             "System.Threading.Tasks", "DSharpPlus", "DSharpPlus.Entities",
             "DSharpPlus.CommandsNext", "DSharpPlus.CommandsNext.Attributes", "DSharpPlus.Interactivity",
-            "TheGodfather.Modules", "TheGodfather.Exceptions", "TheGodfather.Attributes"
+            "MCOP.Modules", "MCOP.Exceptions", "MCOP.Attributes"
         }.ToImmutableArray();
 
     public static Type? CompileCommand(string code)
@@ -28,7 +28,7 @@ public static class CSharpCompilationService
 
         code = $@"
                 [ModuleLifespan(ModuleLifespan.Transient)]
-                public sealed class DynamicCommands : TheGodfatherModule
+                public sealed class DynamicCommands : BotModule
                 {{
                     {m.Groups["code"]}
                 }}";

@@ -14,7 +14,7 @@ internal static class DiscordGuildExtensions
         try {
             return await guild.GetMemberAsync(uid);
         } catch (NotFoundException) {
-            Log.Information($"GetMemberSilentAsync cant find uid:{uid}");
+            Log.Information("GetMemberSilentAsync failed uid: {uid}", uid);
             return null;
         }
     }
