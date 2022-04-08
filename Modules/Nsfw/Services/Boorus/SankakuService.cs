@@ -9,9 +9,6 @@ namespace MCOP.Modules.Nsfw.Services
     public sealed class SankakuService : IBotService
     {
         private static readonly string _baseTags = "-male -penis -loli -censored -video female rating:e";
-        private static readonly string[] _authors = new[] { "cyicheng", "fi-san", "gray_bear", "itsukarine", "ken_ill",
-                "niliu_chahui", "ru_zhai", "z.taiga", "zhixue", "hong_bai", "sunday_se7en", "boppin", "etsunami_kumita", "shaggy_susu",
-                "xiaodi"};
         private readonly Sankaku _sankaku;
 
 #pragma warning disable CS8604 // Possible null reference argument.
@@ -25,12 +22,10 @@ namespace MCOP.Modules.Nsfw.Services
 
         private async Task<DiscordMessage> SendPostAsync(DiscordChannel channel, BooruPost post, string path)
         {
-            var embed = new DiscordEmbedBuilder
-            {
-                Title = post.Artist,
-                ImageUrl = $"attachment://{post.MD5}-temp.jpg",
-                Url = post.PostUrl,
-            };
+            var embed = new DiscordEmbedBuilder()
+            .WithTitle(post.Artist)
+            .WithUrl(post.PostUrl)
+            .WithImageUrl($"attachment://{post.MD5}-temp.jpg");
 
             DiscordMessage message;
             using (FileStream fstream2 = File.OpenRead(path))
@@ -38,9 +33,7 @@ namespace MCOP.Modules.Nsfw.Services
                 message = await new DiscordMessageBuilder()
                     .WithFiles(new Dictionary<string, Stream>() { { $"{post.MD5}-temp.jpg", fstream2 } })
                     .WithEmbed(embed)
-                    .SendAsync(channel)
-                    .ConfigureAwait(false);
-
+                    .SendAsync(channel);
             }
             File.Delete(path);
 
@@ -64,10 +57,9 @@ namespace MCOP.Modules.Nsfw.Services
                 tags = _baseTags;
             }
 
-            SearchResult searchResult = new();
-
             try
             {
+                SearchResult searchResult;
                 if (string.IsNullOrEmpty(next))
                 {
                     searchResult = await _sankaku.GetRandomAsync(tags, limit);

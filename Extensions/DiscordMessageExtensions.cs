@@ -21,9 +21,14 @@ public static class DiscordMessageExtensions
     {
         List<byte[]> hashes = new();
 
-        if (!msg.Attachments.Any())
+        var links = msg.Content.Split("\t\n ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Where(s => s.StartsWith("http://") || s.StartsWith("www.") || s.StartsWith("https://"));
+        var link = links.FirstOrDefault();
+
+        if (link is not null && (link.Contains(".png") || link.Contains(".jpg") || link.Contains(".jpeg") || link.Contains(".webp")))
         {
-            return hashes;
+            byte[] imgBytes = await HttpService.GetByteArrayAsync(link);
+            using var bitmap = SkiaSharp.SKBitmap.Decode(imgBytes);
+            hashes.Add(ImageProcessorService.GetBitmapHash(bitmap));
         }
 
         foreach (var item in msg.Attachments)
@@ -33,11 +38,8 @@ public static class DiscordMessageExtensions
             if (type.Contains("png") || type.Contains("jpeg") || type.Contains("webp"))
             {
                 byte[] imgBytes = await HttpService.GetByteArrayAsync(item.Url);
-
-                using (var bitmap = SkiaSharp.SKBitmap.Decode(imgBytes))
-                {
-                    hashes.Add(ImageProcessorService.GetBitmapHash(bitmap));
-                }
+                using var bitmap = SkiaSharp.SKBitmap.Decode(imgBytes);
+                hashes.Add(ImageProcessorService.GetBitmapHash(bitmap));
 
             }
         }

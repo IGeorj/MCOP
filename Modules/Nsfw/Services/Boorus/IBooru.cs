@@ -11,7 +11,7 @@ namespace MCOP.Modules.Nsfw.Services.Boorus
     {
         Task<List<DiscordMessage>> SendRandomImagesAsync(DiscordChannel channel, int amount, string tags = "");
         Task<List<DiscordMessage>> SendDailyTopAsync(DiscordChannel channel, int amount, int page = 0);
-        Task<bool> isAvailable();
+        Task<bool> IsAvailable();
         string GetBaseTags(string tags);
     }
 }

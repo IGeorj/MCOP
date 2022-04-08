@@ -21,12 +21,10 @@ namespace MCOP.Modules.Nsfw.Services
 
         private async Task<DiscordMessage> SendPostAsync(DiscordChannel channel, BooruPost post)
         {
-            var embed = new DiscordEmbedBuilder
-            {
-                Title = post.Artist,
-                ImageUrl = post.ImageUrl,
-                Url = post.PostUrl,
-            };
+            var embed = new DiscordEmbedBuilder()
+            .WithTitle(post.Artist)
+            .WithImageUrl(post.ImageUrl)
+            .WithUrl(post.PostUrl);
 
             return await channel.SendMessageAsync(embed.Build());
         }
@@ -72,7 +70,6 @@ namespace MCOP.Modules.Nsfw.Services
         public async Task<List<DiscordMessage>> SendSearchResultAsync(DiscordChannel channel, SearchResult result)
         {
             var posts = result.ToSortedList();
-            var authToken = Sankaku.GetAcessToken();
             List<DiscordMessage> messages = new();
 
             foreach (var post in posts)

@@ -20,28 +20,19 @@ namespace MCOP.EventListeners
                 return;
             }
 
-            ulong authorId;
-            DiscordMessage msg;
+            DiscordMessage msg = e.Message;
 
-            if (e.Message.Author is null)
+            if (msg.Author is null)
             {
-                msg = await e.Channel.GetMessageAsync(e.Message.Id);
-                authorId = msg.Author.Id;
-            }
-            else
-            {
-                msg = e.Message;
-                authorId = msg.Author.Id;
+                msg = await e.Channel.GetMessageAsync(msg.Id);
             }
 
-            if (e.Emoji.GetDiscordName() == ":heart:" && !(authorId == e.User.Id))
+            if (e.Emoji.GetDiscordName() == ":heart:" && !(msg.Author.Id == e.User.Id))
             {
                 UserStatsService statsService = bot.Services.GetRequiredService<UserStatsService>();
-                await statsService.ChangeLikeAsync(e.Guild.Id, authorId, 1);
-                Log.Information("User {Username} ADD heart emoji. MessageId:{Id} AuthorId:{authorId}", e.User.Username, msg.Id, authorId);
+                await statsService.ChangeLikeAsync(e.Guild.Id, msg.Author.Id, 1);
+                Log.Information("User {Username} ADD heart emoji. MessageId:{Id} AuthorId:{authorId}", e.User.Username, msg.Id, msg.Author.Id);
             }
-
-            return;
         }
 
         [AsyncEventListener(DiscordEventType.MessageReactionRemoved)]
@@ -53,29 +44,20 @@ namespace MCOP.EventListeners
                 return;
             }
 
-            ulong authorId;
-            DiscordMessage msg;
+            DiscordMessage msg = e.Message;
 
-            if (e.Message.Author is null)
+            if (msg.Author is null)
             {
-                msg = await e.Channel.GetMessageAsync(e.Message.Id);
-                authorId = msg.Author.Id;
-            }
-            else
-            {
-                msg = e.Message;
-                authorId = msg.Author.Id;
+                msg = await e.Channel.GetMessageAsync(msg.Id);
             }
 
-            if (e.Emoji.GetDiscordName() == ":heart:" && !(authorId == e.User.Id))
+            if (e.Emoji.GetDiscordName() == ":heart:" && !(msg.Author.Id == e.User.Id))
             {
                 UserStatsService statsService = bot.Services.GetRequiredService<UserStatsService>();
-                await statsService.ChangeLikeAsync(e.Guild.Id, authorId, -1);
-                Log.Information("User {Username} REMOVE heart emoji. MessageId:{Id} AuthorId:{authorId}", e.User.Username, msg.Id, authorId);
+                await statsService.ChangeLikeAsync(e.Guild.Id, msg.Author.Id, -1);
+                Log.Information("User {Username} REMOVE heart emoji. MessageId:{Id} AuthorId:{authorId}", e.User.Username, msg.Id, msg.Author.Id);
 
             }
-
-            return;
         }
     }
 }

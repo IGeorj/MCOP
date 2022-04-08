@@ -78,11 +78,21 @@ internal static partial class Listeners
         return e.Context.RespondAsync(embed: emb.Build());
     }
 
+    [AsyncEventListener(DiscordEventType.SlashCommandInvoked)]
+    public static Task SlashCommandInvokedEventHandler(Bot bot, SlashCommandInvokedEventArgs e)
+    {
+        Log.Information(
+            "Slash Invoked: {ExecutedCommand} {User} {Guild} {Channel}",
+            e.Context.CommandName, e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
+        );
+        return Task.CompletedTask;
+    }
+
     [AsyncEventListener(DiscordEventType.SlashCommandExecuted)]
     public static Task SlashCommandExecutionEventHandler(Bot bot, SlashCommandExecutedEventArgs e)
     {
         Log.Information(
-            "Executed: {ExecutedCommand} {User} {Guild} {Channel}",
+            "Slash Executed: {ExecutedCommand} {User} {Guild} {Channel}",
             e.Context.CommandName, e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
         );
         return Task.CompletedTask;
@@ -99,7 +109,7 @@ internal static partial class Listeners
             ex = ex.InnerException;
 
         Log.Debug(
-            "Slash command errored ({ExceptionName}): {ErroredCommand} {User} {Guild} {Channel}",
+            "Slash Errored ({ExceptionName}): {ErroredCommand} {User} {Guild} {Channel}",
             e.Exception?.GetType().Name ?? "Unknown", e.Context.CommandName,
             e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
         );

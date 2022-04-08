@@ -82,7 +82,7 @@ public sealed class PeriodicTasksService : IDisposable
         TimeSpan interval = postTime.Subtract(now);
 
         this.DailyTopTimer = new Timer(DailyTopCallback, bot, interval, TimeSpan.FromHours(24));
-        this.BotStatusUpdateTimer = new Timer(BotActivityChangeCallback, bot, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(10));
+        this.BotStatusUpdateTimer = new Timer(BotActivityChangeCallback, bot, TimeSpan.FromSeconds(10), TimeSpan.FromHours(1));
     }
 
 

@@ -30,9 +30,7 @@ namespace MCOP.Modules.Basic
             UserStats stats = await statsService.GetOrAddAsync(ctx.Guild.Id, member.Id);
 
             var embed = new DiscordEmbedBuilder()
-            {
-                Title = member.ToDiscriminatorString(),
-            }
+            .WithTitle(member.ToDiscriminatorString())
             .WithThumbnail(member.AvatarUrl)
             .AddField("Лайки", $":heart: {stats.Like}", true)
             .AddField("Дуели", $":crossed_swords: {stats.DuelWin} - {stats.DuelLose}", true);
@@ -84,9 +82,7 @@ namespace MCOP.Modules.Basic
 
 
             var embed = new DiscordEmbedBuilder()
-            {
-                Title = "Топ пользователей"
-            }
+            .WithTitle("Топ пользователей")
             .AddField("Топ лайков", topLikes.ToString(), true)
             .AddField("Топ дуелей", topDuels.ToString(), true)
             .AddField("Невезучий", kek, true);

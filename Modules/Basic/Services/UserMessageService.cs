@@ -2,6 +2,7 @@
 using MCOP.Database.Models;
 using MCOP.Services;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,20 +29,28 @@ namespace MCOP.Modules.Basic.Services
 
         public async Task<UserMessage> GetOrAddAsync(ulong gid, ulong mid)
         {
-            UserMessage? message = await this.GetAsync(gid, mid);
-
-            if (message is not null)
+            try
             {
-                return message;
+                UserMessage? message = await this.GetAsync(gid, mid);
+
+                if (message is not null)
+                {
+                    return message;
+                }
+
+                UserMessage createdMessage = new()
+                {
+                    GuildId = gid,
+                    MessageId = mid
+                };
+                await this.AddAsync(createdMessage);
+                return createdMessage;
             }
-
-            UserMessage createdMessage = new()
+            catch (Exception e)
             {
-                GuildId = gid,
-                MessageId = mid
-            };
-            await this.AddAsync(createdMessage);
-            return createdMessage;
+                Log.Error("UserMessageService GetOrAddAsync: {e}", e);
+                throw;
+            }
         }
     }
 }

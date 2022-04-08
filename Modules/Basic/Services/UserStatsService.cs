@@ -2,6 +2,7 @@
 using MCOP.Database.Models;
 using MCOP.Services;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace MCOP.Modules.Basic.Services
 {
@@ -50,58 +51,97 @@ namespace MCOP.Modules.Basic.Services
 
         public async Task ChangeLikeAsync(ulong gid, ulong uid, int change = 1)
         {
-            UserStats stats = await GetOrAddAsync(gid, uid);
-            stats.Like += change;
+            try
+            {
+                UserStats stats = await GetOrAddAsync(gid, uid);
+                stats.Like += change;
 
-            await using BotDbContext db = this.dbb.CreateContext();
-            db.Update(stats);
-            await db.SaveChangesAsync();
+                await using BotDbContext db = this.dbb.CreateContext();
+                db.Update(stats);
+                await db.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                Log.Error("ChangeLikeAsync: {e}", e);
+                throw;
+            }
         }
 
         public async Task AddLoseAsync(ulong gid, ulong uid, int change = 1)
         {
-            UserStats stats = await GetOrAddAsync(gid, uid);
-            stats.DuelLose += change;
+            try
+            {
+                UserStats stats = await GetOrAddAsync(gid, uid);
+                stats.DuelLose += change;
 
-            await using BotDbContext db = this.dbb.CreateContext();
-            db.Update(stats);
-            await db.SaveChangesAsync();
+                await using BotDbContext db = this.dbb.CreateContext();
+                db.Update(stats);
+                await db.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                Log.Error("AddLoseAsync: {e}", e);
+                throw;
+            }
         }
 
         public async Task AddWinAsync(ulong gid, ulong uid, int change = 1)
         {
-            UserStats stats = await GetOrAddAsync(gid, uid);
-            stats.DuelWin += change;
+            try
+            {
+                UserStats stats = await GetOrAddAsync(gid, uid);
+                stats.DuelWin += change;
 
-            await using BotDbContext db = this.dbb.CreateContext();
-            db.Update(stats);
-            await db.SaveChangesAsync();
+                await using BotDbContext db = this.dbb.CreateContext();
+                db.Update(stats);
+                await db.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                Log.Error("AddWinAsync: {e}", e);
+                throw;
+            }
         }
 
 
         public async Task<UserStats> GetOrAddAsync(ulong gid, ulong uid)
         {
-            UserStats? stats = await this.GetAsync(gid, uid);
-
-            if (stats is not null)
+            try
             {
-                return stats;
-            }
+                UserStats? stats = await this.GetAsync(gid, uid);
 
-            await this.AddAsync(EntityFactory(gid, uid));
-            return await this.GetAsync(gid, uid);
+                if (stats is not null)
+                {
+                    return stats;
+                }
+
+                await this.AddAsync(EntityFactory(gid, uid));
+                return await this.GetAsync(gid, uid);
+            }
+            catch (Exception e)
+            {
+                Log.Error("GetOrAddAsync: {e}", e);
+                throw;
+            }
         }
 
         public async Task ChangeActiveStatus(ulong gid, ulong uid, bool active)
         {
-            UserStats stats = await GetOrAddAsync(gid, uid);
-            stats.IsActive = active;
+            try
+            {
+                UserStats stats = await GetOrAddAsync(gid, uid);
+                stats.IsActive = active;
 
-            await using BotDbContext db = this.dbb.CreateContext();
-            db.Update(stats);
-            await db.SaveChangesAsync();
+                await using BotDbContext db = this.dbb.CreateContext();
+                db.Update(stats);
+                await db.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                Log.Error("ChangeActiveStatus: {e}", e);
+                throw;
+            }
+
         }
-
-
     }
 }

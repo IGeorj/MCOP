@@ -5,6 +5,7 @@ using MCOP.EventListeners.Attributes;
 using MCOP.EventListeners.Common;
 using MCOP.Extensions;
 using MCOP.Modules.Basic.Services;
+using MCOP.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
@@ -50,19 +51,10 @@ internal static partial class Listeners
         {
             if (e.Channel.Id == nsfwAnimeChannelId)
 	        {
-                if (e.Message.Attachments == null)
-				{
-					return;
-				}
+                List<byte[]> hashes = await e.Message.GetImageHashesAsync();
 
-                bool withImage = e.Message.Attachments.Any(a => a.MediaType.Contains("png") || a.MediaType.Contains("jpeg") || a.MediaType.Contains("webp"));
-
-                if (withImage)
+                if (hashes.Count > 0)
                 {
-                    await e.Message.CreateReactionAsync(DiscordEmoji.FromName(bot.Client, ":heart:"));
-
-                    List<byte[]> hashes = await e.Message.GetImageHashesAsync();
-
                     var hashService = bot.Services.GetRequiredService<ImageHashService>();
                     var messageService = bot.Services.GetRequiredService<UserMessageService>();
 
@@ -86,22 +78,18 @@ internal static partial class Listeners
                             }
 
                             DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
-                            {
-                                Title = "Найдено совпадение"
-                            }
+                            .WithTitle("Найдено совпадение")
                             .AddField("Новое", e.Author.ToDiscriminatorString(), true)
                             .AddField("Прошлое", foundMessage.Author.ToDiscriminatorString(), true)
                             .AddField("Шанс", ((int)procent).ToString())
                             .WithThumbnail("https://media.discordapp.net/attachments/549313253541543951/843572826778239074/pngwing.com.png");
 
                             DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
-                            {
-                                Embed = embedBuilder
-                            }
+                            .WithEmbed(embedBuilder)
                             .AddComponents(new DiscordComponent[]
                             {
                                 new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
-                                new DiscordLinkButtonComponent(foundMessage.JumpLink.ToString(), "Прошлое")
+                                new DiscordLinkButtonComponent(foundMessage.JumpLink.ToString(), "Прошлое"),
                             });
                             await e.Channel.SendMessageAsync(messageBuilder);
                             continue;
@@ -115,6 +103,11 @@ internal static partial class Listeners
                         imageHash.MessageId = userMessage.MessageId;
 
                         added += await hashService.AddAsync(imageHash);
+
+                        if (added > 0)
+                        {
+                            await e.Message.CreateReactionAsync(DiscordEmoji.FromName(bot.Client, ":heart:"));
+                        }
                     }
 
                     Log.Information("Added {Amount} hashes ({Total} total)", added, hashService.GetTotalHashes());
@@ -139,7 +132,7 @@ internal static partial class Listeners
             {
                 var countDB = await messageService.RemoveAsync(gid, mid);
                 var countHash = hashService.RemoveFromHashByMessageId(gid, mid);
-                Log.Debug("Removed from DB messages: {countDB}, hashes: {countHash}", countDB, countHash);
+                Log.Debug("Removed from DB: {countDB}, hash: {countHash}, (Total count {count})", countDB, countHash, hashService.GetTotalHashes());
             }
         }
     }

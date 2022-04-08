@@ -15,19 +15,17 @@ namespace MCOP.Modules.Basic.Services
 {
     public sealed class ImageHashService : DbAbstractionServiceBase<ImageHash, int>
     {
-        private ConcurrentHashSet<ImageHash> hashes;
+        private ConcurrentDictionary<int, ImageHash> hashes;
 
         public ImageHashService(BotDbContextBuilder dbb, bool loadData = true) : base(dbb)
         {
-            hashes = new ConcurrentHashSet<ImageHash>();
+            hashes = new ConcurrentDictionary<int, ImageHash>();
 
             if (loadData)
             {
-                using (BotDbContext db = this.dbb.CreateContext())
-                {
-                    hashes = new ConcurrentHashSet<ImageHash>(db.ImageHashes.Include(m => m.Message).AsEnumerable());
-                    Log.Information("Image Hash loaded: {count}", hashes.Count);
-                }
+                using BotDbContext db = this.dbb.CreateContext();
+                hashes = new ConcurrentDictionary<int, ImageHash>(db.ImageHashes.Include(m => m.Message).ToDictionary(h => h.Id, h => h));
+                Log.Information("Image Hash loaded: {count}", hashes.Count);
             }
         }
 
@@ -44,44 +42,71 @@ namespace MCOP.Modules.Basic.Services
 
         public new async Task<int> AddAsync(params ImageHash[] entities)
         {
-            foreach (var item in entities)
+            try
             {
-                hashes.Add(item);
+                var count = await base.AddAsync(entities);
+                foreach (var item in entities)
+                {
+                    hashes.TryAdd(item.Id, item);
+                }
+                return count;
             }
-            return await base.AddAsync(entities);
+            catch (Exception e)
+            {
+                Log.Error("ImageHashService AddAsync: {e}", e);
+                throw;
+            }
+
         }
 
         public int RemoveFromHashByMessageId(ulong guildId, ulong messageId)
         {
-            var count = 0;
-            var toRemove = hashes.Where(m => m.GuildId == guildId && m.MessageId == messageId);
-            if (toRemove.Any())
+            try
             {
-                foreach (var item in toRemove)
+                var count = 0;
+                var toRemove = hashes.Where(m => m.Value.GuildId == guildId && m.Value.MessageId == messageId);
+                if (toRemove.Any())
                 {
-                    var isRemoved = hashes.TryRemove(item);
-                    if (isRemoved) { count += 1; }
+                    foreach (var item in toRemove)
+                    {
+                        var isRemoved = hashes.TryRemove(item);
+                        if (isRemoved) { count += 1; }
+                    }
                 }
+                return count;
             }
-            return count;
+            catch (Exception e)
+            {
+                Log.Error("ImageHashService RemoveFromHashByMessageId: {e}", e);
+                throw;
+            }
         }
 
         public bool TryGetSimilar(byte[] hash, double minProcent, out ulong messageId, out double procent)
         {
-            foreach (var item in hashes)
+            try
             {
-                double diff = ImageProcessorService.GetPercentageDifference(hash, item.Hash);
-                if (diff >= minProcent)
+                foreach (var item in hashes)
                 {
-                    messageId = item.MessageId;
-                    procent = diff;
-                    return true;
+                    double diff = ImageProcessorService.GetPercentageDifference(hash, item.Value.Hash);
+                    if (diff >= minProcent)
+                    {
+                        messageId = item.Value.MessageId;
+                        procent = diff;
+                        return true;
+                    }
                 }
+
+                messageId = 0;
+                procent = 0;
+                return false;
+            }
+            catch (Exception e)
+            {
+                Log.Error("ImageHashService TryGetSimilar: {e}", e);
+                throw;
             }
 
-            messageId = 0;
-            procent = 0;
-            return false;
         }
     }
 }

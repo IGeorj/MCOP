@@ -135,11 +135,9 @@ namespace MCOP.Modules.Basic
                 }
 
                 KeyValuePair<string, string> randomNoun = _nouns.ElementAt(rng.Next(0, _nouns.Count));
-                var embed = new DiscordEmbedBuilder
-                {
-                    Title = $"Битва за {randomNoun.Key}",
-                    Description = "Для принятия дулеи поставьте смайлик на это сообщение"
-                }
+                var embed = new DiscordEmbedBuilder()
+                .WithDescription("Для принятия дулеи поставьте смайлик на это сообщение")
+                .WithTitle($"Битва за {randomNoun.Key}")
                 .AddField("Время бана", $"{strTimeout} минут", true)
                 .AddField("Кулдаун", "5 минут", true)
                 .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);

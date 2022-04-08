@@ -52,6 +52,7 @@ public enum DiscordEventType
     Resumed,
     SlashCommandErrored,
     SlashCommandExecuted,
+    SlashCommandInvoked,
     SocketClosed,
     SocketErrored,
     SocketOpened,

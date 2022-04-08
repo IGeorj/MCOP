@@ -28,9 +28,6 @@ namespace MCOP.Modules.POE
                 var embed = new DiscordEmbedBuilder();
                 embed.WithTitle("Название похуй, потом добавлю");
                 embed.WithImageUrl($"attachment://generate.png");
-                embed.AddField("Evasion", item.EvasionRating.ToString());
-                embed.AddField("Armour", item.ArmourRating.ToString());
-                embed.AddField("EnergyShield", item.EnergyShield.ToString());
 
                 using FileStream fstream = File.OpenRead("Images/POE/generate.png");
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder()
