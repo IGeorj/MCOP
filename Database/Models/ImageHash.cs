@@ -33,7 +33,7 @@ public class ImageHash : IEquatable<ImageHash>
 
 
     public bool Equals(ImageHash? other)
-        => !(other is null) && this.Hash.SequenceEqual(other.Hash);
+        => other is not null && this.Hash.SequenceEqual(other.Hash);
 
     public override bool Equals(object? obj)
         => this.Equals(obj as ImageHash);

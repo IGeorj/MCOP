@@ -13,6 +13,8 @@ using MCOP.Extensions;
 using MCOP.Modules.Basic.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using YoutubeExplode;
+using YoutubeExplode.Videos.Streams;
 
 namespace MCOP.Modules.Basic
 {
@@ -41,28 +43,27 @@ namespace MCOP.Modules.Basic
         [SlashRequirePermissions(Permissions.Administrator)]
         [SlashCommand("test", "Test")]
         public async Task Test(InteractionContext ctx,
-            [Option("guildID", "Message ID")] string guildID,
-            [Option("userID", "Message ID")] string userID)
+            [Option("yturl", "yturl")] string text)
         {
             await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
-
+            
             try
             {
-                var gid = ulong.Parse(guildID);
-                var uid = ulong.Parse(userID);
-
-                UserStatsService statsService = ctx.Services.GetRequiredService<UserStatsService>();
-                await statsService.AddWinAsync(gid, uid);
-                await statsService.AddLoseAsync(gid, uid);
+                var youtube = new YoutubeClient();
+                var video = await youtube.Videos.GetAsync(text);
+                var streamManifest = await youtube.Videos.Streams.GetManifestAsync(video.Id);
+                var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+                var stream = await youtube.Videos.Streams.GetAsync(streamInfo);
+                Directory.CreateDirectory("Music");
+                await youtube.Videos.Streams.DownloadAsync(streamInfo, $"Music/{video.Id}.{streamInfo.Container}");
             }
             catch (Exception)
             {
-
+                
                 throw;
             }
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
-
         }
 
         [SlashRequirePermissions(Permissions.Administrator)]
@@ -171,7 +172,15 @@ namespace MCOP.Modules.Basic
                     var result = await duelMessage.WaitForReactionAsync(member2, TimeSpan.FromMinutes(5));
                     if (result.TimedOut)
                     {
-                        await duelMessage.DeleteAsync();
+                        try
+                        {
+                            await duelMessage.DeleteAsync();
+                        }
+                        catch (Exception)
+                        {
+                            Log.Information("Duel message doesn't exist");
+                            return;
+                        }
                         return;
                     }
                 }
@@ -195,7 +204,15 @@ namespace MCOP.Modules.Basic
 
                     if (res.TimedOut)
                     {
-                        await duelMessage.DeleteAsync();
+                        try
+                        {
+                            await duelMessage.DeleteAsync();
+                        }
+                        catch (Exception)
+                        {
+                            Log.Information("Duel message doesn't exist");
+                            return;
+                        }
                         return;
                     }
 

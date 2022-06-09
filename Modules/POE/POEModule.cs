@@ -20,20 +20,20 @@ namespace MCOP.Modules.POE
 
             try
             {
-                var item = POEService.CreateArmour(100, 100, 100, Common.ArmourType.BodyArmour);
+                var item = POEService.CreateRandomArmour();
 
                 //Generate Image
-                await item.GenerateImageAsync();
+                string path = item.GenerateImage();
 
                 var embed = new DiscordEmbedBuilder();
-                embed.WithTitle("Название похуй, потом добавлю");
+                embed.WithTitle(item.Name);
                 embed.WithImageUrl($"attachment://generate.png");
 
-                using FileStream fstream = File.OpenRead("Images/POE/generate.png");
+                using FileStream fstream = File.OpenRead(path);
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder()
                     .AddEmbed(embed)
                     .AddFile("generate.png", fstream)
-                    );
+                );
 
             }
             catch (Exception)

@@ -5,21 +5,15 @@ namespace MCOP.Modules.POE.Extensions
     public static class EnumsExtensions
     {
 
-        public static int GetMaxSocketCount(this ArmourType type)
+        public static int GetMaxSocketCount(this ArmourTypeEnum type)
         {
-            switch (type)
+            return type switch
             {
-                case ArmourType.Boots:
-                case ArmourType.Gloves:
-                case ArmourType.Helmet:
-                    return 4;
-                case ArmourType.Shield:
-                    return 3;
-                case ArmourType.BodyArmour:
-                    return 6;
-                default:
-                    return 1;
-            }
+                ArmourTypeEnum.Boots or ArmourTypeEnum.Gloves or ArmourTypeEnum.Helmet => 4,
+                ArmourTypeEnum.Shield => 3,
+                ArmourTypeEnum.BodyArmour => 6,
+                _ => 1,
+            };
         }
     }
 }

@@ -4,6 +4,7 @@ using MCOP.Services;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.Reflection;
 
 namespace MCOP.EventListeners;
 

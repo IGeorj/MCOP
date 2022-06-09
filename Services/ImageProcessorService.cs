@@ -12,42 +12,67 @@ namespace MCOP.Services
 {
     public struct SKText
     {
-        public string Text { get; }
-        public string HexColor { get; }
+        public string Text { get; set; }
+        public string HexColor { get; set; }
+        public float FontSize { get; set; } = 14.0f;
 
         public SKText(string text, string hexColor)
         {
             Text = text;
             HexColor = hexColor;
         }
+
+        public SKText(string text, string hexColor, float fontSize) : this(text, hexColor)
+        {
+            FontSize = fontSize;
+        }
     }
 
     public class SKTextLine : IEnumerable
     {
-        public List<SKText> ColoredText { get; set; }
+        public List<SKText> ColoredText { get; }
+        public float Width = 0;
+        public float Height = 0;
+        public int Padding = 4;
+        private SKTypeface Typeface { get; }
 
         public SKTextLine()
         {
+            Typeface = SKTypeface.FromFile("Fonts/Fontin-SmallCaps.otf");
             ColoredText = new List<SKText>();
         }
-        public SKTextLine(IEnumerable<SKText> texts)
+
+        public void Add(IEnumerable<SKText> texts)
         {
-            ColoredText = texts.ToList();
+            using SKPaint paint = new SKPaint();
+            paint.Typeface = Typeface;
+            paint.IsAntialias = true;
+            float maxWidth = 0;
+            float maxHeight = 0;
+            foreach (var item in texts)
+            {
+                ColoredText.Add(item);
+                SKRect bounds = new SKRect();
+                paint.TextSize = item.FontSize;
+                paint.Color = SKColor.Parse(item.HexColor);
+                maxWidth += paint.MeasureText(item.Text, ref bounds);
+                maxHeight = Math.Max(maxHeight, item.FontSize);
+            }
+            Width = maxWidth;
+            Height = maxHeight + Padding;
         }
 
         public void Add(SKText text)
         {
             ColoredText.Add(text);
-        }
-        public float GetWidth(SKPaint paint)
-        {
-            float width = 0;
-            foreach (var item in ColoredText)
-            {
-                SKRect bounds = new SKRect();
-                width += paint.MeasureText(item.Text, ref bounds);
-            }
-            return width + 8;
+            using SKPaint paint = new SKPaint();
+            paint.Typeface = Typeface;
+            paint.IsAntialias = true;
+            paint.TextSize = text.FontSize;
+            paint.Color = SKColor.Parse(text.HexColor);
+            SKRect bounds = new SKRect();
+            Width += paint.MeasureText(text.Text, ref bounds);
+            Height = Math.Max(Height, text.FontSize + Padding);
         }
 
         public IEnumerator GetEnumerator()
@@ -58,72 +83,98 @@ namespace MCOP.Services
 
     public static class ImageProcessorService
     {
-        public static SKImage GetImageFromLines(params SKTextLine[] lines)
+        public static SKImage GetImageFromLines(IEnumerable<SKTextLine> lines)
         {
-            int lineHeight = 18;
-            float maxWidth = 0;
+            float imageWidth = 0;
+            float imageHeight = 0;
+            int Padding = 8;
             using var paint = new SKPaint();
             paint.Typeface = SKTypeface.FromFile("Fonts/Fontin-SmallCaps.otf");
-            paint.TextSize = 14.0f;
             paint.IsAntialias = true;
-            paint.Color = SKColors.White;
             foreach (var line in lines)
             {
-                var lineWidth = line.GetWidth(paint);
-                maxWidth = Math.Max(maxWidth, lineWidth);
+                imageWidth = Math.Max(imageWidth, line.Width);
+                imageHeight += line.Height;
             }
-            var info = new SKImageInfo((int)maxWidth + 1, lineHeight * lines.Length);
+
+            var info = new SKImageInfo((int)imageWidth + Padding + 1 , (int)imageHeight + Padding + 1);
             using var surface = SKSurface.Create(info);
             using SKCanvas canvas = surface.Canvas;
             canvas.Clear(SKColors.Black);
-            var offsetY = 13;
+            float offsetY = 0;
             foreach (var line in lines)
             {
-                var offsetX = (info.Width - line.GetWidth(paint)) / 2.0f + 4;
+                offsetY += line.Height;
+                float offsetX = (info.Width - line.Width) / 2.0f;
                 for (int i = 0; i < line.ColoredText.Count; i++)
                 {
                     paint.Color = SKColor.Parse(line.ColoredText[i].HexColor);
+                    paint.TextSize = line.ColoredText[i].FontSize;
                     SKRect bounds = new SKRect();
-                    paint.MeasureText(line.ColoredText[i].Text, ref bounds);
+                    var width = paint.MeasureText(line.ColoredText[i].Text, ref bounds);
                     canvas.DrawText(line.ColoredText[i].Text, offsetX, offsetY, paint);
-                    offsetX += bounds.Width;
+                    offsetX += width;
                 }
-                offsetY += lineHeight;
             }
             return surface.Snapshot();
         }
-        public static Task GenerateImageAsync(this Armour item)
+        public static string GenerateImage(this Armour item)
         {
-            SKTextLine[] lines = new SKTextLine[]
+            List<SKTextLine> lines = new List<SKTextLine>();
+            lines.Add(item.NameToText());
+            var quality = item.QualityToText();
+            var armour = item.ArmourRatingToText();
+            var evasion = item.EvasionRatingToText();
+            var energyShield = item.EnergyShieldToText();
+            if (quality is not null)
             {
-                new SKTextLine()
-                {
-                    new SKText("Quality:", "#827a6c"),
-                    new SKText($" {item.Quality}%", "#8787fe")
-                },
-                new SKTextLine()
-                {
-                    new SKText("armour:", "#827a6c"),
-                    new SKText($" {item.ArmourRating}", "#8787fe")
-                },
-                new SKTextLine()
-                {
-                    new SKText("evasion:", "#827a6c"),
-                    new SKText($" {item.EvasionRating}", "#8787fe")
-                },
-                new SKTextLine()
-                {
-                    new SKText("energy shield:", "#827a6c"),
-                    new SKText($" {item.EnergyShield}", "#8787fe")
-                },
+                lines.Add(quality);
+            }
+            if (armour is not null)
+            {
+                lines.Add(armour);
+            }
+            if (evasion is not null)
+            {
+                lines.Add(evasion);
+            }
+            if (energyShield is not null)
+            {
+                lines.Add(energyShield);
+            }
+            lines.Add(item.ItemLevelToText());
+            if (item.StatsRequirements is not null)
+            {
+                lines.Add(item.StatsRequirements.StatsToTextLine());
+            }
 
-            };
-            var image = GetImageFromLines(lines);
-            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-            using var stream = File.OpenWrite("Images/POE/generate.png");
+            string path = "Images/POE/generate.png";
+
+            SKBitmap bitmapHeader;
+            using (Stream loadStream = File.OpenRead(item.Image))
+            {
+                bitmapHeader = SKBitmap.Decode(loadStream);
+            }
+            bitmapHeader = bitmapHeader.Resize(new SKImageInfo(bitmapHeader.Width / 2, bitmapHeader.Height / 2), SKFilterQuality.High);
+
+            var imageText = GetImageFromLines(lines);
+            var leftPadding = 8;
+            var info = new SKImageInfo(imageText.Width + bitmapHeader.Width + leftPadding, Math.Max(imageText.Height, bitmapHeader.Height));
+            using var surface = SKSurface.Create(info);
+            using SKCanvas canvas = surface.Canvas;
+            canvas.Clear(SKColors.Black);
+            float offsetX = leftPadding;
+            float offsetY = (info.Height - imageText.Height) / 2.0f;
+            canvas.DrawImage(imageText, offsetX, offsetY);
+            offsetX += imageText.Width;
+            offsetY = (info.Height - bitmapHeader.Height) / 2.0f;
+            canvas.DrawBitmap(bitmapHeader, offsetX, offsetY);
+
+            using var data = surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100);
+            using var stream = File.OpenWrite(path);
             data.SaveTo(stream);
             
-            return Task.CompletedTask;
+            return path;
         }
 
         public static Task<bool> SaveAsJpgAsync(SKBitmap bitmap, string path, int quality)

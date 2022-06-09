@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Extensions.Logging;
 using DSharpPlus.SlashCommands;
+using DSharpPlus.VoiceNext;
 
 namespace MCOP;
 
@@ -25,6 +26,7 @@ public sealed class Bot
     public InteractivityExtension Interactivity => this.interactivity ?? throw new BotUninitializedException();
     public CommandsNextExtension CNext => this.cnext ?? throw new BotUninitializedException();
     public SlashCommandsExtension CSlash => this.cslash ?? throw new BotUninitializedException();
+    public VoiceNextExtension VNext => this.vnext ?? throw new BotUninitializedException();
     public IReadOnlyDictionary<string, Command> Commands => this.commands ?? throw new BotUninitializedException();
 
     private readonly BotConfigService? config;
@@ -34,6 +36,7 @@ public sealed class Bot
     private InteractivityExtension? interactivity;
     private SlashCommandsExtension? cslash;
     private CommandsNextExtension? cnext;
+    private VoiceNextExtension? vnext;
     private IReadOnlyDictionary<string, Command>? commands;
 
 
@@ -63,6 +66,7 @@ public sealed class Bot
         this.UpdateCommandList();
 
         this.interactivity = this.SetupInteractivity();
+        this.vnext = this.SetupVoiceNext();
 
         Listeners.FindAndRegister(this);
 
@@ -120,13 +124,11 @@ public sealed class Bot
         };
 
         SlashCommandsExtension slash = Client.UseSlashCommands(slCfg);
-        Log.Debug("Registering SlashCommands...");
         var assembly = Assembly.GetExecutingAssembly();
-    
-        // Guilds
         // slash.RegisterCommands<ApplicationCommandModule>(323487778220277761);
-
-        // Global
+        // slash.RegisterCommands<ApplicationCommandModule>(226812644537925642);
+        // slash.RegisterCommands(assembly, 323487778220277761);
+        // slash.RegisterCommands(assembly, 226812644537925642);
         slash.RegisterCommands(assembly);
         return slash;
     }
@@ -164,4 +166,11 @@ public sealed class Bot
             Timeout = TimeSpan.FromMinutes(1)
         });
     }
+
+    private VoiceNextExtension SetupVoiceNext()
+    {
+        Log.Information("Initializing VoiceNext...");
+        return this.Client.UseVoiceNext();
+    }
+
 }

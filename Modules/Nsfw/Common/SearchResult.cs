@@ -15,7 +15,7 @@ namespace MCOP.Modules.Nsfw.Common
 
         public void Sort()
         {
-            posts = new ConcurrentBag<BooruPost>(posts.OrderBy(s => s.ParentId).ThenBy(s => s.ID));
+            posts = new ConcurrentBag<BooruPost>(posts.OrderBy(x => x.ParentId ?? x.ID).ThenBy(x => x.ID));
 
         }
         public List<BooruPost> ToList()

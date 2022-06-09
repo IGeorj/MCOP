@@ -1,83 +1,105 @@
-﻿using MCOP.Services;
+﻿using MCOP.Modules.POE.Common.Enums;
+using MCOP.Services;
 
 namespace MCOP.Modules.POE.Common
 {
 
+    public static class TextColors
+    {
+        public static string LightHexColor { get; } = "#827A6C";
+        public static string WhiteHexColor { get; } = "#FFFFFF";
+        public static string BlueHexColor { get; } = "#8787FE";
+        public static string CorruptedHexColor { get; } = "#C50003";
+    }
+
     [Serializable]
     public class ItemBase : Item
     {
-        public string Name { get; set; } = "No Name";
+        public string Name { get; set; } = "Base Name";
         public string Image { get; set; } = "";
         public StatsRequirements? StatsRequirements { get; set; }
         public Sockets? Sockets { get; set; }
+
+        public SKTextLine NameToText()
+        {
+            return new SKTextLine
+            {
+                new SKText(Name, TextColors.WhiteHexColor, 18.0f)
+            };
+        }
+
     }
 
     [Serializable]
     public class Item
     {
-        public int Quality { get; set; } = 0;
+        public int? Quality { get; set; }
         public int ItemLevel { get; set; } = 0;
         public int LevelRequired { get; set; } = 0;
         public bool IsCorrupted { get; set; } = false;
         public ItemType ItemType { get; set; } = ItemType.Normal;
 
-        public SKTextLine QualityToText()
+        public SKTextLine? QualityToText()
         {
-            return ToTextLaneBase("Quality: ", Quality.ToString());
+            if (Quality.HasValue == false)
+            {
+                return null;
+            }
+
+            return new SKTextLine
+            {
+                new SKText("Quality: ", TextColors.LightHexColor),
+                new SKText(Quality.Value.ToString() + "%", TextColors.BlueHexColor)
+            };
         }
 
         public SKTextLine ItemLevelToText()
         {
-            return ToTextLaneBase("Item level: ", ItemLevel.ToString(), "#827A6C");
+            return new SKTextLine
+            {
+                new SKText("Item level: ", TextColors.LightHexColor),
+                new SKText(ItemLevel.ToString(), TextColors.WhiteHexColor)
+            };
         }
 
         public SKTextLine? CorruptedToText()
         {
-            return IsCorrupted ? new SKTextLine { new SKText("Corrupted", "#C50003") } : null;
-        }
-
-        private SKTextLine ToTextLaneBase(string text, string value, string valueColor = "#8787FE")
-        {
-            var light = "#827A6C";
-            return new SKTextLine
-            {
-                new SKText(text, light),
-                new SKText(value, valueColor)
-            };
+            return IsCorrupted ? new SKTextLine { new SKText("Corrupted", TextColors.CorruptedHexColor) } : null;
         }
     }
 
     [Serializable]
     public class StatsRequirements
     {
-        public int Str { get; set; } = 0;
-        public int Dex { get; set; } = 0;
-        public int Int { get; set; } = 0;
+        public int? Str { get; set; }
+        public int? Dex { get; set; }
+        public int? Int { get; set; }
 
-        public SKTextLine StrToText()
+        public SKTextLine StatsToTextLine()
         {
-            return ToTextLaneBase("Str", Str.ToString());
-        }
+            SKTextLine textLine = new SKTextLine();
+            List<SKText> textList = new List<SKText>();
 
-        public SKTextLine DexToText()
-        {
-            return ToTextLaneBase("Dex", Dex.ToString());
-        }
 
-        public SKTextLine IntToText()
-        {
-            return ToTextLaneBase("Int", Int.ToString());
-        }
-
-        private SKTextLine ToTextLaneBase(string text, string value)
-        {
-            var white = "#FFFFFF";
-            var light = "#827A6C";
-            return new SKTextLine
+            if (Str.HasValue)
             {
-                new SKText(value, white),
-                new SKText(text, light)
-            };
+                textList.Add(new SKText(Str.Value.ToString(), TextColors.WhiteHexColor));
+                textList.Add(new SKText((Dex.HasValue || Int.HasValue) ? " Str, " : " Str", TextColors.LightHexColor));
+            }
+            if (Dex.HasValue)
+            {
+                textList.Add(new SKText(Dex.Value.ToString(), TextColors.WhiteHexColor));
+                textList.Add(new SKText(Int.HasValue ? " Dex, " : " Dex", TextColors.LightHexColor));
+            }
+            if (Int.HasValue)
+            {
+                textList.Add(new SKText(Int.Value.ToString(), TextColors.WhiteHexColor));
+                textList.Add(new SKText(" Int", TextColors.LightHexColor));
+            }
+
+            textLine.Add(textList);
+
+            return textLine;
         }
     }
 
@@ -89,22 +111,5 @@ namespace MCOP.Modules.POE.Common
         public int Linked { get; set; } = 1;
         public List<SocketColor> Colors { get; set; } = new List<SocketColor>();
 
-    }
-
-    public enum SocketColor
-    {
-        Red,
-        Green,
-        Blue,
-        White,
-        Black
-    }
-
-    public enum ItemType
-    {
-        Normal,
-        Magic,
-        Rare,
-        Unique
     }
 }

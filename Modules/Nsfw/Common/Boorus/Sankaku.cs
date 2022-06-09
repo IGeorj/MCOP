@@ -10,7 +10,7 @@ namespace MCOP.Modules.Nsfw.Common
     {
         private static readonly string _baseUrl = "https://capi-v2.sankakucomplex.com";
         private static readonly string _authUrl = "https://capi-v2.sankakucomplex.com/auth/token";
-        private static readonly string _searchUrl = "https://capi-v2.sankakucomplex.com/posts/keyset?lang=en&default_threshold=1";
+        private static readonly string _searchUrl = "https://capi-v2.sankakucomplex.com/posts/keyset?lang=en&default_threshold=1&hide_posts_in_books=never";
 
 
         private static string? _accessToken;

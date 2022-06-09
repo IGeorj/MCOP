@@ -46,10 +46,10 @@ namespace MCOP.Modules.Nsfw.Services
                 tags = _baseTags;
             }
 
-            SearchResult searchResult = new();
-
             try
             {
+
+                SearchResult searchResult = new();
                 if (string.IsNullOrEmpty(next))
                 {
                     searchResult = await _e621.GetRandomAsync(tags, limit);
