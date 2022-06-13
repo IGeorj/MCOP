@@ -14,7 +14,6 @@ namespace MCOP.Modules.Nsfw
 {
     [SlashCommandGroup("nsfw", "18+ комманды")]
     [SlashRequireNsfw]
-    [SlashRequireChannelId(857354195866615808, 549313253541543951)]
     [SlashCooldown(1,5, CooldownBucketType.User)]
     public sealed class NsfwModule : ApplicationCommandModule
     {
@@ -22,6 +21,12 @@ namespace MCOP.Modules.Nsfw
         public E621Service E621 { get; set; }
         public GelbooruService Gelbooru { get; set; }
 
+        public NsfwModule(SankakuService sankaku, E621Service e621, GelbooruService gelbooru)
+        {
+            Sankaku = sankaku;
+            E621 = e621;
+            Gelbooru = gelbooru;
+        }
 
         [SlashCommand("lewd", "Скидывает рандомную 18+ аниме картику")]
         public async Task Lewd(InteractionContext ctx,

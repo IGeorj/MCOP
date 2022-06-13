@@ -42,26 +42,9 @@ namespace MCOP.Modules.Basic
 
         [SlashRequirePermissions(Permissions.Administrator)]
         [SlashCommand("test", "Test")]
-        public async Task Test(InteractionContext ctx,
-            [Option("yturl", "yturl")] string text)
+        public async Task Test(InteractionContext ctx)
         {
             await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
-            
-            try
-            {
-                var youtube = new YoutubeClient();
-                var video = await youtube.Videos.GetAsync(text);
-                var streamManifest = await youtube.Videos.Streams.GetManifestAsync(video.Id);
-                var streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
-                var stream = await youtube.Videos.Streams.GetAsync(streamInfo);
-                Directory.CreateDirectory("Music");
-                await youtube.Videos.Streams.DownloadAsync(streamInfo, $"Music/{video.Id}.{streamInfo.Container}");
-            }
-            catch (Exception)
-            {
-                
-                throw;
-            }
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
         }

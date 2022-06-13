@@ -121,8 +121,8 @@ internal static partial class Listeners
             case SlashExecutionChecksFailedException slex:
                 foreach (var check in slex.FailedChecks)
                 {
-                    if (check is SlashRequireChannelIdAttribute att)
-                        error = $"Команда доступна в каналах: <#{string.Join("> <#", att.Ids)}>";
+                    if (check is SlashRequireNsfwAttribute att)
+                        error = $"Команда доступна только в nsfw каналах";
                 }
                 break;
             case TaskCanceledException:

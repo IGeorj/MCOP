@@ -36,4 +36,8 @@
     <PackageReference Include="YoutubeExplode" Version="6.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Modules\Basic\Common\" />
+  </ItemGroup>
+
 </Project>
