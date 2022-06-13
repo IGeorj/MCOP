@@ -181,14 +181,23 @@ namespace MCOP.Services
         {
             try
             {
-                using (SKImage image = SKImage.FromBitmap(bitmap))
+                var info = new SKImageInfo(bitmap.Width, bitmap.Height);
+                using (SKSurface surface = SKSurface.Create(info))
                 {
-                    using (SKData data = image.Encode(SKEncodedImageFormat.Jpeg, quality))
+                    using (SKCanvas canvas = surface.Canvas)
                     {
-                        using (var stream = File.OpenWrite(path))
+                        canvas.Clear(SKColors.White);
+                        canvas.DrawBitmap(bitmap, 0, 0);
+                        using (SKImage image = surface.Snapshot())
                         {
-                            data.SaveTo(stream);
-                            return Task.FromResult(true);
+                            using (SKData data = image.Encode(SKEncodedImageFormat.Jpeg, quality))
+                            {
+                                using (var stream = File.OpenWrite(path))
+                                {
+                                    data.SaveTo(stream);
+                                    return Task.FromResult(true);
+                                }
+                            }
                         }
                     }
                 }
@@ -196,7 +205,7 @@ namespace MCOP.Services
             catch (Exception)
             {
                 Log.Error("SkiaSharp failed to save image as jpg. Path: {path}", path);
-                return Task.FromResult(true);
+                return Task.FromResult(false);
             }
         }
 

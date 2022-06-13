@@ -57,9 +57,6 @@ namespace MCOP.Modules.Nsfw
                     DiscordEmoji yes = DiscordEmoji.FromName(ctx.Client, ":thumbsup:");
                     DiscordEmoji no = DiscordEmoji.FromName(ctx.Client, ":thumbsdown:");
 
-                    DiscordEmoji.TryFromGuildEmote(ctx.Client, 864097093110595615, out yes);
-                    DiscordEmoji.TryFromGuildEmote(ctx.Client, 844213126026231899, out no);
-
                     await repeatMessage.CreateReactionAsync(yes);
                     await repeatMessage.CreateReactionAsync(no);
 
