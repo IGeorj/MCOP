@@ -67,7 +67,7 @@ internal static partial class Listeners
     [AsyncEventListener(DiscordEventType.SocketErrored)]
     public static Task SocketErroredEventHandlerAsync(Bot _, SocketErrorEventArgs e)
     {
-        Log.Debug(e.Exception, "Socket errored");
+        Log.Debug("Socket errored {Message}", e.Exception.Message);
         return Task.CompletedTask;
     }
 
