@@ -10,14 +10,14 @@ namespace MCOP.Modules.Nsfw.Services
         private readonly string _baseTags = "rating:explicit score:>=80 -male -penis -censored -type:webm -feral -monochrome -vomit -male/male -gay -death -imminent_death -castration -nightmare_fuel -snuff -herm -death_by_penis -pooping -feces -urine -necrophilia -animal_genitalia";
         private readonly E621 _e621;
 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8602, CS8604 // Dereference of a possibly null reference.
         public E621Service()
         {
             _e621 = new E621(Program.Bot.Config.CurrentConfiguration.E621HashPassword);
 
         }
 
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning restore CS8602, CS8604 // Dereference of a possibly null reference.
 
         private async Task<DiscordMessage> SendPostAsync(DiscordChannel channel, BooruPost post)
         {

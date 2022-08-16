@@ -8,45 +8,47 @@ namespace MCOP.Modules.Nsfw.Common
 {
     public sealed class Sankaku
     {
-        private static readonly string _baseUrl = "https://capi-v2.sankakucomplex.com";
-        private static readonly string _authUrl = "https://capi-v2.sankakucomplex.com/auth/token";
-        private static readonly string _searchUrl = "https://capi-v2.sankakucomplex.com/posts/keyset?lang=en&default_threshold=1&hide_posts_in_books=never";
+        private static readonly string _authUrl = "/auth/token";
+        private static readonly string _searchUrl = "/posts/keyset?lang=en&default_threshold=1&hide_posts_in_books=never";
 
 
-        private static string? _accessToken;
-        private static string? _refreshToken;
-        private static string? _login;
-        private static string? _password;
-
-        private Sankaku(){ }
+        private string? _accessToken;
+        private string? _refreshToken;
+        private string? _login;
+        private string? _password;
+        
+        private readonly HttpClient _httpClient;
+        public Sankaku(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
 
         #region static methods
-        public static async Task<Sankaku> Create(string login, string password)
+        public async Task AuthorizeAsync(string login, string password)
         {
             SetLogin(login);
             SetPassword(password);
             await RefreshTokenAsync();
-            return new Sankaku();
         }
 
-        public static string? GetAcessToken()
+        public string? GetAcessToken()
         {
             return _accessToken;
         }
 
-        public static void SetLogin(string login)
+        public void SetLogin(string login)
         {
             _login = login;
         }
 
-        public static void SetPassword(string password)
+        public void SetPassword(string password)
         {
             _password = password;
         }
 
-        public static async Task<bool> IsAvailable()
+        public async Task<bool> IsAvailable()
         {
-            var response = await HttpService.GetAsync(_baseUrl);
+            var response = await _httpClient.GetAsync(_authUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -57,7 +59,7 @@ namespace MCOP.Modules.Nsfw.Common
             return false;
         }
 
-        private static async Task RefreshTokenAsync()
+        private async Task RefreshTokenAsync()
         {
             if (!await IsAvailable())
             {
@@ -76,7 +78,7 @@ namespace MCOP.Modules.Nsfw.Common
 
                 HttpContent content = new StringContent(jsonAuth.ToString(), Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await HttpService.PostAsync(_authUrl, content);
+                HttpResponseMessage response = await _httpClient.PostAsync(_authUrl, content);
                 string strJson = await response.Content.ReadAsStringAsync();
 
                 JObject jsonUser = JObject.Parse(strJson);
@@ -144,14 +146,14 @@ namespace MCOP.Modules.Nsfw.Common
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
 
-                var response = await HttpService.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     await RefreshTokenAsync();
                     HttpRequestMessage request2 = new HttpRequestMessage(HttpMethod.Get, url);
                     request2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
-                    response = await HttpService.SendAsync(request2);
+                    response = await _httpClient.SendAsync(request2);
                 }
 
                 if (!response.IsSuccessStatusCode)

@@ -11,13 +11,10 @@ namespace MCOP.Modules.Nsfw.Services
         private static readonly string _baseTags = "-male -penis -loli -censored -video female rating:e";
         private readonly Sankaku _sankaku;
 
-#pragma warning disable CS8604 // Possible null reference argument.
-        public SankakuService()
+        public SankakuService(Sankaku sankaku)
         {
-            _sankaku = Sankaku.Create("georj", Program.Bot?.Config.CurrentConfiguration.SankakuPassword).GetAwaiter().GetResult();
+            _sankaku = sankaku;
         }
-
-#pragma warning restore CS8604 // Possible null reference argument.
 
 
         private async Task<DiscordMessage> SendPostAsync(DiscordChannel channel, BooruPost post, string path)
@@ -100,7 +97,7 @@ namespace MCOP.Modules.Nsfw.Services
 
         public async Task<DiscordMessage> SendBooruPostAsync(DiscordChannel channel, BooruPost post)
         {
-            var authToken = Sankaku.GetAcessToken();
+            var authToken = _sankaku.GetAcessToken();
 
             Directory.CreateDirectory($"Images/Nsfw/{post.Artist}/");
             string path = $"Images/Nsfw/{post.Artist}/{post.MD5}.jpg";

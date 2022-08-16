@@ -14,7 +14,7 @@ namespace MCOP.Modules.Nsfw
 {
     [SlashCommandGroup("nsfw", "18+ комманды")]
     [SlashRequireNsfw]
-    [SlashCooldown(1,5, CooldownBucketType.User)]
+    [SlashCooldown(1, 5, CooldownBucketType.User)]
     public sealed class NsfwModule : ApplicationCommandModule
     {
         public SankakuService Sankaku { get; set; }
@@ -63,12 +63,12 @@ namespace MCOP.Modules.Nsfw
                     var interactivity = ctx.Client.GetInteractivity();
 
                     InteractivityResult<MessageReactionAddEventArgs> res = await interactivity.WaitForReactionAsync(
-                        e => 
+                        e =>
                         {
                             if (e.User.IsBot || e.Message != repeatMessage)
                                 return false;
 
-                            if ( (e.User.Id == ctx.User.Id || ((DiscordMember)e.User).IsAdmin()) && (e.Emoji == yes || e.Emoji == no) )
+                            if ((e.User.Id == ctx.User.Id || ((DiscordMember)e.User).IsAdmin()) && (e.Emoji == yes || e.Emoji == no))
                             {
                                 return true;
                             }
@@ -78,10 +78,10 @@ namespace MCOP.Modules.Nsfw
                         TimeSpan.FromSeconds(30)
                     );
 
-                    if (res.TimedOut || res.Result.Emoji == no) 
+                    if (res.TimedOut || res.Result.Emoji == no)
                     {
                         await repeatMessage.DeleteAsync();
-                        return; 
+                        return;
                     }
 
                     await repeatMessage.DeleteAsync();

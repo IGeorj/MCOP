@@ -14,6 +14,7 @@ using Serilog;
 using Serilog.Extensions.Logging;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.VoiceNext;
+using MCOP.Modules.Nsfw.Common;
 
 namespace MCOP;
 
@@ -60,7 +61,7 @@ public sealed class Bot
 
         this.client = this.SetupClient();
 
-        this.services = this.SetupServices();
+        this.services = await this.SetupServicesAsync();
         this.cnext = this.SetupCommands();
         this.cslash = this.SetupSlashCommands();
         this.UpdateCommandList();
@@ -103,17 +104,35 @@ public sealed class Bot
         return client;
     }
 
-    private ServiceProvider SetupServices()
+    private async Task<ServiceProvider> SetupServicesAsync()
     {
         Log.Information("Initializing services...");
-        return new ServiceCollection()
-            .AddSingleton(this.Config)
-            .AddSingleton(this.Database)
-            .AddSingleton(this.Client)
-            .AddSharedServices()
+        ServiceCollection services = new ServiceCollection();
+
+        services.AddSingleton(Config)
+            .AddSingleton(Database)
+            .AddSingleton(Client)
+            .AddSharedServices();
+
+        services.AddHttpClient("sankaku", client =>
+        {
+            client.BaseAddress = new Uri("https://capi-v2.sankakucomplex.com");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
+        });
+
+        services.AddSingleton(provider => 
+        {
+            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            Sankaku sankaku = new Sankaku(httpClientFactory.CreateClient("sankaku"));
+            sankaku.AuthorizeAsync("georj", Config.CurrentConfiguration.SankakuPassword).GetAwaiter().GetResult();
+            return sankaku;
+        });
+
+        ServiceProvider provider = services
             .BuildServiceProvider()
-            .Initialize()
-            ;
+            .Initialize();
+
+        return provider;
     }
 
     private SlashCommandsExtension SetupSlashCommands()
