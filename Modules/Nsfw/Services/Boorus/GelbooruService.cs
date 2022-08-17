@@ -15,12 +15,13 @@ namespace MCOP.Modules.Nsfw.Services
 {
     public sealed class GelbooruService : IBotService
     {
-        private readonly string _baseTags = "-male -penis -loli -censored score:>50 rating:explicit";
         private readonly Gelbooru _gelbooru;
+        private string _baseTags = string.Empty;
 
-        public GelbooruService()
+        public GelbooruService(BotConfigService config)
         {
             _gelbooru = new Gelbooru();
+            _baseTags = config.CurrentConfiguration.GelbooruRestrictegTags ?? string.Empty;
         }
 
         private async Task<DiscordMessage> SendPostAsync(DiscordChannel channel, BooruPost post)

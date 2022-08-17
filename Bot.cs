@@ -124,7 +124,7 @@ public sealed class Bot
         {
             var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
             Sankaku sankaku = new Sankaku(httpClientFactory.CreateClient("sankaku"));
-            sankaku.AuthorizeAsync("georj", Config.CurrentConfiguration.SankakuPassword).GetAwaiter().GetResult();
+            sankaku.AuthorizeAsync("georj", Config.CurrentConfiguration.SankakuPassword ?? string.Empty).GetAwaiter().GetResult();
             return sankaku;
         });
 

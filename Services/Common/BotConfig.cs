@@ -44,6 +44,15 @@ public sealed class BotConfig
     [JsonProperty("sankaku-password")]
     public string? SankakuPassword { get; set; }
 
+    [JsonProperty("sankaku-restricted-tags")]
+    public string? SankakuRestrictegTags { get; set; }
+
     [JsonProperty("e621-hash-password")]
     public string? E621HashPassword { get; set; }
+
+    [JsonProperty("e621-restricted-tags")]
+    public string? E621RestrictegTags { get; set; }
+
+    [JsonProperty("gelbooru-restricted-tags")]
+    public string? GelbooruRestrictegTags { get; set; }
 }

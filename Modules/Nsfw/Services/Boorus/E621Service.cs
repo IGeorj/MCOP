@@ -7,17 +7,15 @@ namespace MCOP.Modules.Nsfw.Services
 {
     public sealed class E621Service : IBotService
     {
-        private readonly string _baseTags = "rating:explicit score:>=80 -male -penis -censored -type:webm -feral -monochrome -vomit -male/male -gay -death -imminent_death -castration -nightmare_fuel -snuff -herm -death_by_penis -pooping -feces -urine -necrophilia -animal_genitalia";
         private readonly E621 _e621;
+        private string _baseTags = string.Empty;
 
-#pragma warning disable CS8602, CS8604 // Dereference of a possibly null reference.
-        public E621Service()
+        public E621Service(BotConfigService config)
         {
-            _e621 = new E621(Program.Bot.Config.CurrentConfiguration.E621HashPassword);
-
+            _e621 = new E621(config.CurrentConfiguration.E621HashPassword ?? string.Empty);
+            _baseTags = config.CurrentConfiguration.E621RestrictegTags ?? string.Empty;
         }
 
-#pragma warning restore CS8602, CS8604 // Dereference of a possibly null reference.
 
         private async Task<DiscordMessage> SendPostAsync(DiscordChannel channel, BooruPost post)
         {

@@ -8,12 +8,13 @@ namespace MCOP.Modules.Nsfw.Services
 {
     public sealed class SankakuService : IBotService
     {
-        private static readonly string _baseTags = "-male -penis -loli -censored -video female rating:e";
         private readonly Sankaku _sankaku;
+        private string _baseTags = string.Empty;
 
-        public SankakuService(Sankaku sankaku)
+        public SankakuService(Sankaku sankaku, BotConfigService config)
         {
             _sankaku = sankaku;
+            _baseTags = config.CurrentConfiguration.SankakuRestrictegTags ?? string.Empty;
         }
 
 
