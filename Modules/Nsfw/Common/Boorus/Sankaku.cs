@@ -23,7 +23,6 @@ namespace MCOP.Modules.Nsfw.Common
             _httpClient = httpClient;
         }
 
-        #region static methods
         public async Task AuthorizeAsync(string login, string password)
         {
             SetLogin(login);
@@ -97,7 +96,6 @@ namespace MCOP.Modules.Nsfw.Common
                 Log.Error("Failed to update token. Error: {error}", ex.Message);
             }
         }
-        #endregion
 
         private Task<SearchResult> ParseJsonAsync(string strJson)
         {
@@ -151,9 +149,9 @@ namespace MCOP.Modules.Nsfw.Common
                 if (!response.IsSuccessStatusCode)
                 {
                     await RefreshTokenAsync();
-                    HttpRequestMessage request2 = new HttpRequestMessage(HttpMethod.Get, url);
-                    request2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
-                    response = await _httpClient.SendAsync(request2);
+                    HttpRequestMessage requestAfterRefresh = new HttpRequestMessage(HttpMethod.Get, url);
+                    requestAfterRefresh.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+                    response = await _httpClient.SendAsync(requestAfterRefresh);
                 }
 
                 if (!response.IsSuccessStatusCode)
