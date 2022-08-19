@@ -18,9 +18,9 @@ namespace MCOP.Modules.Nsfw.Services
         private readonly Gelbooru _gelbooru;
         private string _baseTags = string.Empty;
 
-        public GelbooruService(BotConfigService config)
+        public GelbooruService(Gelbooru gelbooru, BotConfigService config)
         {
-            _gelbooru = new Gelbooru();
+            _gelbooru = gelbooru;
             _baseTags = config.CurrentConfiguration.GelbooruRestrictegTags ?? string.Empty;
         }
 

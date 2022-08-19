@@ -12,19 +12,20 @@ namespace MCOP.Modules.Nsfw.Common
 {
     public sealed class E621
     {
-        private static readonly string _baseUrl = "https://e621.net";
-        private static readonly string _searchUrl = "https://e621.net/posts.json?";
+        private static readonly string _searchUrl = "/posts.json?";
 
         private readonly string _password;
+        private readonly HttpClient _httpClient;
 
-        public E621(string password)
+        public E621(string password, HttpClient httpClient)
         {
             _password = password;
+            _httpClient = httpClient;
         }
 
-        public static async Task<bool> IsAvailable()
+        public async Task<bool> IsAvailable()
         {
-            var response = await HttpService.GetAsync(_baseUrl);
+            var response = await _httpClient.GetAsync(_searchUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -49,19 +50,21 @@ namespace MCOP.Modules.Nsfw.Common
 #pragma warning disable CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
             SearchResult searchResult = new SearchResult();
 
-            Parallel.ForEach(json.Children(), (post) =>
+            Parallel.ForEach(json["posts"].Children(), (post) =>
             {
-                var filetype = post["image"].Value<string>();
-                filetype = filetype[(filetype.LastIndexOf('.') + 1)..];
+                var fileToken = post["file"];
+                var url = fileToken["url"].Value<string>();
+                var filetype = url[(url.LastIndexOf('.') + 1)..];
+                var artist = post["tags"]["artist"];
                 searchResult.AddPost(new BooruPost
                 {
                     FileType = filetype,
-                    ID = (string)post["id"],
+                    ID = (string)fileToken["id"],
                     MD5 = (string)post["md5"],
-                    ImageUrl = (string)post["file_url"],
-                    PreviewUrl = (string)post["preview_url"],
-                    PostUrl = $"https://gelbooru.com/index.php?page=post&s=view&id={(string)post["id"]}",
-                    Artist = "Автор не найден",
+                    ImageUrl = url,
+                    PreviewUrl = (string)post["preview"]["url"],
+                    PostUrl = $"https://e621.net/posts{(string)post["id"]}",
+                    Artist = artist == null ? "Автор не найден" : (string)artist.FirstOrDefault(),
                 });
             });
 #pragma warning restore CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
@@ -73,11 +76,11 @@ namespace MCOP.Modules.Nsfw.Common
         {
             try
             {
+                url = url + $"&login=georj&api_key={_password}";
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Authorization", "Basic " + _password);
 
 
-                var response = await HttpService.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                 {

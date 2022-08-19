@@ -119,6 +119,16 @@ public sealed class Bot
             client.BaseAddress = new Uri("https://capi-v2.sankakucomplex.com");
             client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
         });
+        services.AddHttpClient("e621", client =>
+        {
+            client.BaseAddress = new Uri("https://e621.net");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
+        });
+        services.AddHttpClient("gelbooru", client =>
+        {
+            client.BaseAddress = new Uri("https://gelbooru.com");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
+        });
 
         services.AddSingleton(provider => 
         {
@@ -126,6 +136,18 @@ public sealed class Bot
             Sankaku sankaku = new Sankaku(httpClientFactory.CreateClient("sankaku"));
             sankaku.AuthorizeAsync("georj", Config.CurrentConfiguration.SankakuPassword ?? string.Empty).GetAwaiter().GetResult();
             return sankaku;
+        });
+        services.AddSingleton(provider =>
+        {
+            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            E621 e621 = new E621(Config.CurrentConfiguration.E621HashPassword ?? string.Empty, httpClientFactory.CreateClient("e621"));
+            return e621;
+        });
+        services.AddSingleton(provider =>
+        {
+            var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+            Gelbooru gelbooru = new Gelbooru(httpClientFactory.CreateClient("gelbooru"));
+            return gelbooru;
         });
 
         ServiceProvider provider = services

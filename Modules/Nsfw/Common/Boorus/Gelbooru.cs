@@ -11,12 +11,18 @@ namespace MCOP.Modules.Nsfw.Common
 {
     public sealed class Gelbooru
     {
-        private static readonly string _baseUrl = "https://gelbooru.com";
-        private static readonly string _searchUrl = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1";
+        private static readonly string _searchUrl = "/index.php?page=dapi&s=post&q=index&json=1";
 
-        public static async Task<bool> IsAvailable()
+        private HttpClient _httpClient;
+
+        public Gelbooru(HttpClient httpClient)
         {
-            var response = await HttpService.GetAsync(_baseUrl);
+            _httpClient = httpClient;
+        }
+
+        public async Task<bool> IsAvailable()
+        {
+            var response = await _httpClient.GetAsync(_searchUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -68,7 +74,7 @@ namespace MCOP.Modules.Nsfw.Common
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
 
-                var response = await HttpService.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                 {

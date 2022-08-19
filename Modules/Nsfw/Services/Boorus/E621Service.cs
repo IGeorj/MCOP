@@ -10,9 +10,9 @@ namespace MCOP.Modules.Nsfw.Services
         private readonly E621 _e621;
         private string _baseTags = string.Empty;
 
-        public E621Service(BotConfigService config)
+        public E621Service(E621 e621,BotConfigService config)
         {
-            _e621 = new E621(config.CurrentConfiguration.E621HashPassword ?? string.Empty);
+            _e621 = e621;
             _baseTags = config.CurrentConfiguration.E621RestrictegTags ?? string.Empty;
         }
 
