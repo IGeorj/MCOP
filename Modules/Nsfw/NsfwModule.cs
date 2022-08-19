@@ -86,7 +86,7 @@ namespace MCOP.Modules.Nsfw
 
                     await repeatMessage.DeleteAsync();
                 }
-                await ctx.Channel.SendMessageAsync("Картинки закончились...");
+                await ctx.Channel.SendMessageAsync("Ничего не найдено или картинки закончились...");
 
             }
             catch (Exception e)

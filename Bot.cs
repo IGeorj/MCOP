@@ -61,7 +61,7 @@ public sealed class Bot
 
         this.client = this.SetupClient();
 
-        this.services = await this.SetupServicesAsync();
+        this.services = this.SetupServices();
         this.cnext = this.SetupCommands();
         this.cslash = this.SetupSlashCommands();
         this.UpdateCommandList();
@@ -104,7 +104,7 @@ public sealed class Bot
         return client;
     }
 
-    private async Task<ServiceProvider> SetupServicesAsync()
+    private ServiceProvider SetupServices()
     {
         Log.Information("Initializing services...");
         ServiceCollection services = new ServiceCollection();
