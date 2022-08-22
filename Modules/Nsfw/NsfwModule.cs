@@ -14,7 +14,7 @@ namespace MCOP.Modules.Nsfw
 {
     [SlashCommandGroup("nsfw", "18+ комманды")]
     [SlashRequireNsfw]
-    [SlashCooldown(1, 5, CooldownBucketType.User)]
+    [SlashCooldown(1, 5, SlashCooldownBucketType.User)]
     public sealed class NsfwModule : ApplicationCommandModule
     {
         public SankakuService Sankaku { get; set; }

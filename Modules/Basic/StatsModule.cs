@@ -1,7 +1,7 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
-using MCOP.Attributes.SlashCommands;
+using DSharpPlus.SlashCommands.Attributes;
 using MCOP.Database.Models;
 using MCOP.Extensions;
 using MCOP.Modules.Basic.Services;
@@ -10,7 +10,7 @@ using System.Text;
 
 namespace MCOP.Modules.Basic
 {
-    [SlashCooldown(2, 5, CooldownBucketType.Channel)]
+    [SlashCooldown(2, 5, SlashCooldownBucketType.Channel)]
     public sealed class StatsModule : ApplicationCommandModule
     {
         [SlashCommand("stats", "Показывает статистику")]

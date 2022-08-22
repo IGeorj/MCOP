@@ -13,12 +13,10 @@ using MCOP.Extensions;
 using MCOP.Modules.Basic.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using YoutubeExplode;
-using YoutubeExplode.Videos.Streams;
 
 namespace MCOP.Modules.Basic
 {
-    [SlashCooldown(1, 5, CooldownBucketType.Channel)]
+    [SlashCooldown(1, 5, SlashCooldownBucketType.Channel)]
     public sealed class FunModule : ApplicationCommandModule
     {
         private static readonly Dictionary<string, string> _nouns = new()
