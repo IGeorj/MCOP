@@ -107,10 +107,22 @@ namespace MCOP.Modules.Nsfw.Services
             try
             {
                 var md5 = post.MD5;
+                var imageQuality = 95;
 
                 await post.DownloadAsJpgAsync(path, authToken);
 
-                await ImageProcessorService.SaveAsJpgAsync(path, pathTemp, 95);
+                await ImageProcessorService.SaveAsJpgAsync(path, pathTemp, imageQuality);
+
+                if (File.Exists(pathTemp))
+                {
+                    var filesizeKB = new FileInfo(pathTemp).Length / 1024;
+
+                    while (filesizeKB >= MCOP.Common.DiscordLimits.AttachmentSizeLimit)
+                    {
+                        imageQuality -= 5;
+                        await ImageProcessorService.SaveAsJpgAsync(path, pathTemp, imageQuality);
+                    }
+                }
 
                 return await SendPostAsync(channel, post, pathTemp);
             }
