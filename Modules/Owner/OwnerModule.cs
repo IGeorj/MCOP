@@ -341,7 +341,7 @@ public sealed class OwnerModule : BotModule
         }
 
         using FileStream? fs = fi.OpenRead();
-        await ctx.RespondAsync(new DiscordMessageBuilder().WithFile(fs));
+        await ctx.RespondAsync(new DiscordMessageBuilder().AddFile(fs));
     }
 
     [Command("log"), Priority(0)]

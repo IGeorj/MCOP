@@ -153,13 +153,14 @@ namespace MCOP.Modules.Nsfw
         [SlashRequireUserPermissions(Permissions.Administrator)]
         [SlashCommand("lewdtop", "Скидывает ежедневный топ")]
         public async Task LewdTop(InteractionContext ctx,
-            [Option("amount", "Кол-во картинок")] long amount = 80)
+            [Option("amount", "Кол-во картинок")] long amount = 80,
+            [Option("days", "Сколько дней назад (по умолчанию - 1)")] long days = 1)
         {
             await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
 
             try
             {
-                (List<DiscordMessage>, string?) result = await Sankaku.SendDailyTopAsync(ctx.Channel, (int)amount);
+                (List<DiscordMessage>, string?) result = await Sankaku.SendDailyTopAsync(ctx.Channel, (int)amount, days: (int)days);
 
             }
             catch (Exception e)

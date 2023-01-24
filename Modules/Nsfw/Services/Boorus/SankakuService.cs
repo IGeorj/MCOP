@@ -29,7 +29,7 @@ namespace MCOP.Modules.Nsfw.Services
             using (FileStream fstream2 = File.OpenRead(path))
             {
                 message = await new DiscordMessageBuilder()
-                    .WithFiles(new Dictionary<string, Stream>() { { $"{post.MD5}-temp.jpg", fstream2 } })
+                    .AddFile($"{post.MD5}-temp.jpg", fstream2)
                     .WithEmbed(embed)
                     .SendAsync(channel);
             }
@@ -109,19 +109,18 @@ namespace MCOP.Modules.Nsfw.Services
                 var md5 = post.MD5;
                 var imageQuality = 95;
 
-                await post.DownloadAsJpgAsync(path, authToken);
+                var downloaded = await post.DownloadAsJpgAsync(path, authToken);
 
-                await ImageProcessorService.SaveAsJpgAsync(path, pathTemp, imageQuality);
-
-                if (File.Exists(pathTemp))
+                if (!downloaded)
                 {
-                    var filesizeKB = new FileInfo(pathTemp).Length / 1024;
+                    throw new Exception($"Original file is not saved { post.ImageUrl }");
+                }
 
-                    while (filesizeKB >= MCOP.Common.DiscordLimits.AttachmentSizeLimit)
-                    {
-                        imageQuality -= 5;
-                        await ImageProcessorService.SaveAsJpgAsync(path, pathTemp, imageQuality);
-                    }
+                var saved = await ImageProcessorService.SaveAsJpgAsync(path, pathTemp, imageQuality);
+
+                if (!saved)
+                {
+                    throw new Exception($"Temp file is not saved {post.ImageUrl}");
                 }
 
                 return await SendPostAsync(channel, post, pathTemp);
@@ -169,10 +168,12 @@ namespace MCOP.Modules.Nsfw.Services
         }
 
         public async Task<(List<DiscordMessage>, string?)> SendDailyTopAsync(
-            DiscordChannel channel, int limit = 40, string tags = "", string next = "")
+            DiscordChannel channel, int limit = 40, string tags = "", string next = "", int days = 1)
         {
             try
             {
+                Log.Information("SendDailyTopAsync");
+
                 if (!string.IsNullOrEmpty(tags))
                 {
                     tags = $"{_baseTags} {tags}";
@@ -186,11 +187,11 @@ namespace MCOP.Modules.Nsfw.Services
 
                 if (string.IsNullOrEmpty(next))
                 {
-                    searchResult = await _sankaku.GetDailyTopAsync(tags, limit);
+                    searchResult = await _sankaku.GetDailyTopAsync(tags, limit, days);
                 }
                 else
                 {
-                    searchResult = await _sankaku.GetDailyTopAsync(tags, next, limit);
+                    searchResult = await _sankaku.GetDailyTopAsync(tags, next, limit, days);
                 }
 
                 List<DiscordMessage> messages = await SendSearchResultAsync(channel, searchResult);

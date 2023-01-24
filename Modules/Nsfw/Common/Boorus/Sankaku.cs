@@ -245,10 +245,10 @@ namespace MCOP.Modules.Nsfw.Common
             }
         }
 
-        public async Task<SearchResult> GetDailyTopAsync(string tags, int limit = 40)
+        public async Task<SearchResult> GetDailyTopAsync(string tags, int limit = 40, int days = 1)
         {
             DateTime date = DateTime.Today;
-            tags = $"{tags} order:popularity date:{date.AddDays(-1):yyyy-MM-ddTHH:mm}";
+            tags = $"{tags} order:popularity date:{date.AddDays(-days):yyyy-MM-ddTHH:mm}";
             string url = $"{_searchUrl}&tags={tags}&limit={limit}";
 
             try
@@ -261,10 +261,10 @@ namespace MCOP.Modules.Nsfw.Common
             }
         }
 
-        public async Task<SearchResult> GetDailyTopAsync(string tags, string next, int limit = 40)
+        public async Task<SearchResult> GetDailyTopAsync(string tags, string next, int limit = 40, int days = 1)
         {
             DateTime date = DateTime.Today;
-            tags = $"{tags} order:popularity date:{date.AddDays(-1):yyyy-MM-ddTHH:mm}";
+            tags = $"{tags} order:popularity date:{date.AddDays(-days):yyyy-MM-ddTHH:mm}";
             string url = $"{_searchUrl}&tags={tags}&limit={limit}&next={next}";
 
             try

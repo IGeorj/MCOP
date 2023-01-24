@@ -213,7 +213,6 @@ namespace MCOP.Services
         {
             using SKBitmap bitmap = SKBitmap.Decode(bytes);
             return SaveAsJpgAsync(bitmap, path, quality);
-
         }
 
         public static Task<bool> SaveAsJpgAsync(string pathFrom, string pathTo, int quality)
