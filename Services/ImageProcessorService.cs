@@ -177,10 +177,14 @@ namespace MCOP.Services
             return path;
         }
 
-        public static Task<bool> SaveAsJpgAsync(SKBitmap bitmap, string path, int quality)
+        public static Task<bool> SaveAsJpgAsync(SKBitmap bitmap, string path, int quality, decimal resizeRation = 0)
         {
             try
             {
+                if (resizeRation != 0)
+                {
+                    bitmap = bitmap.Resize(new SKImageInfo((int)(bitmap.Width / resizeRation), (int)(bitmap.Height / resizeRation)), SKFilterQuality.High);
+                }
                 var info = new SKImageInfo(bitmap.Width, bitmap.Height);
                 using (SKSurface surface = SKSurface.Create(info))
                 {
@@ -215,13 +219,13 @@ namespace MCOP.Services
             return SaveAsJpgAsync(bitmap, path, quality);
         }
 
-        public static Task<bool> SaveAsJpgAsync(string pathFrom, string pathTo, int quality)
+        public static Task<bool> SaveAsJpgAsync(string pathFrom, string pathTo, int quality, decimal resizeRation = 0)
         {
             using (FileStream fstream = File.OpenRead(pathFrom))
             {
                 using (SKBitmap bitmap = SKBitmap.Decode(fstream))
                 {
-                    return SaveAsJpgAsync(bitmap, pathTo, quality);
+                    return SaveAsJpgAsync(bitmap, pathTo, quality, resizeRation);
                 }
             }
         }

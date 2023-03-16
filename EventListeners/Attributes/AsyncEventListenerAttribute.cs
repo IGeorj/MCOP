@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using DSharpPlus.SlashCommands.EventArgs;
 using MCOP.EventListeners.Common;
 using MCOP.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,14 @@ public sealed class AsyncEventListenerAttribute : Attribute
                 try {
                     await (Task)mi.Invoke(null, new object[] { bot, e })!;
                 } catch (Exception ex) {
+                    if (e is SlashCommandExecutedEventArgs)
+                    {
+                        await ((SlashCommandExecutedEventArgs)e).Context.DeferAsync(true);
+                    }
+                    if (e is SlashCommandInvokedEventArgs)
+                    {
+                        await ((SlashCommandInvokedEventArgs)e).Context.DeferAsync(true);
+                    }
                     Log.Error(ex, "Listener threw an exception");
                 }
             });

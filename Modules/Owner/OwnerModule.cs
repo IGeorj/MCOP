@@ -357,7 +357,6 @@ public sealed class OwnerModule : BotModule
     #region sendmessage
     [Command("sendmessage")]
     [Aliases("send", "s")]
-    [RequirePrivilegedUser]
     public async Task SendAsync(CommandContext ctx,
                                [Description("(u/c)")] string desc,
                                [Description("ID")] ulong xid,
@@ -385,7 +384,6 @@ public sealed class OwnerModule : BotModule
     #region shutdown
     [Command("shutdown"), Priority(1)]
     [Aliases("disable", "poweroff", "exit", "quit")]
-    [RequirePrivilegedUser]
     public Task ExitAsync(CommandContext _,
                          [Description("Time until exit")] TimeSpan timespan,
                          [Description("Exit code")] int exitCode = 0)
@@ -400,7 +398,7 @@ public sealed class OwnerModule : BotModule
     #region sudo
     [Command("sudo")]
     [Aliases("execas", "as")]
-    [RequireGuild, RequirePrivilegedUser]
+    [RequireGuild]
     public async Task SudoAsync(CommandContext ctx,
                                [Description("Member to execute as")] DiscordMember member,
                                [RemainingText, Description("Full command name")] string command)
@@ -411,7 +409,7 @@ public sealed class OwnerModule : BotModule
         Command? cmd = ctx.CommandsNext.FindCommand(command, out string args);
         if (cmd is null)
             throw new CommandFailedException("Can't find such command. Are you sure you wrote the full command name?");
-        if (cmd.ExecutionChecks.Any(c => c is RequireOwnerAttribute or RequirePrivilegedUserAttribute))
+        if (cmd.ExecutionChecks.Any(c => c is RequireOwnerAttribute))
             throw new CommandFailedException("Cannot sudo privileged commands");
         CommandContext fctx = ctx.CommandsNext.CreateFakeContext(member, ctx.Channel, command, ctx.Prefix, cmd, args);
         if ((await cmd.RunChecksAsync(fctx, false)).Any())
@@ -424,7 +422,6 @@ public sealed class OwnerModule : BotModule
     #region toggleignore
     [Command("toggleignore")]
     [Aliases("ti")]
-    [RequirePrivilegedUser]
     public Task ToggleIgnoreAsync(CommandContext ctx)
     {
         BotActivityService bas = ctx.Services.GetRequiredService<BotActivityService>();
@@ -436,7 +433,6 @@ public sealed class OwnerModule : BotModule
     #region restart
     [Command("restart")]
     [Aliases("reboot")]
-    [RequirePrivilegedUser]
     public Task RestartAsync(CommandContext ctx)
         => this.ExitAsync(ctx, 100);
     #endregion
@@ -450,7 +446,6 @@ public sealed class OwnerModule : BotModule
 
     #region uptime
     [Command("uptime")]
-    [RequirePrivilegedUser]
     public Task UptimeAsync(CommandContext ctx)
     {
         BotActivityService bas = ctx.Services.GetRequiredService<BotActivityService>();

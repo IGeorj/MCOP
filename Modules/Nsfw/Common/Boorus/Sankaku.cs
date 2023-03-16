@@ -116,6 +116,12 @@ namespace MCOP.Modules.Nsfw.Common
 
             Parallel.ForEach(posts.Children(), (post) =>
             {
+                List<Tag> tags = new List<Tag>();
+                foreach (var tag in post["tags"])
+                {
+                    tags.Add(new Tag { Id = (string)tag["id"], Name = (string)tag["name"] });
+                }
+
                 JToken artist = post["tags"].FirstOrDefault(t => (int)t["type"] == 1);
                 string filetype = (string)post["file_type"];
                 filetype = filetype[(filetype.LastIndexOf('/') + 1)..];
@@ -129,7 +135,8 @@ namespace MCOP.Modules.Nsfw.Common
                     ImageUrl = (string)post["file_url"],
                     PostUrl = $"https://beta.sankakucomplex.com/post/show/{(string)post["id"]}",
                     Artist = artist == null ? "Автор не найден" : (string)artist["name"],
-                    ParentId = (string?)post["parent_id"]
+                    ParentId = (string?)post["parent_id"],
+                    Tags = tags
                 });
             });
 #pragma warning restore CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.

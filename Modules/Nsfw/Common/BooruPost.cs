@@ -1,9 +1,16 @@
-﻿using MCOP.Services;
+﻿using MCOP.Common;
+using MCOP.Services;
 using Serilog;
 using System.Net.Http.Headers;
 
 namespace MCOP.Modules.Nsfw.Common
 {
+    public record Tag
+    {
+        public string Id { get; set; } = default!;
+        public string Name { get; set; } = default!;
+    }
+
     public record BooruPost
     {
         public string ID { get; init; } = default!;
@@ -14,6 +21,10 @@ namespace MCOP.Modules.Nsfw.Common
         public string ImageUrl { get; init; } = default!;
         public string PostUrl { get; init; } = default!;
         public string? ParentId { get; init; } = null;
+        public List<Tag> Tags { get; set; } = new List<Tag>();
+        public string? LocalFilePath { get; set; } = default!;
+        public string? LocalFilePathCompressed { get; set; } = default!;
+        public DateTime? AlreadySendDate { get; set; } = default!;
 
         public async ValueTask<bool> DownloadAsJpgAsync(string path, string? authToken = null, int quality = 100)
         {
@@ -41,9 +52,46 @@ namespace MCOP.Modules.Nsfw.Common
 
                 byte[] bytes = await HttpService.GetByteArrayAsync(ImageUrl);
 
-                return await ImageProcessorService.SaveAsJpgAsync(bytes, path, 100);
+                var savedFull = await ImageProcessorService.SaveAsJpgAsync(bytes, path, 100);
+
+                bool savedCompressed = await SaveCompressed(path);
+                LocalFilePath = path;
+
+                var containsRestrictedTags = Tags.Any(p => p.Name == "3d");
+                if (containsRestrictedTags)
+                {
+                    File.Delete(LocalFilePath);
+                    LocalFilePath = null;
+                }
+                return savedFull || savedCompressed;
             }
-            return true;
+
+            return await SaveCompressed(path); ;
+        }
+
+        private async Task<bool> SaveCompressed(string pathFrom)
+        {
+            string pathTemp = $"Images/Nsfw/{MD5}-temp.jpg";
+            var savedCompressed = await ImageProcessorService.SaveAsJpgAsync(pathFrom, pathTemp, 95);
+            int sizeKB = GetFileSizeInKb(pathTemp);
+            decimal resizeRatio = 2;
+            while (sizeKB >= DiscordLimits.AttachmentSizeLimit)
+            {
+                File.Delete(pathTemp);
+                savedCompressed = await ImageProcessorService.SaveAsJpgAsync(pathFrom, pathTemp, 100, resizeRatio);
+                sizeKB = GetFileSizeInKb(pathTemp);
+                resizeRatio++;
+            }
+            LocalFilePathCompressed = pathTemp;
+            AlreadySendDate = File.GetCreationTime(pathFrom);
+            return savedCompressed;
+        }
+
+        private static int GetFileSizeInKb(string pathTemp)
+        {
+            FileInfo fileInfo = new FileInfo(pathTemp);
+            int sizeKB = (int)fileInfo.Length / 1024;
+            return sizeKB;
         }
     }
 }

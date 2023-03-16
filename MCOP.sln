@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOP", "MCOP.csproj", "{7FA0660F-6E01-40ED-A576-B1E7177D37CA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCOP API", "..\MCOP API\MCOP API.csproj", "{C74DF370-BEE2-47AF-BD19-0755799E496B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{7FA0660F-6E01-40ED-A576-B1E7177D37CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7FA0660F-6E01-40ED-A576-B1E7177D37CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7FA0660F-6E01-40ED-A576-B1E7177D37CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C74DF370-BEE2-47AF-BD19-0755799E496B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C74DF370-BEE2-47AF-BD19-0755799E496B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C74DF370-BEE2-47AF-BD19-0755799E496B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C74DF370-BEE2-47AF-BD19-0755799E496B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

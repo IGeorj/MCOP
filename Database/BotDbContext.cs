@@ -7,7 +7,6 @@ public class BotDbContext : DbContext
 {
     #region db sets
     public virtual DbSet<BotStatus> BotStatuses { get; protected set; }
-    public virtual DbSet<PrivilegedUser> PrivilegedUsers { get; protected set; }
     public virtual DbSet<UserStats> UserStats { get; protected set; }
     public virtual DbSet<UserMessage> UserMessages { get; protected set; }
     public virtual DbSet<ImageHash> ImageHashes { get; protected set; }

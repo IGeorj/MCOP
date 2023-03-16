@@ -23,7 +23,8 @@ namespace MCOP.Modules.Nsfw.Services
             var embed = new DiscordEmbedBuilder()
             .WithTitle(post.Artist)
             .WithUrl(post.PostUrl)
-            .WithImageUrl($"attachment://{post.MD5}-temp.jpg");
+            .WithImageUrl($"attachment://{post.MD5}-temp.jpg")
+            .WithTimestamp(post.AlreadySendDate);
 
             DiscordMessage message;
             using (FileStream fstream2 = File.OpenRead(path))
@@ -89,7 +90,7 @@ namespace MCOP.Modules.Nsfw.Services
                 }
                 catch (Exception)
                 {
-                    Log.Warning("Failed to send file: {MD5}", post.MD5);
+                    Log.Warning("Failed to send file: {MD5}, {Path}, {Path2}", post.MD5, post.LocalFilePath, post.LocalFilePathCompressed);
                 }
             }
 
@@ -102,13 +103,9 @@ namespace MCOP.Modules.Nsfw.Services
 
             Directory.CreateDirectory($"Images/Nsfw/{post.Artist}/");
             string path = $"Images/Nsfw/{post.Artist}/{post.MD5}.jpg";
-            string pathTemp = $"Images/Nsfw/{post.MD5}-temp.jpg";
 
             try
             {
-                var md5 = post.MD5;
-                var imageQuality = 95;
-
                 var downloaded = await post.DownloadAsJpgAsync(path, authToken);
 
                 if (!downloaded)
@@ -116,14 +113,7 @@ namespace MCOP.Modules.Nsfw.Services
                     throw new Exception($"Original file is not saved { post.ImageUrl }");
                 }
 
-                var saved = await ImageProcessorService.SaveAsJpgAsync(path, pathTemp, imageQuality);
-
-                if (!saved)
-                {
-                    throw new Exception($"Temp file is not saved {post.ImageUrl}");
-                }
-
-                return await SendPostAsync(channel, post, pathTemp);
+                return await SendPostAsync(channel, post, post.LocalFilePathCompressed);
             }
             catch (Exception)
             {

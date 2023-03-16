@@ -142,7 +142,7 @@ internal static partial class Listeners
                 break;
         }
 
-        return e.Context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().WithContent(error));
+        return e.Context.EditResponseAsync(new DiscordWebhookBuilder().WithContent(error));
     }
 
 }

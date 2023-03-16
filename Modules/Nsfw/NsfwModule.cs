@@ -33,7 +33,7 @@ namespace MCOP.Modules.Nsfw
             [Maximum(5)][Option("amount", "Кол-во картинок за раз. Предел - 5 шт.")] long amount = 1,
             [Option("tags", "Пример: genshin_impact female")] string tags = "")
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferAsync();
 
             try
             {
@@ -102,7 +102,7 @@ namespace MCOP.Modules.Nsfw
             [Option("amount", "Кол-во картинок")] long amount = 1,
             [Option("tags", "Пример: black_nose female")] string tags = "")
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferAsync();
 
             try
             {
@@ -128,7 +128,7 @@ namespace MCOP.Modules.Nsfw
             [Option("amount", "Кол-во картинок")] long amount = 1,
             [Option("tags", "Пример: genshin_impact female")] string tags = "")
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferAsync();
 
             tags += " animated_gif";
             try
@@ -156,7 +156,7 @@ namespace MCOP.Modules.Nsfw
             [Option("amount", "Кол-во картинок")] long amount = 80,
             [Option("days", "Сколько дней назад (по умолчанию - 1)")] long days = 1)
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferAsync();
 
             try
             {
