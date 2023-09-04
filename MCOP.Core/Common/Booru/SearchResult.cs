@@ -38,7 +38,14 @@ namespace MCOP.Core.Common.Booru
         {
             foreach (var post in posts)
             {
-                post.DeleteUnwantedFiles();
+                post.DeleteUnwantedFile();
+            }
+        }
+        public void DeleteAllFiles()
+        {
+            foreach (var post in posts)
+            {
+                post.DeleteFile();
             }
         }
 

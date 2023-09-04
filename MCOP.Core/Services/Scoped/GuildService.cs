@@ -13,7 +13,6 @@ namespace MCOP.Core.Services.Scoped
     public class GuildService : IScoped
     {
         private readonly McopDbContext _context;
-        public UptimeInformation UptimeInformation { get; }
 
         public GuildService(McopDbContext context)
         {

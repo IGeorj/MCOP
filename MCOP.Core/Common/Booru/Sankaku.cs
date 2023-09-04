@@ -16,10 +16,10 @@ namespace MCOP.Core.Common.Booru
         private string? _login;
         private string? _password;
 
-        private readonly HttpClient _httpClient;
+        public HttpClient HttpClient { get; init; }
         public Sankaku(HttpClient httpClient)
         {
-            _httpClient = httpClient;
+            HttpClient = httpClient;
         }
 
         public async Task AuthorizeAsync(string login, string password)
@@ -46,7 +46,7 @@ namespace MCOP.Core.Common.Booru
 
         public async Task<bool> IsAvailable()
         {
-            var response = await _httpClient.GetAsync(_authUrl);
+            var response = await HttpClient.GetAsync(_authUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -76,7 +76,7 @@ namespace MCOP.Core.Common.Booru
 
                 HttpContent content = new StringContent(jsonAuth.ToString(), Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await _httpClient.PostAsync(_authUrl, content);
+                HttpResponseMessage response = await HttpClient.PostAsync(_authUrl, content);
                 string strJson = await response.Content.ReadAsStringAsync();
 
                 JObject jsonUser = JObject.Parse(strJson);
@@ -150,14 +150,14 @@ namespace MCOP.Core.Common.Booru
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
 
-                var response = await _httpClient.SendAsync(request);
+                var response = await HttpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     await RefreshTokenAsync();
                     HttpRequestMessage requestAfterRefresh = new HttpRequestMessage(HttpMethod.Get, url);
                     requestAfterRefresh.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
-                    response = await _httpClient.SendAsync(requestAfterRefresh);
+                    response = await HttpClient.SendAsync(requestAfterRefresh);
                 }
 
                 if (!response.IsSuccessStatusCode)

@@ -91,7 +91,7 @@ namespace MCOP.Core.Services.Booru
 
             try
             {
-                await post.DownloadAsJpgAsync(authToken);
+                await post.DownloadAsJpgAsync(_sankaku.HttpClient, authToken);
 
                 return await SendPostAsync(channel, post, post.LocalFilePathCompressed);
             }
@@ -105,6 +105,8 @@ namespace MCOP.Core.Services.Booru
         {
             try
             {
+                Log.Information($"Sankaku {nameof(SendDailyTopToChannelsAsync)} started");
+
                 SearchResult searchResult = await _sankaku.GetDailyTopAsync(_baseTags, limit, daysShift);
                 List<DiscordMessage> messages = new List<DiscordMessage>();
 
@@ -124,6 +126,8 @@ namespace MCOP.Core.Services.Booru
                 }
 
                 searchResult.DeleteUnwantedFiles();
+
+                Log.Information($"Sankaku {nameof(SendDailyTopToChannelsAsync)} finished");
 
                 return messages;
             }

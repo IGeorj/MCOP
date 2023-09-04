@@ -12,7 +12,7 @@ public static class HttpService
         _handler = new HttpClientHandler { AllowAutoRedirect = false };
         _client = new HttpClient(_handler, disposeHandler: true)
         {
-            Timeout = TimeSpan.FromMinutes(1)
+            Timeout = TimeSpan.FromMinutes(2)
         };
         _client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
     }

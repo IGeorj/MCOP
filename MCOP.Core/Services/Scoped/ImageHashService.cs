@@ -94,7 +94,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                List<ImageHash> hashes = await GetHashesByGuildAsync(18446744073709551600);
+                List<ImageHash> hashes = await GetHashesByGuildAsync(guildId);
                 foreach (var item in hashes)
                 {
                     double diff = SkiaSharpService.GetPercentageDifference(hash, item.Hash);

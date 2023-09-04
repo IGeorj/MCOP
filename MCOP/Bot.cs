@@ -14,6 +14,8 @@ using MCOP.Data;
 using MCOP.Core.Services.Shared;
 using MCOP.Core.Common.Booru;
 using Microsoft.EntityFrameworkCore;
+using Polly;
+using Polly.Extensions.Http;
 
 namespace MCOP;
 
@@ -106,21 +108,27 @@ public sealed class Bot
             .AddSharedServices()
             .AddScopedClasses();
 
+        var retryPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
         services.AddHttpClient("sankaku", client =>
         {
+            client.Timeout = TimeSpan.FromMinutes(3);
             client.BaseAddress = new Uri("https://capi-v2.sankakucomplex.com");
             client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
-        });
+        }).AddPolicyHandler(retryPolicy);
         services.AddHttpClient("e621", client =>
         {
             client.BaseAddress = new Uri("https://e621.net");
             client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
-        });
+        }).AddPolicyHandler(retryPolicy);
         services.AddHttpClient("gelbooru", client =>
         {
             client.BaseAddress = new Uri("https://gelbooru.com");
             client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
-        });
+        }).AddPolicyHandler(retryPolicy);
 
         services.AddSingleton(provider => 
         {

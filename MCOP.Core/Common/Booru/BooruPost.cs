@@ -27,41 +27,50 @@ namespace MCOP.Core.Common.Booru
         public DateTime? AlreadySendDate { get; set; } = default!;
 
 
-        public async Task DownloadAsJpgAsync(string? authToken = null, int quality = 100)
+        public async Task DownloadAsJpgAsync(HttpClient httpclient, string? authToken = null, int quality = 100)
         {
-            Directory.CreateDirectory($"Images/Nsfw/{Artist}/");
-            string path = $"Images/Nsfw/{Artist}/{MD5}.jpg";
-
-            if (!File.Exists(path))
-            {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, ImageUrl);
-                if (!string.IsNullOrEmpty(authToken))
-                {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-                }
-
-                HttpResponseMessage responce = await HttpService.SendAsync(request);
-
-                // If failed retry 1 times
-                if (!responce.IsSuccessStatusCode)
-                {
-                    responce = await HttpService.SendAsync(request);
-                }
-
-                if (!responce.IsSuccessStatusCode)
-                {
-                    var exception = new Exception($"Failed to download image: {ImageUrl}");
-                    Log.Error(exception, exception.Message);
-                    throw exception;
-                }
-
-                byte[] bytes = await HttpService.GetByteArrayAsync(ImageUrl);
-
-                await SkiaSharpService.SaveAsJpgAsync(bytes, path, 100);
-            }
-
             try
             {
+                var folderName = string.Join("_", Artist.Split(Path.GetInvalidFileNameChars()));
+                Directory.CreateDirectory($"Images/Nsfw/{folderName}/");
+                string path = $"Images/Nsfw/{folderName}/{MD5}.jpg";
+
+                if (!File.Exists(path))
+                {
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, ImageUrl);
+                    if (!string.IsNullOrEmpty(authToken))
+                    {
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                    }
+                    HttpResponseMessage responce = new HttpResponseMessage();
+
+                    try
+                    {
+                        responce = await httpclient.SendAsync(request);
+                    }
+                    catch (Exception)
+                    {
+                        responce.StatusCode = System.Net.HttpStatusCode.BadGateway;
+                    }
+
+                    // If failed retry 1 times
+                    if (!responce.IsSuccessStatusCode)
+                    {
+                        responce = await httpclient.SendAsync(request);
+                    }
+
+                    if (!responce.IsSuccessStatusCode)
+                    {
+                        var exception = new Exception($"Failed to download image: {ImageUrl}");
+                        Log.Error(exception, exception.Message);
+                        throw exception;
+                    }
+
+                    byte[] bytes = await httpclient.GetByteArrayAsync(ImageUrl);
+
+                    await SkiaSharpService.SaveAsJpgAsync(bytes, path, 100);
+                }
+
                 await SaveCompressedAsync(path);
             }
             catch (Exception)
@@ -70,7 +79,7 @@ namespace MCOP.Core.Common.Booru
             }
         }
 
-        public void DeleteUnwantedFiles()
+        public void DeleteUnwantedFile()
         {
             if (LocalFilePathCompressed is not null)
             {
@@ -92,6 +101,31 @@ namespace MCOP.Core.Common.Booru
             }
         }
 
+        public void DeleteFile()
+        {
+            if (LocalFilePathCompressed is not null)
+            {
+                File.Delete(LocalFilePathCompressed);
+            }
+
+            if (LocalFilePathCompressed is not null)
+            {
+                File.Delete(LocalFilePathCompressed);
+            }
+
+            if (LocalFilePath is not null)
+            {
+                string? directoryPath = Path.GetDirectoryName(LocalFilePath);
+                File.Delete(LocalFilePath);
+
+                if (IsDirectoryEmpty(directoryPath))
+                {
+                    Directory.Delete(directoryPath);
+                }
+
+                LocalFilePath = null;
+            }
+        }
 
         private async Task SaveCompressedAsync(string pathFrom)
         {

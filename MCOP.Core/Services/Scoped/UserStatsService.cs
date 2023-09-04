@@ -10,10 +10,12 @@ namespace MCOP.Core.Services.Scoped
     public class UserStatsService : IScoped
     {
         private readonly McopDbContext _context;
+        private readonly UserService _userService;
 
-        public UserStatsService(McopDbContext context)
+        public UserStatsService(McopDbContext context, UserService userService)
         {
             _context = context;
+            _userService = userService;
         }
 
         public async Task<GuildUserStat> GetOrAddAsync(ulong guildId, ulong userId)
@@ -23,8 +25,9 @@ namespace MCOP.Core.Services.Scoped
                 GuildUserStat? userStats = await _context.GuildUserStats.FindAsync(guildId, userId);
                 if (userStats is null)
                 {
+                    await _userService.GetOrAddUserAsync(guildId, userId);
                     userStats = (await _context.GuildUserStats.AddAsync(new GuildUserStat() { GuildId = guildId, UserId = userId })).Entity;
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
                 return userStats;
             }

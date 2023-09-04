@@ -33,16 +33,16 @@ namespace MCOP.Modules.Nsfw
 
         [SlashCommand("lewd", "Скидывает рандомную 18+ аниме картику")]
         public async Task Lewd(InteractionContext ctx,
-            [Maximum(5)][Option("amount", "Кол-во картинок за раз. Предел - 5 шт.")] long amount = 1,
+            [Maximum(5)][Option("amount", "Кол-во картинок за раз. Максимум - 5 шт.")] long amount = 1,
             [Option("tags", "Пример: genshin_impact female")] string tags = "")
         {
             await ctx.DeferAsync();
 
             try
             {
-                SearchResult result = await Sankaku.GetRandomSearchResultAsync(tags: tags);
+                SearchResult searchResult = await Sankaku.GetRandomSearchResultAsync(tags: tags);
 
-                var posts = result.ToBooruPosts();
+                var posts = searchResult.ToBooruPosts();
                 int take = (int)amount;
 
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Скамлю сайт на картиночки..."));
@@ -53,39 +53,43 @@ namespace MCOP.Modules.Nsfw
                     {
                         var booruMessage = await Sankaku.SendBooruPostAsync(ctx.Channel, post);
                         _ = CreateDeleteReactionAsync(ctx, booruMessage);
-                        post.DeleteUnwantedFiles();
                     }
 
-                    var repeatMessage = await ctx.Channel.SendMessageAsync("Едем дальше?");
+                    var nextButton = new DiscordButtonComponent(
+                        ButtonStyle.Success,
+                        "lewd_next_button",
+                        "Дальше",
+                        false);
 
-                    DiscordEmoji yes = DiscordEmoji.FromName(ctx.Client, ":thumbsup:");
-                    DiscordEmoji no = DiscordEmoji.FromName(ctx.Client, ":thumbsdown:");
+                    var cancelButton = new DiscordButtonComponent(
+                        ButtonStyle.Danger,
+                        "lewd_cancel_button",
+                        "Отмена",
+                        false);
 
-                    await repeatMessage.CreateReactionAsync(yes);
-                    await repeatMessage.CreateReactionAsync(no);
+                    var repeatMessageBuilder = new DiscordMessageBuilder()
+                        .AddComponents(nextButton, cancelButton);
 
-                    var interactivity = ctx.Client.GetInteractivity();
+                    var repeatMessage = await ctx.Channel.SendMessageAsync(repeatMessageBuilder);
 
-                    InteractivityResult<MessageReactionAddEventArgs> res = await interactivity.WaitForReactionAsync(
-                        e =>
-                        {
-                            if (e.User.IsBot || e.Message != repeatMessage)
-                                return false;
-
-                            if ((e.User.Id == ctx.User.Id || ((DiscordMember)e.User).IsAdmin()) && (e.Emoji == yes || e.Emoji == no))
-                            {
-                                return true;
-                            }
-
+                    var buttonResult = await repeatMessage.WaitForButtonAsync(e =>
+                    {
+                        if (e.User.IsBot || e.Message != repeatMessage)
                             return false;
-                        },
-                        TimeSpan.FromSeconds(30)
-                    );
 
-                    if (res.TimedOut || res.Result.Emoji == no)
+                        if ((e.User.Id == ctx.User.Id || ((DiscordMember)e.User).IsAdmin()))
+                        {
+                            return true;
+                        }
+
+                        return false;
+                    });
+
+                    if (buttonResult.TimedOut || buttonResult.Result.Id == cancelButton.CustomId)
                     {
                         try
                         {
+                            searchResult.DeleteAllFiles();
                             await repeatMessage.DeleteAsync();
                             return;
                         }
@@ -97,6 +101,9 @@ namespace MCOP.Modules.Nsfw
 
                     await repeatMessage.DeleteAsync();
                 }
+
+                searchResult.DeleteAllFiles();
+
                 await ctx.Channel.SendMessageAsync("Ничего не найдено или картинки закончились...");
 
             }
@@ -110,7 +117,7 @@ namespace MCOP.Modules.Nsfw
 
         [SlashCommand("furry", "Скидывает рандомную 18+ фурри картику")]
         public async Task Furry(InteractionContext ctx,
-            [Option("amount", "Кол-во картинок")] long amount = 1,
+            [Maximum(5)][Option("amount", "Кол-во картинок за раз. Максимум - 5 шт.")] long amount = 1,
             [Option("tags", "Пример: black_nose female")] string tags = "")
         {
             await ctx.DeferAsync();
@@ -136,7 +143,7 @@ namespace MCOP.Modules.Nsfw
 
         [SlashCommand("gif", "Скидывает рандомную 18+ аниме гифку")]
         public async Task Gif(InteractionContext ctx,
-            [Option("amount", "Кол-во картинок")] long amount = 1,
+            [Maximum(5)][Option("amount", "Кол-во гифок за раз. Максимум - 5 шт.")] long amount = 1,
             [Option("tags", "Пример: genshin_impact female")] string tags = "")
         {
             await ctx.DeferAsync();
@@ -161,10 +168,10 @@ namespace MCOP.Modules.Nsfw
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Держи свои картиночки"));
         }
 
-        [SlashRequireUserPermissions(Permissions.Administrator)]
+        [SlashRequireOwner]
         [SlashCommand("daily-top", "Скидывает ежедневный топ картинок")]
         public async Task LewdTop(InteractionContext ctx,
-            [Option("amount", "Кол-во картинок")] long amount = 80,
+            [Maximum(80)][Option("amount", "Кол-во картинок за раз. Максимум - 80 шт.")] long amount = 80,
             [Option("days", "Сколько дней назад (по умолчанию - 1)")] long days = 1)
         {
             await ctx.DeferAsync();
@@ -193,8 +200,8 @@ namespace MCOP.Modules.Nsfw
         }
 
         [SlashRequireOwner]
-        [SlashCommand("test-daily", "Устанавливает канал для ежедневного топа")]
-        public async Task TestDaily(InteractionContext ctx)
+        [SlashCommand("send-daily", "Отправляет ежедневные на все сервера")]
+        public async Task SendDaily(InteractionContext ctx)
         {
             await ctx.DeferAsync();
 
