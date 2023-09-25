@@ -44,6 +44,7 @@ namespace MCOP.Core.Common.Booru
             }
 
             JObject json = JObject.Parse(strJson);
+            Log.Debug("E621 Json" + Environment.NewLine + json.ToString(Newtonsoft.Json.Formatting.Indented));
 
 #pragma warning disable CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
             SearchResult searchResult = new SearchResult();
@@ -86,6 +87,8 @@ namespace MCOP.Core.Common.Booru
                     Log.Warning(error);
                     throw new Exception(error);
                 }
+
+                Log.Information(url);
 
                 string strJson = await response.Content.ReadAsStringAsync();
 

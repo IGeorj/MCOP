@@ -57,7 +57,18 @@ public sealed class PeriodicTasksService : IDisposable
                 List<DiscordChannel> channels = new List<DiscordChannel>();
                 foreach (var config in guildConfigs)
                 {
-                    channels.Add(await bot.Client.GetChannelAsync(config.LewdChannelId.Value));
+                    if (bot.Client.Guilds.ContainsKey(config.GuildId) && config.LewdChannelId is not null)
+                    {
+                        try
+                        {
+                            channels.Add(await bot.Client.GetChannelAsync(config.LewdChannelId.Value));
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, $"Cannot send daily Guild: {config.GuildId}, Channel: {config.LewdChannelId.Value}");
+                            continue;
+                        }
+                    }
                 }
                 await sankaku.SendDailyTopToChannelsAsync(channels);
 

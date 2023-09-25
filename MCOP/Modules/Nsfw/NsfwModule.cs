@@ -10,6 +10,7 @@ using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Booru;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
+using Serilog;
 
 namespace MCOP.Modules.Nsfw
 {
@@ -36,7 +37,7 @@ namespace MCOP.Modules.Nsfw
             [Maximum(5)][Option("amount", "Кол-во картинок за раз. Максимум - 5 шт.")] long amount = 1,
             [Option("tags", "Пример: genshin_impact female")] string tags = "")
         {
-            await ctx.DeferAsync();
+            await ctx.DeferAsync(true);
 
             try
             {
@@ -68,6 +69,7 @@ namespace MCOP.Modules.Nsfw
                         false);
 
                     var repeatMessageBuilder = new DiscordMessageBuilder()
+                        .WithContent($"**Теги**: {tags} **Кол-во**: {amount}")
                         .AddComponents(nextButton, cancelButton);
 
                     var repeatMessage = await ctx.Channel.SendMessageAsync(repeatMessageBuilder);
@@ -104,12 +106,12 @@ namespace MCOP.Modules.Nsfw
 
                 searchResult.DeleteAllFiles();
 
-                await ctx.Channel.SendMessageAsync("Ничего не найдено или картинки закончились...");
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Ничего не найдено или картинки закончились..."));
 
             }
             catch (Exception e)
             {
-                await ctx.Channel.SendMessageAsync(e.Message);
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(e.Message));
                 return;
             }
 
@@ -207,9 +209,21 @@ namespace MCOP.Modules.Nsfw
 
             var guildConfigs = await GuildService.GetGuildConfigsWithLewdChannelAsync();
             List<DiscordChannel> channels = new List<DiscordChannel>();
+
             foreach (var config in guildConfigs)
             {
-                channels.Add(await ctx.Client.GetChannelAsync(config.LewdChannelId.Value));
+                if (ctx.Client.Guilds.ContainsKey(config.GuildId) && config.LewdChannelId is not null)
+                {
+                    try
+                    {
+                        channels.Add(await ctx.Client.GetChannelAsync(config.LewdChannelId.Value));
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, $"Cannot send daily Guild: {config.GuildId}, Channel: {config.LewdChannelId.Value}");
+                        continue;
+                    }
+                }
             }
             await Sankaku.SendDailyTopToChannelsAsync(channels);
 

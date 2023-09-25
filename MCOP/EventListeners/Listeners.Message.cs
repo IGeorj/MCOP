@@ -17,7 +17,7 @@ internal static partial class Listeners
             return;
         }
 
-        if (e.Message.Content.Contains("@everyone"))
+        if (e.Guild.Id == GlobalVariables.McopServerId &&  e.Message.Content.Contains("@everyone"))
         {
             var member = e.Author as DiscordMember;
             if (member is not null && !member.IsAdmin())
@@ -37,10 +37,17 @@ internal static partial class Listeners
                 await member.GrantRoleAsync(e.Guild.GetRole(622772942761361428)); // САСЁШЬ
             }
         }
+        // TODO: remove hardcoded channels
+        var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
+        var mcopNsfwChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 539145624868749327;
+        var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
 
-        var mcopServer = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
-        var gaysServer = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
-        if (mcopServer || gaysServer)
+        if (mcopNsfwChannel && e.Message.Attachments.Count > 0)
+        {
+            await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
+        }
+
+        if (mcopLewdChannel || gaysAdminChannel)
         {
             var hashService = Services.GetRequiredService<ImageHashService>();
             List<byte[]> hashes = await hashService.GetHashesFromMessageAsync(e.Message);
@@ -102,9 +109,11 @@ internal static partial class Listeners
 
     public static async Task MessageDeleteEventHandler(DiscordClient client, MessageDeleteEventArgs e)
     {
-        var mcopServer = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
-        var gaysServer = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
-        if (mcopServer || gaysServer)
+        // TODO: remove hardcoded channels
+        var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
+        var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
+
+        if (mcopLewdChannel || gaysAdminChannel)
         {
             var messageService = Services.GetRequiredService<MessageService>();
             await messageService.RemoveMessageAsync(e.Guild.Id, e.Message.Id);
@@ -113,9 +122,11 @@ internal static partial class Listeners
 
     public static async Task MessageUpdatedEventHandler(DiscordClient client, MessageUpdateEventArgs e)
     {
-        var mcopServer = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
-        var gaysServer = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
-        if (mcopServer || gaysServer)
+        // TODO: remove hardcoded channels
+        var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
+        var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
+
+        if (mcopLewdChannel || gaysAdminChannel)
         {
             var hashService = Services.GetRequiredService<ImageHashService>();
             var messageService = Services.GetRequiredService<MessageService>();
@@ -141,7 +152,6 @@ internal static partial class Listeners
                 Log.Information("Updated {Amount} hashes ({Total} total)", updated, await hashService.GetTotalCountAsync());
             }
         }
-
     }
 
     public static async Task ComponentInteractionCreatedEventHandler(DiscordClient client, ComponentInteractionCreateEventArgs e)

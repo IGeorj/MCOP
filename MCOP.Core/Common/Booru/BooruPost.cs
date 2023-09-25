@@ -9,6 +9,7 @@ namespace MCOP.Core.Common.Booru
     {
         public string Id { get; set; } = default!;
         public string Name { get; set; } = default!;
+        public int Type { get; set; } = default!;
     }
 
     public record BooruPost

@@ -12,6 +12,7 @@ using DSharpPlus.SlashCommands.EventArgs;
 using DSharpPlus;
 using DSharpPlus.SlashCommands;
 using MCOP.Attributes.SlashCommands;
+using DSharpPlus.SlashCommands.Attributes;
 
 namespace MCOP.EventListeners;
 
@@ -102,12 +103,6 @@ internal static partial class Listeners
         while (ex is AggregateException or TargetInvocationException && ex.InnerException is { })
             ex = ex.InnerException;
 
-        Log.Error(
-            "Slash Errored ({ExceptionName}): {ErroredCommand} {User} {Guild} {Channel}",
-            e.Exception?.GetType().Name ?? "Unknown", e.Context.CommandName,
-            e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
-        );
-
         string error = "";
 
         switch (ex)
@@ -116,27 +111,40 @@ internal static partial class Listeners
                 foreach (var check in slex.FailedChecks)
                 {
                     if (check is SlashRequireNsfwAttribute att)
-                        error = $"Команда доступна только в nsfw каналах";
+                        error += $"Команда доступна только в nsfw каналах. ";
+
+                    if (check is SlashCooldownAttribute cooldownAttribute)
+                    {
+                        DateTime time = DateTime.UtcNow;
+                        time += cooldownAttribute.Reset;
+
+                        error += $"Кулдаун между командами: <t:{((DateTimeOffset)time).ToUnixTimeSeconds()}:R>";
+                    }
                 }
                 break;
             case TaskCanceledException:
                 return;
             case UnauthorizedException _:
-                error = "403";
+                error = "403 Unauthorized";
+                Log.Error(ex, error);
                 break;
             case NpgsqlException _:
             case DbUpdateException _:
-                Log.Error(ex, "Database error");
+                error = "Database error";
+                Log.Error(ex, error);
                 return;
             case CommandCancelledException:
-                break;
+                return;
             default:
-                error = ex.Message;
-                Log.Error(ex, "Unhandled error");
+                error = "Unknown error";
+                Log.Error("Slash Errored ({ExceptionName}): {ErroredCommand} {User} {Guild} {Channel}",
+                    e.Exception?.GetType().Name ?? "Unknown", e.Context.CommandName,
+                    e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
+                );
                 break;
         }
 
-        await e.Context.EditResponseAsync(new DiscordWebhookBuilder().WithContent(error));
+        await e.Context.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(error));
     }
 
 }

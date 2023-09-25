@@ -30,6 +30,12 @@ namespace MCOP.Core.Services.Booru
                     .WithImageUrl($"attachment://{post.MD5}-temp.jpg")
                     .WithTimestamp(post.AlreadySendDate);
 
+                var characterTag = post.Tags.Where(t => t.Type == 4);
+                if (characterTag is not null && characterTag.Any())
+                {
+                    embed.WithFooter("Персонажи: " + characterTag.Select(x => x.Name).Aggregate((i, j) => i + " " + j));
+                }
+
                 DiscordMessage message;
                 using (FileStream fstream2 = File.OpenRead(path))
                 {

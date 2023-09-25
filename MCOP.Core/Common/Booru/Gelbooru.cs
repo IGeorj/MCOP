@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using Serilog;
+using System.Collections.Concurrent;
 
 namespace MCOP.Core.Common.Booru
 {
@@ -37,27 +38,40 @@ namespace MCOP.Core.Common.Booru
             }
 
             JObject json = JObject.Parse(strJson);
+            Log.Debug("Gelbooru Json" + Environment.NewLine + json.ToString(Newtonsoft.Json.Formatting.Indented));
             var jsonPosts = json.SelectToken("post");
 
-#pragma warning disable CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
             SearchResult searchResult = new SearchResult();
+
+            if (jsonPosts is null)
+            {
+                throw new Exception("Gelbooru. Nothing found");
+            }
 
             Parallel.ForEach(jsonPosts.Children(), (post) =>
             {
-                var filetype = post["image"].Value<string>();
-                filetype = filetype[(filetype.LastIndexOf('.') + 1)..];
-                searchResult.AddPost(new BooruPost
+                var exceptions = new ConcurrentQueue<Exception>();
+                try
                 {
-                    FileType = filetype,
-                    ID = (string)post["id"],
-                    MD5 = (string)post["md5"],
-                    ImageUrl = (string)post["file_url"],
-                    PreviewUrl = (string)post["preview_url"],
-                    PostUrl = $"https://gelbooru.com/index.php?page=post&s=view&id={(string)post["id"]}",
-                    Artist = "Автор не найден",
-                });
+                    var filetype = post["image"].Value<string>();
+                    filetype = filetype[(filetype.LastIndexOf('.') + 1)..];
+                    searchResult.AddPost(new BooruPost
+                    {
+                        FileType = filetype,
+                        ID = (string)post["id"],
+                        MD5 = (string)post["md5"],
+                        ImageUrl = (string)post["file_url"],
+                        PreviewUrl = (string)post["preview_url"],
+                        PostUrl = $"https://gelbooru.com/index.php?page=post&s=view&id={(string)post["id"]}",
+                        Artist = "Автор не найден",
+                    });
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, jsonPosts.ToString(Newtonsoft.Json.Formatting.Indented));
+                }
+
             });
-#pragma warning restore CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
 
             return Task.FromResult(searchResult);
         }
@@ -76,6 +90,8 @@ namespace MCOP.Core.Common.Booru
                     Log.Warning(error);
                     throw new Exception(error);
                 }
+
+                Log.Information(url);
 
                 string strJson = await response.Content.ReadAsStringAsync();
 

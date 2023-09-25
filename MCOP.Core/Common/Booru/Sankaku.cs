@@ -105,6 +105,7 @@ namespace MCOP.Core.Common.Booru
             }
 
             JObject json = JObject.Parse(strJson);
+            Log.Debug("Sankaku Json" + Environment.NewLine + json.ToString(Newtonsoft.Json.Formatting.Indented));
             JToken? meta = json.SelectToken("meta");
             JToken? posts = json.SelectToken("data");
 
@@ -118,7 +119,7 @@ namespace MCOP.Core.Common.Booru
                 List<Tag> tags = new List<Tag>();
                 foreach (var tag in post["tags"])
                 {
-                    tags.Add(new Tag { Id = (string)tag["id"], Name = (string)tag["name"] });
+                    tags.Add(new Tag { Id = (string)tag["id"], Name = (string)tag["name"], Type = (int)tag["type"] });
                 }
 
                 JToken artist = post["tags"].FirstOrDefault(t => (int)t["type"] == 1);
@@ -166,6 +167,8 @@ namespace MCOP.Core.Common.Booru
                     Log.Warning(error);
                     throw new Exception(error);
                 }
+
+                Log.Information(url);
 
                 string strJson = await response.Content.ReadAsStringAsync();
 
