@@ -128,7 +128,7 @@ namespace MCOP.Modules.Basic
 
                     if (ctx.User.Id == user.Id)
                     {
-                        var mcopGuild = await Program.Bot.Client.GetGuildAsync(GlobalVariables.McopServerId);
+                        var mcopGuild = await ctx.Client.GetGuildAsync(GlobalVariables.McopServerId);
                         var durka = DiscordEmoji.FromGuildEmote(ctx.Client, 839771710265229314);
 
                         embed.AddField("Победитель", durka);

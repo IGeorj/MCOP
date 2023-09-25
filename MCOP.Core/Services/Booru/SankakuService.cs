@@ -99,7 +99,7 @@ namespace MCOP.Core.Services.Booru
             {
                 await post.DownloadAsJpgAsync(_sankaku.HttpClient, authToken);
 
-                return await SendPostAsync(channel, post, post.LocalFilePathCompressed);
+                return await SendPostAsync(channel, post, post.LocalFilePathCompressed ?? "");
             }
             catch (Exception ex)
             {

@@ -50,19 +50,20 @@ namespace MCOP.Core.Common.Booru
 
             Parallel.ForEach(jsonPosts.Children(), (post) =>
             {
-                var exceptions = new ConcurrentQueue<Exception>();
                 try
                 {
-                    var filetype = post["image"].Value<string>();
+                    var id = post["id"]?.Value<string>() ?? throw new Exception("Id token not found");
+                    var filetype = post["image"]?.Value<string>() ?? throw new Exception("Image token not found");
                     filetype = filetype[(filetype.LastIndexOf('.') + 1)..];
+
                     searchResult.AddPost(new BooruPost
                     {
                         FileType = filetype,
-                        ID = (string)post["id"],
-                        MD5 = (string)post["md5"],
-                        ImageUrl = (string)post["file_url"],
-                        PreviewUrl = (string)post["preview_url"],
-                        PostUrl = $"https://gelbooru.com/index.php?page=post&s=view&id={(string)post["id"]}",
+                        ID = id,
+                        MD5 = post["md5"]?.Value<string>() ?? throw new Exception("Md5 token not found"),
+                        ImageUrl = post["file_url"]?.Value<string>() ?? throw new Exception("File url token not found"),
+                        PreviewUrl = post["preview_url"]?.Value<string>() ?? throw new Exception("Preview url token not found"),
+                        PostUrl = $"https://gelbooru.com/index.php?page=post&s=view&id={id}",
                         Artist = "Автор не найден",
                     });
                 }

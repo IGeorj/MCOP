@@ -40,33 +40,47 @@ namespace MCOP.Core.Common.Booru
             if (strJson == "[]")
             {
                 // TODO: Tags prediction
-                throw new Exception("Sankaku. Nothing found");
+                throw new Exception("E621. Nothing found");
             }
 
             JObject json = JObject.Parse(strJson);
             Log.Debug("E621 Json" + Environment.NewLine + json.ToString(Newtonsoft.Json.Formatting.Indented));
+            JToken? posts = json.SelectToken("posts");
 
-#pragma warning disable CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
             SearchResult searchResult = new SearchResult();
 
-            Parallel.ForEach(json["posts"].Children(), (post) =>
+            if (posts is null)
             {
-                var fileToken = post["file"];
-                var url = fileToken["url"].Value<string>();
-                var filetype = url[(url.LastIndexOf('.') + 1)..];
-                var artist = post["tags"]["artist"];
-                searchResult.AddPost(new BooruPost
+                throw new Exception("E621. Nothing found");
+            }
+
+            Parallel.ForEach(posts.Children(), (post) =>
+            {
+                try
                 {
-                    FileType = filetype,
-                    ID = (string)fileToken["id"],
-                    MD5 = (string)post["md5"],
-                    ImageUrl = url,
-                    PreviewUrl = (string)post["preview"]["url"],
-                    PostUrl = $"https://e621.net/posts{(string)post["id"]}",
-                    Artist = artist == null ? "Автор не найден" : (string)artist.FirstOrDefault(),
-                });
+                    var fileToken = post["file"] ?? throw new Exception("File token not found");
+                    var url = fileToken["url"]?.Value<string>() ?? throw new Exception("Url token not found");
+                    var filetype = url[(url.LastIndexOf('.') + 1)..];
+                    var tagsToken = post["tags"] ?? throw new Exception("Tags token not found");
+                    var artistToken = tagsToken["artist"] ?? throw new Exception("Artist token not found");
+                    var id = post["id"]?.Value<string>() ?? throw new Exception("Id token not found");
+
+                    searchResult.AddPost(new BooruPost
+                    {
+                        FileType = filetype,
+                        ID = id,
+                        MD5 = fileToken["md5"]?.Value<string>() ?? throw new Exception("Md5 token not found"),
+                        ImageUrl = url,
+                        PreviewUrl = post["preview"]?.SelectToken("url")?.Value<string>() ?? throw new Exception("Preview url token not found"),
+                        PostUrl = $"https://e621.net/posts{id}",
+                        Artist = artistToken?.Children().FirstOrDefault()?.Value<string>() ?? "Автор не найден",
+                    });
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, posts.ToString(Newtonsoft.Json.Formatting.Indented));
+                }
             });
-#pragma warning restore CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
 
             return Task.FromResult(searchResult);
         }

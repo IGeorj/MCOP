@@ -93,7 +93,7 @@ namespace MCOP.Core.Common.Booru
                 string? directoryPath = Path.GetDirectoryName(LocalFilePath);
                 File.Delete(LocalFilePath);
 
-                if (IsDirectoryEmpty(directoryPath))
+                if (directoryPath is not null && IsDirectoryEmpty(directoryPath))
                 {
                     Directory.Delete(directoryPath);
                 }
@@ -119,7 +119,7 @@ namespace MCOP.Core.Common.Booru
                 string? directoryPath = Path.GetDirectoryName(LocalFilePath);
                 File.Delete(LocalFilePath);
 
-                if (IsDirectoryEmpty(directoryPath))
+                if (directoryPath is not null && IsDirectoryEmpty(directoryPath))
                 {
                     Directory.Delete(directoryPath);
                 }

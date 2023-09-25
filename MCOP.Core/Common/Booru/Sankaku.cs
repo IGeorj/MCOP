@@ -109,37 +109,56 @@ namespace MCOP.Core.Common.Booru
             JToken? meta = json.SelectToken("meta");
             JToken? posts = json.SelectToken("data");
 
-#pragma warning disable CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
             SearchResult searchResult = new SearchResult();
-            searchResult.SetPrev((string?)meta["prev"]);
-            searchResult.SetNext((string?)meta["next"]);
+
+            if (meta is not null)
+            {
+                searchResult.SetPrev((string?)meta["prev"]);
+                searchResult.SetNext((string?)meta["next"]);
+            }
+
+            if (posts is null)
+            {
+                throw new Exception("Sankaku. Nothing found");
+            }
 
             Parallel.ForEach(posts.Children(), (post) =>
             {
-                List<Tag> tags = new List<Tag>();
-                foreach (var tag in post["tags"])
+                try
                 {
-                    tags.Add(new Tag { Id = (string)tag["id"], Name = (string)tag["name"], Type = (int)tag["type"] });
+                    List<Tag> tags = new List<Tag>();
+                    foreach (var tag in post["tags"] ?? throw new Exception("Tags token not found"))
+                    {
+                        tags.Add(new Tag {
+                            Id = tag["id"]?.Value<string>() ?? throw new Exception("Tag id token not found"), 
+                            Name = tag["name"]?.Value<string>() ?? throw new Exception("Tag Name token not found"), 
+                            Type = tag["type"]?.Value<int>() ?? throw new Exception("Tag type token not found")
+                        });
+                    }
+
+                    string id = post["id"]?.Value<string>() ?? throw new Exception("Id token not found");
+                    string artist = tags.FirstOrDefault(x => x.Type == 1)?.Name ?? "Автор не найден";
+                    string filetype = post["file_type"]?.Value<string>() ?? throw new Exception("File type token not found");
+                    filetype = filetype[(filetype.LastIndexOf('/') + 1)..];
+
+                    searchResult.AddPost(new BooruPost
+                    {
+                        FileType = filetype,
+                        ID = id,
+                        MD5 = post["md5"]?.Value<string>() ?? throw new Exception("Md5 token not found"),
+                        PreviewUrl = post["preview_url"]?.Value<string>() ?? throw new Exception("Preview url token not found"),
+                        ImageUrl = post["file_url"]?.Value<string>() ?? throw new Exception("File url token not found"),
+                        PostUrl = $"https://beta.sankakucomplex.com/post/show/{id}",
+                        Artist = artist,
+                        ParentId = (string?)post["parent_id"],
+                        Tags = tags
+                    });
                 }
-
-                JToken artist = post["tags"].FirstOrDefault(t => (int)t["type"] == 1);
-                string filetype = (string)post["file_type"];
-                filetype = filetype[(filetype.LastIndexOf('/') + 1)..];
-
-                searchResult.AddPost(new BooruPost
+                catch (Exception e)
                 {
-                    FileType = filetype,
-                    ID = (string)post["id"],
-                    MD5 = (string)post["md5"],
-                    PreviewUrl = (string)post["preview_url"],
-                    ImageUrl = (string)post["file_url"],
-                    PostUrl = $"https://beta.sankakucomplex.com/post/show/{(string)post["id"]}",
-                    Artist = artist == null ? "Автор не найден" : (string)artist["name"],
-                    ParentId = (string?)post["parent_id"],
-                    Tags = tags
-                });
+                    Log.Error(e, posts.ToString(Newtonsoft.Json.Formatting.Indented));
+                }
             });
-#pragma warning restore CS8604, CS8602, CS8601, CS8600 // Possible null reference argument.
 
             return Task.FromResult(searchResult);
         }

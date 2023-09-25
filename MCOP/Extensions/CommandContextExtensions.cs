@@ -95,9 +95,14 @@ internal static class CommandContextExtensions
     public static Task ExecuteOtherCommandAsync(this CommandContext ctx, string command, params string?[] args)
     {
         string callStr = $"{command} {args.JoinWith(" ")}";
-        Command cmd = ctx.CommandsNext.FindCommand(callStr, out string actualArgs);
-        CommandContext fctx = ctx.CommandsNext.CreateFakeContext(ctx.User, ctx.Channel, callStr, ctx.Prefix, cmd, actualArgs);
-        return ctx.CommandsNext.ExecuteCommandAsync(fctx);
+        Command? cmd = ctx.CommandsNext.FindCommand(callStr, out string? actualArgs);
+        if (cmd is not null)
+        {
+            CommandContext fctx = ctx.CommandsNext.CreateFakeContext(ctx.User, ctx.Channel, callStr, ctx.Prefix, cmd, actualArgs);
+            return ctx.CommandsNext.ExecuteCommandAsync(fctx);
+        }
+
+        return Task.CompletedTask;
     }
 
     private static async Task InternalInformAsync(this CommandContext ctx, DiscordEmoji? emoji = null, string? msg = null,

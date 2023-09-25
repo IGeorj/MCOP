@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+
+#nullable disable
 
 namespace MCOP.Data.Models
 {
@@ -24,3 +25,5 @@ namespace MCOP.Data.Models
 
     }
 }
+
+#nullable restore

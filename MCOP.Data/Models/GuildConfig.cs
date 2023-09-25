@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+#nullable disable
 
 namespace MCOP.Data.Models
 {
@@ -29,3 +26,5 @@ namespace MCOP.Data.Models
         public Guild Guild { get; set; }
     }
 }
+
+#nullable restore
