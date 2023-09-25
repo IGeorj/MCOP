@@ -6,10 +6,8 @@ using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Serilog;
 using DSharpPlus.SlashCommands.EventArgs;
-using DSharpPlus;
 using DSharpPlus.SlashCommands;
 using MCOP.Attributes.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
@@ -61,7 +59,6 @@ internal static partial class Listeners
             case UnauthorizedException _:
                 emb.WithDescription("403");
                 break;
-            case NpgsqlException _:
             case DbUpdateException _:
                 Log.Error(ex, "Database error");
                 return;
@@ -128,7 +125,6 @@ internal static partial class Listeners
                 error = "403 Unauthorized";
                 Log.Error(ex, error);
                 break;
-            case NpgsqlException _:
             case DbUpdateException _:
                 error = "Database error";
                 Log.Error(ex, error);
