@@ -104,7 +104,7 @@ public sealed class Bot
 
         services.AddSingleton(Config)
             .AddSingleton(Client)
-            .AddDbContext<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;"))
+            .AddDbContext<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;"), ServiceLifetime.Transient)
             .AddSharedServices()
             .AddScopedClasses();
 

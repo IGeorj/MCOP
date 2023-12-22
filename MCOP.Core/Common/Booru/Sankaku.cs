@@ -8,7 +8,7 @@ namespace MCOP.Core.Common.Booru
     public sealed class Sankaku
     {
         private static readonly string _authUrl = "/auth/token";
-        private static readonly string _searchUrl = "/posts/keyset?lang=en&default_threshold=1&hide_posts_in_books=never";
+        private static readonly string _searchUrl = "/posts/keyset?lang=en&default_threshold=0&hide_posts_in_books=never";
 
 
         private string? _accessToken;

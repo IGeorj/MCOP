@@ -130,7 +130,7 @@ namespace MCOP.Core.Services.Scoped
                     hashes.Add(SkiaSharpService.GetBitmapHash(bitmap));
                 }
 
-                foreach (var item in message.Attachments)
+                foreach (var item in message.Attachments.ToList())
                 {
                     string type = item.MediaType;
 

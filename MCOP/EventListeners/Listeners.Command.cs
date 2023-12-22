@@ -139,7 +139,8 @@ internal static partial class Listeners
                 );
                 break;
         }
-
+        Log.Error(error);
+        Log.Error(ex.ToString());
         await e.Context.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(error));
     }
 
