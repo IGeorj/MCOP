@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
 
         foreach (Type service in services)
         {
-            serviceCollection.AddScoped(service);
+            serviceCollection.AddTransient(service);
             Log.Debug("Added service: {Service}", service.FullName);
         }
 

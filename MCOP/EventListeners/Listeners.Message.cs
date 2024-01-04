@@ -58,7 +58,7 @@ internal static partial class Listeners
 
                 foreach (var hash in hashes)
                 {
-                    var hashFound = await hashService.FindHashByGuildAsync(e.Guild.Id, hash, 90);
+                    var hashFound = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 94);
 
                     if (hashFound is not null)
                     {
@@ -70,6 +70,7 @@ internal static partial class Listeners
                         catch (Exception)
                         {
                             Log.Warning($"Can't get message from hash. messageId:{hashFound.MessageId}, channelId:{e.Channel.Id}, guildId:{e.Guild.Id}");
+                            await hashService.RemoveHashesByMessageId(e.Guild.Id, hashFound.MessageId);
                             continue;
                         }
 
@@ -128,28 +129,30 @@ internal static partial class Listeners
 
         if (mcopLewdChannel || gaysAdminChannel)
         {
-            var hashService = Services.GetRequiredService<ImageHashService>();
-            var messageService = Services.GetRequiredService<MessageService>();
-
-            await messageService.RemoveMessageAsync(e.Guild.Id, e.Message.Id);
-
-            List<byte[]> hashes = await hashService.GetHashesFromMessageAsync(e.Message);
-            int updated = 0;
-
-            foreach (var hash in hashes)
+            if (IsAttachmentsChanged(e.Message, e.MessageBefore))
             {
-                var hashFound = await hashService.FindHashByGuildAsync(e.Guild.Id, hash, 90);
+                var hashService = Services.GetRequiredService<ImageHashService>();
 
-                if (hashFound is not null)
+                List<byte[]> hashes = await hashService.GetHashesFromMessageAsync(e.Message);
+                int updated = 0;
+
+                await hashService.RemoveHashesByMessageId(e.Guild.Id, e.Message.Id);
+
+                foreach (var hash in hashes)
                 {
-                    continue;
-                }
+                    var hashFound = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 94);
 
-                updated += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hash);
-            }
-            if (updated > 0)
-            {
-                Log.Information("Updated {Amount} hashes ({Total} total)", updated, await hashService.GetTotalCountAsync());
+                    if (hashFound is not null)
+                    {
+                        continue;
+                    }
+
+                    updated += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hash);
+                }
+                if (updated > 0)
+                {
+                    Log.Information("Updated {Amount} hashes ({Total} total)", updated, await hashService.GetTotalCountAsync());
+                }
             }
         }
     }
@@ -157,5 +160,31 @@ internal static partial class Listeners
     public static async Task ComponentInteractionCreatedEventHandler(DiscordClient client, ComponentInteractionCreateEventArgs e)
     {
         await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+    }
+
+    private static bool IsAttachmentsChanged(DiscordMessage message, DiscordMessage messageBefore)
+    {
+        if (messageBefore is null)
+        {
+            return true;
+        }
+
+        if (message.Attachments.Count < messageBefore.Attachments.Count)
+        {
+            return true;
+        }
+
+        var attahcmentsNow = message.Attachments.ToList();
+        var attahcmentsBefore = messageBefore.Attachments.ToList();
+
+        foreach (var attachment in attahcmentsBefore)
+        {
+            if (!attahcmentsNow.Any(x => x.Id == attachment.Id))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

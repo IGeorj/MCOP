@@ -53,6 +53,9 @@ namespace MCOP.Core.Services.Scoped
                         Id = messageId,
                         UserId = guildUser.UserId,
                     })).Entity;
+
+                    _context.GuildUsers.Attach(guildUser);
+
                     await _context.SaveChangesAsync();
                 }
 

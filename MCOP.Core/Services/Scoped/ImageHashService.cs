@@ -13,12 +13,10 @@ namespace MCOP.Core.Services.Scoped
     public class ImageHashService : IScoped
     {
         private readonly McopDbContext _context;
-        private readonly MessageService _messageService;
 
         public ImageHashService(McopDbContext context, MessageService messageService)
         {
             _context = context;
-            _messageService = messageService;
         }
 
 
@@ -50,13 +48,45 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                var message = await _messageService.GetOrAddAsync(guildId, messageId, userId);
+                GuildMessage? message = await _context.GuildMessages.FindAsync(guildId, messageId);
+                if (message is null)
+                {
+                    var guild = await _context.Guilds.FindAsync(guildId);
+                    if (guild is null)
+                    {
+                        guild = (await _context.Guilds.AddAsync(new Guild { Id = guildId })).Entity;
+                        await _context.SaveChangesAsync();
+                    }
+                    var user = await _context.Users.FindAsync(userId);
+                    if (user is null)
+                    {
+                        user = (await _context.Users.AddAsync(new User { Id = userId })).Entity;
+                        await _context.SaveChangesAsync();
+                    }
+                    var guildUser = await _context.GuildUsers.FindAsync(guildId, userId);
+                    if (guildUser is null)
+                    {
+                        guildUser = (await _context.GuildUsers.AddAsync(new GuildUser { GuildId = guildId, UserId = user.Id })).Entity;
+                        await _context.SaveChangesAsync();
+                    }
+
+                    message = (await _context.GuildMessages.AddAsync(new GuildMessage
+                    {
+                        GuildId = guildUser.GuildId,
+                        Id = messageId,
+                        UserId = guildUser.UserId,
+                    })).Entity;
+
+                    await _context.SaveChangesAsync();
+                }
 
                 await _context.ImageHashes.AddAsync(new ImageHash
                 {
                     Hash = hash,
-                    GuildMessage = message
+                    MessageId = message.Id,
+                    GuildId = message.GuildId
                 });
+
                 await _context.SaveChangesAsync();
                 return 1;
             }
@@ -66,7 +96,7 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<HashFoundVM?> FindHashAsync(byte[] hash, double diffProcent = 90)
+        public async Task<HashFoundVM?> SearchHashAsync(byte[] hash, double diffProcent = 90)
         {
             try
             {
@@ -90,7 +120,7 @@ namespace MCOP.Core.Services.Scoped
                 throw new McopException(ex, ex.Message);
             }
         }
-        public async Task<HashFoundVM?> FindHashByGuildAsync(ulong guildId, byte[] hash, double diffProcent = 90)
+        public async Task<HashFoundVM?> SearchHashByGuildAsync(ulong guildId, byte[] hash, double diffProcent = 90)
         {
             try
             {
@@ -149,6 +179,18 @@ namespace MCOP.Core.Services.Scoped
                 throw new McopException(ex, ex.Message);
             }
         }
+        public async Task RemoveHashesByMessageId(ulong guildId, ulong messageId)
+        {
+            var toRemove = await _context.ImageHashes.Where(x => x.GuildId == guildId && x.MessageId == messageId).ToListAsync();
+
+            if (toRemove.Count > 0)
+            {
+                _context.ImageHashes.RemoveRange(toRemove);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<int> GetTotalCountAsync()
         {
             try

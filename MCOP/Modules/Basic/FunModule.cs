@@ -65,7 +65,7 @@ namespace MCOP.Modules.Basic
 
                 foreach (var hash in hashes)
                 {
-                    var hashFound = await hashService.FindHashAsync(hash, 90);
+                    var hashFound = await hashService.SearchHashAsync(hash, 94);
 
                     if (hashFound is not null)
                     {
