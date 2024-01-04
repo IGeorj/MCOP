@@ -65,7 +65,7 @@ internal static partial class Listeners
 
     public static Task UnknownEventHandler(DiscordClient client, UnknownEventArgs e)
     {
-        Log.Error("Unknown event ({UnknownEvent}) occured", e.EventName);
+        Log.Debug("Unknown event ({UnknownEvent}) occured", e.EventName);
         return Task.CompletedTask;
     }
 

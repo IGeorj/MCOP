@@ -54,7 +54,7 @@ public sealed class Bot
     public async Task StartAsync()
     {
         Log.Information("Initializing the bot...");
-
+       
         client = SetupClient();
 
         services = SetupServices();
@@ -84,7 +84,7 @@ public sealed class Bot
             LargeThreshold = 500,
             ShardCount = 1,
             LoggerFactory = new SerilogLoggerFactory(dispose: true),
-            Intents = DiscordIntents.All,
+            Intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents,
             LogUnknownEvents = false,
         };
 

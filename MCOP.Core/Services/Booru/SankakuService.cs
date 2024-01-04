@@ -133,7 +133,7 @@ namespace MCOP.Core.Services.Booru
 
                 searchResult.DeleteUnwantedFiles();
 
-                Log.Information($"Sankaku {nameof(SendDailyTopToChannelsAsync)} finished");
+                Log.Information("Sankaku {name} {count1}/{count2} finished.", nameof(SendDailyTopToChannelsAsync), messages.Count, searchResult.Count());
 
                 return messages;
             }

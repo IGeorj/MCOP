@@ -67,6 +67,7 @@ internal static class Program
     {
         var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
         Console.WriteLine($"{ApplicationName} {ApplicationVersion} ({fileVersionInfo.FileVersion})");
+        Console.WriteLine(".NET, version {0}", Environment.Version.ToString());
         Console.WriteLine();
     }
 

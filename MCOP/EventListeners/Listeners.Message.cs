@@ -69,7 +69,7 @@ internal static partial class Listeners
                         }
                         catch (Exception)
                         {
-                            Log.Warning($"Can't get message from hash. messageId:{hashFound.MessageId}, channelId:{e.Channel.Id}, guildId:{e.Guild.Id}");
+                            Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", hashFound.MessageId, e.Channel.Id, e.Guild.Id);
                             await hashService.RemoveHashesByMessageId(e.Guild.Id, hashFound.MessageId);
                             continue;
                         }
