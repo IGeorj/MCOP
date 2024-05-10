@@ -275,6 +275,8 @@ namespace MCOP.Core.Common.Booru
 
         public async Task<SearchResult> GetDailyTopAsync(string tags, int limit = 40, int days = 1)
         {
+            await RefreshTokenAsync();
+
             DateTime date = DateTime.Today;
             tags = $"{tags} order:popularity date:{date.AddDays(-days):yyyy-MM-ddTHH:mm}";
             string url = $"{_searchUrl}&tags={tags}&limit={limit}";
@@ -291,6 +293,8 @@ namespace MCOP.Core.Common.Booru
 
         public async Task<SearchResult> GetDailyTopAsync(string tags, string next, int limit = 40, int days = 1)
         {
+            await RefreshTokenAsync();
+
             DateTime date = DateTime.Today;
             tags = $"{tags} order:popularity date:{date.AddDays(-days):yyyy-MM-ddTHH:mm}";
             string url = $"{_searchUrl}&tags={tags}&limit={limit}&next={next}";

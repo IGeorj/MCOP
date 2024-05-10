@@ -31,7 +31,7 @@ namespace MCOP.Modules.User
             GuildUserStat stats = await statsService.GetOrAddAsync(ctx.Guild.Id, member.Id);
 
             var embed = new DiscordEmbedBuilder()
-            .WithTitle(member.ToDiscriminatorString())
+            .WithTitle(member.Username)
             .WithThumbnail(member.AvatarUrl)
             .AddField("Лайки", $":heart: {stats.Likes}", true)
             .AddField("Дуели", $":crossed_swords: {stats.DuelWin} - {stats.DuelLose}", true);

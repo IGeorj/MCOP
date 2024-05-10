@@ -1,6 +1,7 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using MCOP.Common;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
@@ -25,7 +26,7 @@ internal static partial class Listeners
                 await e.Message.DeleteAsync();
 
                 DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
-                    .WithAuthor(member.ToDiscriminatorString(), null, member.AvatarUrl)
+                    .WithAuthor(member.Username, null, member.AvatarUrl)
                     .WithColor(DiscordColor.Yellow)
                     .AddField("Пользователь", $"<@!{member.Id}>", true)
                     .AddField("Модератор", client.CurrentUser.Mention, true)
@@ -42,7 +43,7 @@ internal static partial class Listeners
         var mcopNsfwChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 539145624868749327;
         var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
 
-        if (mcopNsfwChannel && e.Message.Attachments.Count > 0)
+        if ((mcopNsfwChannel || mcopLewdChannel) && e.Message.Attachments.Count > 0)
         {
             await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
         }
@@ -74,12 +75,14 @@ internal static partial class Listeners
                             continue;
                         }
 
+                        var attachemnt = messageFromHash.Attachments[hashes.IndexOf(hash)];
+
                         DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
                         .WithTitle("Найдено совпадение")
-                        .AddField("Новое", e.Author.ToDiscriminatorString(), true)
-                        .AddField("Прошлое", messageFromHash.Author.ToDiscriminatorString(), true)
+                        .AddField("Новое", e.Author.Username, true)
+                        .AddField("Прошлое", messageFromHash.Author.Username, true)
                         .AddField("Процент", ((int)hashFound.Difference).ToString())
-                        .WithThumbnail("https://media.discordapp.net/attachments/549313253541543951/843572826778239074/pngwing.com.png");
+                        .WithThumbnail(attachemnt.Url);
 
                         DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
                         .WithEmbed(embedBuilder)
@@ -87,17 +90,18 @@ internal static partial class Listeners
                         {
                             new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
                             new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
+                            new DiscordButtonComponent(
+                                ButtonStyle.Success, 
+                                GlobalNames.Buttons.RemoveMessage + $"UID:{e.Author.Id}",
+                                "Понял",
+                                false, 
+                                new DiscordComponentEmoji(DiscordEmoji.FromName(client, ":heavy_check_mark:" ))),
                         });
                         await e.Channel.SendMessageAsync(messageBuilder);
                         continue;
                     }
 
                     added += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hash);
-
-                    if (added > 0)
-                    {
-                        await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
-                    }
                 }
                 if (added > 0)
                 {
@@ -160,6 +164,15 @@ internal static partial class Listeners
     public static async Task ComponentInteractionCreatedEventHandler(DiscordClient client, ComponentInteractionCreateEventArgs e)
     {
         await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+
+        if (e.Id.StartsWith(GlobalNames.Buttons.RemoveMessage))
+        {
+            ulong userId = ulong.Parse(e.Id[(e.Id.LastIndexOf(':') + 1)..]);
+            if (userId == e.User.Id)
+            {
+                await e.Message.DeleteAsync();
+            }
+        }
     }
 
     private static bool IsAttachmentsChanged(DiscordMessage message, DiscordMessage messageBefore)

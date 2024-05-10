@@ -139,6 +139,7 @@ namespace MCOP.Core.Services.Booru
             }
             catch (Exception ex)
             {
+                Log.Error("Sankaku {name} failed.", nameof(SendDailyTopToChannelsAsync), ex);
                 throw new McopException(ex, ex.Message);
             }
         }

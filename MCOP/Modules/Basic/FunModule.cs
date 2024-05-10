@@ -14,7 +14,7 @@ using Serilog;
 
 namespace MCOP.Modules.Basic
 {
-    [SlashCooldown(1, 5, SlashCooldownBucketType.Channel)]
+    [SlashCooldown(1, 3, SlashCooldownBucketType.Channel)]
     public sealed class FunModule : ApplicationCommandModule
     {
         private static readonly Dictionary<string, string> _nouns = new()
@@ -45,13 +45,35 @@ namespace MCOP.Modules.Basic
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
         }
 
+        [SlashRequirePermissions(Permissions.Administrator)]
+        [SlashCommand("emoji-to-message", "Бот оставит емодзи на сообщение")]
+        public async Task EmojiToMessage(InteractionContext ctx,
+            [Option("messageId", "Message ID")] string messageId)
+        {
+            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource, new DiscordInteractionResponseBuilder
+            {
+                IsEphemeral = true,
+            });
+
+            ulong ulongMessageId = ulong.Parse(messageId);
+
+            var targetMessage = await ctx.Channel.GetMessageAsync(ulongMessageId);
+
+            await targetMessage.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":heart:"));
+
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
+        }
+
         [SlashRequireOwner]
         [SlashCommand("hash", "Хеширует изображение из сообщения")]
         public async Task Hash(InteractionContext ctx,
             [Option("messageId", "Message ID")] string messageId)
         {
             ulong ulongMessageId = ulong.Parse(messageId);
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource, new DiscordInteractionResponseBuilder
+            {
+                IsEphemeral = true,
+            });
 
             int count = 0;
             DiscordMessage message;
@@ -75,6 +97,8 @@ namespace MCOP.Modules.Basic
                     await hashService.SaveHashAsync(ctx.Guild.Id, message.Id, message.Author.Id, hash);
                     count++;
                 }
+
+                await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":heart:"));
             }
             catch (Exception)
             {

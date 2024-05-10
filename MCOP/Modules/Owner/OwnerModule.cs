@@ -124,7 +124,7 @@ public sealed class OwnerModule : BotModule
         ScriptState<object>? res = null;
         var runTime = Stopwatch.StartNew();
         try {
-            res = await snippet.RunAsync(new EvaluationEnvironment(ctx));
+            res = await snippet.RunAsync(new                            EvaluationEnvironment(ctx));
         } catch (Exception e) {
             exc = e;
         }
