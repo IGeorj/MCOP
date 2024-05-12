@@ -1,5 +1,4 @@
-﻿using MCOP.Common;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 
 namespace MCOP.Extensions;
 

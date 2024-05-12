@@ -1,5 +1,4 @@
 ﻿using MCOP.Core.Services.Image;
-using MCOP.Core.Services.Shared;
 using Serilog;
 using System.Net.Http.Headers;
 

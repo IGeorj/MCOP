@@ -1,9 +1,4 @@
-﻿using DSharpPlus.Entities;
-using MCOP.Core.Services.Image;
-using MCOP.Core.Services.Shared;
-using MCOP.Services;
-
-namespace MCOP.Extensions;
+﻿namespace MCOP.Extensions;
 
 public static class DiscordMessageExtensions
 {

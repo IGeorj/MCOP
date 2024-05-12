@@ -1,6 +1,5 @@
-﻿using System.Net.Http.Headers;
-using MCOP.Core.Services.Shared;
-using MCOP.Services;
+﻿using MCOP.Core.Services.Shared;
+using System.Net.Http.Headers;
 
 namespace MCOP.Extensions;
 
@@ -14,10 +13,13 @@ internal static class UriExtensions
 
     public static async Task<bool> TestHeadersAsync(this Uri uri, string contentType, long? contentLengthLimit)
     {
-        try {
+        try
+        {
             (_, HttpContentHeaders headers) = await HttpService.HeadAsync(uri).ConfigureAwait(false);
             return headers.ContentTypeHeaderStartsWith(contentType) && headers.ContentLength <= contentLengthLimit;
-        } catch {
+        }
+        catch
+        {
 
         }
         return false;

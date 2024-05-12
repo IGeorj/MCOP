@@ -1,9 +1,9 @@
-﻿using System.Text.RegularExpressions;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
+using System.Text.RegularExpressions;
 
 namespace MCOP.Common.Converters;
 
-public sealed class ActivityTypeConverter : BaseArgumentConverter<ActivityType>
+public sealed class ActivityTypeConverter : BaseArgumentConverter<DiscordActivityType>
 {
     private static readonly Regex _listeningRegex;
     private static readonly Regex _playingRegex;
@@ -22,21 +22,21 @@ public sealed class ActivityTypeConverter : BaseArgumentConverter<ActivityType>
     }
 
 
-    public override bool TryConvert(string value, out ActivityType result)
+    public override bool TryConvert(string value, out DiscordActivityType result)
     {
-        result = ActivityType.Playing;
+        result = DiscordActivityType.Playing;
         bool parses = true;
 
         if (_playingRegex.IsMatch(value))
-            result = ActivityType.Playing;
+            result = DiscordActivityType.Playing;
         else if (_watchingRegex.IsMatch(value))
-            result = ActivityType.Watching;
+            result = DiscordActivityType.Watching;
         else if (_listeningRegex.IsMatch(value))
-            result = ActivityType.ListeningTo;
+            result = DiscordActivityType.ListeningTo;
         else if (_streamingRegex.IsMatch(value))
-            result = ActivityType.Streaming;
+            result = DiscordActivityType.Streaming;
         else if (_competingRegex.IsMatch(value))
-            result = ActivityType.Competing;
+            result = DiscordActivityType.Competing;
         else
             parses = false;
 

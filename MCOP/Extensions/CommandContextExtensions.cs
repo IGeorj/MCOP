@@ -1,47 +1,17 @@
-﻿using MCOP.Common;
-using MCOP.Exceptions;
-using MCOP.Services;
-using DSharpPlus.CommandsNext;
+﻿using DSharpPlus.Commands;
 using DSharpPlus.Entities;
-using DSharpPlus.Exceptions;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
-using Microsoft.Extensions.DependencyInjection;
+using MCOP.Common;
 
 namespace MCOP.Extensions;
 
 internal static class CommandContextExtensions
 {
-    public static Task InfoAsync(this CommandContext ctx, DiscordColor color)
-        => InternalInformAsync(ctx, null, null, false, color);
-
-    public static Task InfoAsync(this CommandContext ctx, string? msg = null)
-        => InternalInformAsync(ctx, null, msg, false, null);
-
-    public static Task InfoAsync(this CommandContext ctx, DiscordColor color, string msg)
-        => InternalInformAsync(ctx, null, msg, false, color);
-
-    public static Task InfoAsync(this CommandContext ctx, DiscordEmoji emoji, string msg)
-        => InternalInformAsync(ctx, emoji, msg, false, null);
-
-    public static Task InfoAsync(this CommandContext ctx, DiscordColor color, DiscordEmoji emoji, string msg)
-        => InternalInformAsync(ctx, emoji, msg, false, color);
-
-    public static Task ImpInfoAsync(this CommandContext ctx, string? msg = null)
-        => InternalInformAsync(ctx, null, msg, true, null);
-
-    public static Task ImpInfoAsync(this CommandContext ctx, DiscordColor color, string msg)
-        => InternalInformAsync(ctx, null, msg, true, color);
-
-    public static Task ImpInfoAsync(this CommandContext ctx, DiscordEmoji emoji, string msg)
-        => InternalInformAsync(ctx, emoji, msg, true, null);
-
-    public static Task ImpInfoAsync(this CommandContext ctx, DiscordColor color, DiscordEmoji emoji, string msg)
-        => InternalInformAsync(ctx, emoji, msg, true, color);
-
-    public static Task FailAsync(this CommandContext ctx, string msg)
+    public static async Task FailAsync(this CommandContext ctx, string msg)
     {
-        return ctx.RespondAsync(embed: new DiscordEmbedBuilder {
+        await ctx.RespondAsync(embed: new DiscordEmbedBuilder
+        {
             Description = $"{Emojis.X} {msg}",
             Color = DiscordColor.IndianRed
         });
@@ -55,13 +25,16 @@ internal static class CommandContextExtensions
         var pages = new List<Page>();
         int pageCount = (arr.Length - 1) / pageSize + 1;
         int from = 0;
-        for (int i = 1; i <= pageCount; i++) {
+        for (int i = 1; i <= pageCount; i++)
+        {
             int to = from + pageSize > arr.Length ? arr.Length : from + pageSize;
-            pages.Add(new Page(embed: new DiscordEmbedBuilder {
+            pages.Add(new Page(embed: new DiscordEmbedBuilder
+            {
                 Title = title,
                 Description = arr[from..to].Select(selector).JoinWith(),
                 Color = color ?? DiscordColor.Black,
-                Footer = new DiscordEmbedBuilder.EmbedFooter {
+                Footer = new DiscordEmbedBuilder.EmbedFooter
+                {
                     Text = $"Showing {from + 1}-{to} out of {arr.Length} ; Page {i}/{pageCount}",
                 }
             }));
@@ -79,7 +52,8 @@ internal static class CommandContextExtensions
         int count = collection.Count();
 
         IEnumerable<Page> pages = collection
-            .Select((e, i) => {
+            .Select((e, i) =>
+            {
                 var emb = new DiscordEmbedBuilder();
                 emb.WithFooter($"Showing #{i + 1} out of {count}", null);
                 emb.WithColor(color ?? DiscordColor.Black);
@@ -90,37 +64,5 @@ internal static class CommandContextExtensions
         return count > 1
             ? ctx.Client.GetInteractivity().SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages)
             : ctx.Channel.SendMessageAsync(content: pages.Single().Content, embed: pages.Single().Embed);
-    }
-
-    public static Task ExecuteOtherCommandAsync(this CommandContext ctx, string command, params string?[] args)
-    {
-        string callStr = $"{command} {args.JoinWith(" ")}";
-        Command? cmd = ctx.CommandsNext.FindCommand(callStr, out string? actualArgs);
-        if (cmd is not null)
-        {
-            CommandContext fctx = ctx.CommandsNext.CreateFakeContext(ctx.User, ctx.Channel, callStr, ctx.Prefix, cmd, actualArgs);
-            return ctx.CommandsNext.ExecuteCommandAsync(fctx);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private static async Task InternalInformAsync(this CommandContext ctx, DiscordEmoji? emoji = null, string? msg = null,
-                                                  bool important = true, DiscordColor? color = null)
-    {
-        emoji ??= Emojis.CheckMarkSuccess;
-        if (!important) {
-            try {
-                await ctx.Message.CreateReactionAsync(Emojis.CheckMarkSuccess);
-            } catch (NotFoundException) {
-                await ImpInfoAsync(ctx, emoji, "Done");
-            }
-        } else {
-            string response = msg ?? "Done";
-            await ctx.RespondAsync(embed: new DiscordEmbedBuilder {
-                Description = $"{emoji} {response}",
-                Color = color ?? DiscordColor.Green,
-            });
-        }
     }
 }

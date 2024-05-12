@@ -1,5 +1,5 @@
-﻿using System.Text.RegularExpressions;
-using Serilog.Events;
+﻿using Serilog.Events;
+using System.Text.RegularExpressions;
 
 namespace MCOP.Common.Converters;
 

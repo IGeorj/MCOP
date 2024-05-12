@@ -1,21 +1,23 @@
-﻿using System.Reflection;
-using MCOP.Exceptions;
-using MCOP.Extensions;
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
+﻿using DSharpPlus;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
-using Microsoft.Extensions.DependencyInjection;
-using Serilog;
-using Serilog.Extensions.Logging;
-using DSharpPlus.SlashCommands;
-using MCOP.Data;
-using MCOP.Core.Services.Shared;
+using MCOP.Attributes;
 using MCOP.Core.Common.Booru;
+using MCOP.Core.Services.Shared;
+using MCOP.Data;
+using MCOP.Exceptions;
+using MCOP.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
+using Serilog;
+using Serilog.Extensions.Logging;
 
 namespace MCOP;
 
@@ -25,17 +27,13 @@ public sealed class Bot
     public ConfigurationService Config => config ?? throw new BotUninitializedException();
     public DiscordClient Client => client ?? throw new BotUninitializedException();
     public InteractivityExtension Interactivity => interactivity ?? throw new BotUninitializedException();
-    public CommandsNextExtension CNext => cnext ?? throw new BotUninitializedException();
-    public SlashCommandsExtension CSlash => cslash ?? throw new BotUninitializedException();
-    public IReadOnlyDictionary<string, Command> Commands => commands ?? throw new BotUninitializedException();
+    public CommandsExtension CommandsEx => cnext ?? throw new BotUninitializedException();
 
     private readonly ConfigurationService? config;
     private DiscordClient? client;
     private ServiceProvider? services;
     private InteractivityExtension? interactivity;
-    private SlashCommandsExtension? cslash;
-    private CommandsNextExtension? cnext;
-    private IReadOnlyDictionary<string, Command>? commands;
+    private CommandsExtension? cnext;
 
 
     public Bot(ConfigurationService cfg)
@@ -54,43 +52,35 @@ public sealed class Bot
     public async Task StartAsync()
     {
         Log.Information("Initializing the bot...");
-       
+
         client = SetupClient();
 
         services = SetupServices();
-        cnext = SetupCommands();
-        cslash = SetupSlashCommands();
-        UpdateCommandList();
+        cnext = await SetupCommands();
         interactivity = SetupInteractivity();
         EventListeners.Listeners.RegisterEvents(this);
         await Client.ConnectAsync();
     }
 
-    public void UpdateCommandList()
-    {
-        commands = CNext.GetRegisteredCommands()
-            .Where(cmd => cmd.Parent is null)
-            .SelectMany(cmd => cmd.Aliases.Select(alias => (alias, cmd)).Concat(new[] { (cmd.Name, cmd) }))
-            .ToDictionary(tup => tup.Item1, tup => tup.cmd);
-    }
-
-
     private DiscordClient SetupClient()
     {
-        var cfg = new DiscordConfiguration {
+        var cfg = new DiscordConfiguration
+        {
             Token = Config.CurrentConfiguration.Token,
             TokenType = TokenType.Bot,
             AutoReconnect = true,
             LargeThreshold = 500,
             ShardCount = 1,
             LoggerFactory = new SerilogLoggerFactory(dispose: true),
-            Intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents,
+            Intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents
+            | TextCommandProcessor.RequiredIntents | SlashCommandProcessor.RequiredIntents,
             LogUnknownEvents = false,
         };
 
         var client = new DiscordClient(cfg);
-        client.Ready += (s, e) => {
-            Log.Information("Client ready!");
+        client.SessionCreated += (s, e) =>
+        {
+            Log.Information("SessionCreated!");
             return Task.CompletedTask;
         };
 
@@ -130,7 +120,7 @@ public sealed class Bot
             client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
         }).AddPolicyHandler(retryPolicy);
 
-        services.AddSingleton(provider => 
+        services.AddSingleton(provider =>
         {
             var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
             Sankaku sankaku = new Sankaku(httpClientFactory.CreateClient("sankaku"));
@@ -156,49 +146,42 @@ public sealed class Bot
         return provider;
     }
 
-    private SlashCommandsExtension SetupSlashCommands()
+    private async Task<CommandsExtension> SetupCommands()
     {
-        var slCfg = new SlashCommandsConfiguration
-        {
-            Services = this.Services,
-        };
-
-        SlashCommandsExtension slash = Client.UseSlashCommands(slCfg);
-        var assembly = Assembly.GetExecutingAssembly();
-        // slash.RegisterCommands<ApplicationCommandModule>(323487778220277761);
-        // slash.RegisterCommands<ApplicationCommandModule>(226812644537925642);
-        // slash.RegisterCommands(assembly, 323487778220277761);
-        // slash.RegisterCommands(assembly, 226812644537925642);
-        slash.RegisterCommands(assembly);
-        return slash;
-    }
-
-    private CommandsNextExtension SetupCommands()
-    {
-        var cnCfg = new CommandsNextConfiguration {
-            CaseSensitive = false,
-            EnableDefaultHelp = true,
-            EnableDms = true,
-            EnableMentionPrefix = true,
-            IgnoreExtraArguments = false,
-            PrefixResolver = m => Task.FromResult(m.GetStringPrefixLength(Config.CurrentConfiguration.Prefix)),
-            Services = this.Services,
-        };
-
-        CommandsNextExtension cnext = Client.UseCommandsNext(cnCfg);
-
         Log.Information("Registering commands...");
-        var assembly = Assembly.GetExecutingAssembly();
 
-        cnext.RegisterCommands(assembly);
-        cnext.RegisterConverters(assembly);
+        CommandsExtension commandsExtensions = Client.UseCommands(new CommandsConfiguration()
+        {
+            ServiceProvider = Services,
+        });
 
-        return cnext;
+
+        TextCommandProcessor textCommandProcessor = new(new()
+        {
+            PrefixResolver = new DefaultPrefixResolver(Config.CurrentConfiguration.Prefix).ResolvePrefixAsync
+        });
+
+        SlashCommandProcessor slashCommandProcessor = new SlashCommandProcessor
+        {
+
+        };
+
+        textCommandProcessor.RegisterConverters();
+        slashCommandProcessor.RegisterConverters();
+
+        commandsExtensions.AddCommands(typeof(Program).Assembly);
+        commandsExtensions.AddCheck<RequireNsfwChannelAttributeCheck>();
+
+        await commandsExtensions.AddProcessorsAsync(textCommandProcessor);
+        await commandsExtensions.AddProcessorsAsync(slashCommandProcessor);
+
+        return commandsExtensions;
     }
 
     private InteractivityExtension SetupInteractivity()
     {
-        return Client.UseInteractivity(new InteractivityConfiguration {
+        return Client.UseInteractivity(new InteractivityConfiguration
+        {
             PaginationBehaviour = PaginationBehaviour.WrapAround,
             PaginationDeletion = PaginationDeletion.KeepEmojis,
             PaginationEmojis = new PaginationEmojis(),

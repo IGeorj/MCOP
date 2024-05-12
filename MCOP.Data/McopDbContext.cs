@@ -1,13 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MCOP.Data.Models;
+﻿using MCOP.Data.Models;
 using MCOP.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace MCOP.Data
 {
     public class McopDbContext : DbContext
     {
         public virtual DbSet<Guild> Guilds { get; protected set; }
-        public virtual DbSet<User> Users{ get; protected set; }
+        public virtual DbSet<User> Users { get; protected set; }
         public virtual DbSet<GuildUser> GuildUsers { get; protected set; }
         public virtual DbSet<GuildUserStat> GuildUserStats { get; protected set; }
         public virtual DbSet<GuildConfig> GuildConfigs { get; protected set; }

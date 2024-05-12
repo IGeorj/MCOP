@@ -1,5 +1,4 @@
-﻿using MCOP.Data;
-using MCOP.Utils;
+﻿using MCOP.Utils;
 using Newtonsoft.Json;
 using Serilog;
 using Serilog.Events;

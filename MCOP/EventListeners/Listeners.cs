@@ -19,11 +19,8 @@ internal static partial class Listeners
         bot.Client.UnknownEvent += UnknownEventHandler;
         bot.Client.UserUpdated += UserUpdatedEventHandler;
         bot.Client.UserSettingsUpdated += UserSettingsUpdatedEventHandler;
-        bot.CNext.CommandExecuted += CommandExecutionEventHandler;
-        bot.CNext.CommandErrored += CommandErrorEventHandler;
-        bot.CSlash.SlashCommandInvoked += SlashCommandInvokedEventHandler;
-        bot.CSlash.SlashCommandExecuted += SlashCommandExecutionEventHandler;
-        bot.CSlash.SlashCommandErrored += SlashCommandErrorEventHandler;
+        bot.CommandsEx.CommandExecuted += CommandExecutionEventHandler;
+        bot.CommandsEx.CommandErrored += CommandErrorEventHandler;
         bot.Client.MessageCreated += MessageCreateEventHandler;
         bot.Client.MessageDeleted += MessageDeleteEventHandler;
         bot.Client.MessageUpdated += MessageUpdatedEventHandler;

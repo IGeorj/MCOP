@@ -1,9 +1,8 @@
-﻿using MCOP.Services;
+﻿using DSharpPlus;
 using DSharpPlus.EventArgs;
+using MCOP.Core.Services.Scoped;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using DSharpPlus;
-using MCOP.Core.Services.Scoped;
 
 namespace MCOP.EventListeners;
 

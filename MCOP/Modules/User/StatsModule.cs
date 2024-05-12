@@ -1,24 +1,23 @@
-﻿using DSharpPlus;
+﻿using DSharpPlus.Commands;
 using DSharpPlus.Entities;
-using DSharpPlus.SlashCommands;
-using DSharpPlus.SlashCommands.Attributes;
 using MCOP.Core.Services.Scoped;
 using MCOP.Core.ViewModels;
 using MCOP.Data.Models;
 using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using System.ComponentModel;
 using System.Text;
 
 namespace MCOP.Modules.User
 {
-    [SlashCooldown(2, 5, SlashCooldownBucketType.Channel)]
-    public sealed class StatsModule : ApplicationCommandModule
+    public sealed class StatsModule
     {
-        [SlashCommand("stats", "Показывает статистику")]
-        public async Task Stats(InteractionContext ctx,
-        [Option("user", "Пользователь")] DiscordUser? user = null)
+        [Command("stats")]
+        [Description("Показывает статистику")]
+        public async Task Stats(CommandContext ctx,
+        [Description("Пользователь")] DiscordUser? user = null)
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferResponseAsync();
 
             var member = user is null ? ctx.Member : user as DiscordMember;
             if (member is null)
@@ -27,7 +26,7 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            UserStatsService statsService = ctx.Services.GetRequiredService<UserStatsService>();
+            UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
             GuildUserStat stats = await statsService.GetOrAddAsync(ctx.Guild.Id, member.Id);
 
             var embed = new DiscordEmbedBuilder()
@@ -40,12 +39,13 @@ namespace MCOP.Modules.User
         }
 
 
-        [SlashCommand("top", "Топ 5 сервера")]
-        public async Task StatsTop(InteractionContext ctx)
+        [Command("top")]
+        [Description("Топ 5 сервера")]
+        public async Task StatsTop(CommandContext ctx)
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferResponseAsync();
 
-            UserStatsService statsService = ctx.Services.GetRequiredService<UserStatsService>();
+            UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
             ServerTopVM serverTop = await statsService.GetServerTopAsync(ctx.Guild.Id);
 
             StringBuilder topLikes = new();

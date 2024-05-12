@@ -1,11 +1,11 @@
 ﻿using DSharpPlus.Entities;
+using MCOP.Core.Services.Booru;
+using MCOP.Core.Services.Scoped;
+using MCOP.Core.Services.Shared;
+using MCOP.Core.Services.Shared.Common;
+using MCOP.Data.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using MCOP.Core.Services.Shared.Common;
-using MCOP.Core.Services.Booru;
-using MCOP.Core.Services.Shared;
-using MCOP.Data.Models;
-using MCOP.Core.Services.Scoped;
 
 namespace MCOP.Services;
 
@@ -14,15 +14,18 @@ public sealed class PeriodicTasksService : IDisposable
     #region Callbacks
     private static void BotActivityChangeCallback(object? _)
     {
-        if (_ is Bot bot) {
-            if (bot.Client is null || bot.Client.CurrentUser is null) {
+        if (_ is Bot bot)
+        {
+            if (bot.Client is null || bot.Client.CurrentUser is null)
+            {
                 Log.Error("BotActivityChangeCallback detected null client/user - this should not happen but is not nececarily an error");
                 return;
             }
 
             ActivityService bas = bot.Services.GetRequiredService<ActivityService>();
 
-            try {
+            try
+            {
                 AsyncExecutionService async = bot.Services.GetRequiredService<AsyncExecutionService>();
                 BotStatus? status = async.Execute(bas.GetRandomStatusAsync());
                 if (status is null)
@@ -30,27 +33,34 @@ public sealed class PeriodicTasksService : IDisposable
 
                 DiscordActivity activity = status is { }
                     ? new DiscordActivity(status.Status, status.Activity)
-                    : new DiscordActivity($"Происходит тестирование", ActivityType.Playing);
+                    : new DiscordActivity($"Происходит тестирование", DiscordActivityType.Playing);
 
                 async.Execute(bot.Client!.UpdateStatusAsync(activity));
                 Log.Information("Changed bot status to {ActivityType} {ActivityName}", activity.ActivityType, activity.Name);
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Log.Error(e, "An error occured during activity change");
             }
-        } else {
+        }
+        else
+        {
             Log.Error("BotActivityChangeCallback failed to cast sender");
         }
     }
 
     private static async void DailyTopCallback(object? _)
     {
-        if (_ is Bot bot) {
-            if (bot.Client is null) {
+        if (_ is Bot bot)
+        {
+            if (bot.Client is null)
+            {
                 Log.Error("BaseCallback detected null client - this should not happen");
                 return;
             }
 
-            try {
+            try
+            {
                 SankakuService sankaku = bot.Services.GetRequiredService<SankakuService>();
                 GuildService guildService = bot.Services.GetRequiredService<GuildService>();
                 var guildConfigs = await guildService.GetGuildConfigsWithLewdChannelAsync();
@@ -72,10 +82,14 @@ public sealed class PeriodicTasksService : IDisposable
                 }
                 await sankaku.SendDailyTopToChannelsAsync(channels);
 
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Log.Error(e, "An error occured during BaseCallback timer callback");
             }
-        } else {
+        }
+        else
+        {
             Log.Error("BaseCallback failed to cast sender");
         }
     }

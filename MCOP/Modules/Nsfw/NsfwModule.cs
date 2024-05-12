@@ -1,23 +1,24 @@
-﻿using DSharpPlus;
+﻿using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
+using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
-using DSharpPlus.SlashCommands;
-using DSharpPlus.SlashCommands.Attributes;
-using MCOP.Attributes.SlashCommands;
+using MCOP.Attributes;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Booru;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
 using Serilog;
+using System.ComponentModel;
 
 namespace MCOP.Modules.Nsfw
 {
-    [SlashCommandGroup("nsfw", "18+ комманды")]
-    [SlashRequireNsfw]
-    [SlashCooldown(1, 5, SlashCooldownBucketType.User)]
-    public sealed class NsfwModule : ApplicationCommandModule
+    [Command("nsfw")]
+    [Description("18+ комманды")]
+    [RequireNsfwChannel]
+    public sealed class NsfwModule
     {
         public SankakuService Sankaku { get; set; }
         public E621Service E621 { get; set; }
@@ -32,38 +33,38 @@ namespace MCOP.Modules.Nsfw
             GuildService = guildService;
         }
 
-        [SlashCommand("lewd", "Скидывает рандомную 18+ аниме картику")]
-        public async Task Lewd(InteractionContext ctx,
-            [Maximum(5)][Option("amount", "Кол-во картинок за раз. Максимум - 5 шт.")] long amount = 1,
-            [Option("tags", "Пример: genshin_impact female")] string tags = "")
+        [Command("lewd")]
+        [Description("Скидывает рандомную 18+ аниме картику")]
+        public async Task Lewd(CommandContext ctx,
+            [MinMaxValue(1, 5)][Description("Кол-во картинок за раз. Максимум - 5 шт.")] int amount = 1,
+            [Description("Пример: genshin_impact female")] string tags = "")
         {
-            await ctx.DeferAsync(true);
+            await ctx.DeferResponseAsync();
 
             try
             {
                 SearchResult searchResult = await Sankaku.GetRandomSearchResultAsync(tags: tags);
 
                 var posts = searchResult.ToBooruPosts();
-                int take = (int)amount;
 
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Скамлю сайт на картиночки..."));
 
-                for (int i = 0; i < posts.Count; i += take)
+                for (int i = 0; i < posts.Count; i += amount)
                 {
-                    foreach (var post in posts.GetRange(i, Math.Min(take, posts.Count - i)))
+                    foreach (var post in posts.GetRange(i, Math.Min(amount, posts.Count - i)))
                     {
                         var booruMessage = await Sankaku.SendBooruPostAsync(ctx.Channel, post);
                         _ = CreateDeleteReactionAsync(ctx, booruMessage);
                     }
 
                     var nextButton = new DiscordButtonComponent(
-                        ButtonStyle.Success,
+                        DiscordButtonStyle.Success,
                         "lewd_next_button",
                         "Дальше",
                         false);
 
                     var cancelButton = new DiscordButtonComponent(
-                        ButtonStyle.Danger,
+                        DiscordButtonStyle.Danger,
                         "lewd_cancel_button",
                         "Отмена",
                         false);
@@ -117,16 +118,17 @@ namespace MCOP.Modules.Nsfw
 
         }
 
-        [SlashCommand("furry", "Скидывает рандомную 18+ фурри картику")]
-        public async Task Furry(InteractionContext ctx,
-            [Maximum(5)][Option("amount", "Кол-во картинок за раз. Максимум - 5 шт.")] long amount = 1,
-            [Option("tags", "Пример: black_nose female")] string tags = "")
+        [Command("furry")]
+        [Description("Скидывает рандомную 18+ фурри картику")]
+        public async Task Furry(CommandContext ctx,
+            [MinMaxValue(1, 5)][Description("Кол-во картинок за раз. Максимум - 5 шт.")] int amount = 1,
+            [Description("Пример: black_nose female")] string tags = "")
         {
-            await ctx.DeferAsync();
+            await ctx.DeferResponseAsync();
 
             try
             {
-                (List<DiscordMessage>, string?) result = await E621.SendRandomImagesAsync(ctx.Channel, (int)amount, tags);
+                (List<DiscordMessage>, string?) result = await E621.SendRandomImagesAsync(ctx.Channel, amount, tags);
 
                 foreach (var item in result.Item1)
                 {
@@ -143,17 +145,18 @@ namespace MCOP.Modules.Nsfw
         }
 
 
-        [SlashCommand("gif", "Скидывает рандомную 18+ аниме гифку")]
-        public async Task Gif(InteractionContext ctx,
-            [Maximum(5)][Option("amount", "Кол-во гифок за раз. Максимум - 5 шт.")] long amount = 1,
-            [Option("tags", "Пример: genshin_impact female")] string tags = "")
+        [Command("gif")]
+        [Description("Скидывает рандомную 18+ аниме гифку")]
+        public async Task Gif(CommandContext ctx,
+            [MinMaxValue(1, 5)][Description("Кол-во гифок за раз. Максимум - 5 шт.")] int amount = 1,
+            [Description("Пример: genshin_impact female")] string tags = "")
         {
-            await ctx.DeferAsync();
+            await ctx.DeferResponseAsync();
 
             tags += " animated_gif";
             try
             {
-                (List<DiscordMessage>, string?) result = await Gelbooru.SendRandomImagesAsync(ctx.Channel, (int)amount, tags);
+                (List<DiscordMessage>, string?) result = await Gelbooru.SendRandomImagesAsync(ctx.Channel, amount, tags);
 
                 foreach (var item in result.Item1)
                 {
@@ -170,17 +173,18 @@ namespace MCOP.Modules.Nsfw
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Держи свои картиночки"));
         }
 
-        [SlashRequireOwner]
-        [SlashCommand("daily-top", "Скидывает ежедневный топ картинок")]
-        public async Task LewdTop(InteractionContext ctx,
-            [Maximum(80)][Option("amount", "Кол-во картинок за раз. Максимум - 80 шт.")] long amount = 80,
-            [Option("days", "Сколько дней назад (по умолчанию - 1)")] long days = 1)
+        [RequireApplicationOwner]
+        [Command("daily-top")]
+        [Description("Скидывает ежедневный топ картинок")]
+        public async Task LewdTop(CommandContext ctx,
+            [MinMaxValue(1, 80)][Description("Кол-во картинок за раз. Максимум - 80 шт.")] int amount = 80,
+            [Description("Сколько дней назад (по умолчанию - 1)")] long days = 1)
         {
-            await ctx.DeferAsync();
+            await ctx.DeferResponseAsync();
 
             try
             {
-                List<DiscordMessage> messages = await Sankaku.SendDailyTopToChannelsAsync(new List<DiscordChannel> { ctx.Channel }, (int)amount, daysShift: (int)days);
+                List<DiscordMessage> messages = await Sankaku.SendDailyTopToChannelsAsync(new List<DiscordChannel> { ctx.Channel }, amount, daysShift: (int)days);
 
             }
             catch (Exception e)
@@ -192,20 +196,21 @@ namespace MCOP.Modules.Nsfw
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Держи свои картиночки"));
         }
 
-        [SlashRequireUserPermissions(Permissions.Administrator)]
-        [SlashCommand("set-daily-channel", "Устанавливает канал для ежедневного топа")]
-        public async Task SetLewdChannel(InteractionContext ctx)
+        [RequirePermissions(DiscordPermissions.Administrator)]
+        [Command("set-daily-channel")]
+        [Description("Устанавливает канал для ежедневного топа")]
+        public async Task SetLewdChannel(CommandContext ctx)
         {
-            await ctx.DeferAsync();
+            await ctx.DeferResponseAsync();
             await GuildService.SetLewdChannelAsync(ctx.Guild.Id, ctx.Channel.Id);
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Успешно! Дневной топ будет высылаться сюда в <t:1672592400:t>"));
         }
 
-        [SlashRequireOwner]
-        [SlashCommand("send-daily", "Отправляет ежедневные на все сервера")]
-        public async Task SendDaily(InteractionContext ctx)
+        [RequireApplicationOwner]
+        [Command("send-daily")]
+        public async Task SendDaily(CommandContext ctx)
         {
-            await ctx.DeferAsync();
+            await ctx.DeferResponseAsync();
 
             var guildConfigs = await GuildService.GetGuildConfigsWithLewdChannelAsync();
             List<DiscordChannel> channels = new List<DiscordChannel>();
@@ -230,7 +235,7 @@ namespace MCOP.Modules.Nsfw
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(string.Join(",", channels)));
         }
 
-        private static async Task CreateDeleteReactionAsync(InteractionContext ctx, DiscordMessage message)
+        private static async Task CreateDeleteReactionAsync(CommandContext ctx, DiscordMessage message)
         {
             var removeEmoji = DiscordEmoji.FromName(ctx.Client, ":no_entry_sign:");
 

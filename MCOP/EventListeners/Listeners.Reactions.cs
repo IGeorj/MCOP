@@ -11,7 +11,7 @@ namespace MCOP.EventListeners
     {
         public static async Task MessageReactionAddedEventHandler(DiscordClient client, MessageReactionAddEventArgs e)
         {
-            if (e.Guild is null || e.Channel is null || e.Message is null 
+            if (e.Guild is null || e.Channel is null || e.Message is null
                 || e.User.IsBot || e.Emoji.GetDiscordName() != ":heart:")
             {
                 return;

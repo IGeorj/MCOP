@@ -20,9 +20,12 @@ internal static class StringExtensions
             pattern = $"{(char.IsLetterOrDigit(pattern[0]) ? @"\b" : @"(^|\s)")}({pattern}){(char.IsLetterOrDigit(pattern[^1]) ? @"\b" : @"($|\s)")}";
 
 
-        try {
+        try
+        {
             regex = new Regex(pattern, options);
-        } catch (ArgumentException) {
+        }
+        catch (ArgumentException)
+        {
             return false;
         }
 
@@ -54,9 +57,11 @@ internal static class StringExtensions
             ;
 
         // Step 3
-        for (int i = 1; i <= n; i++) {
+        for (int i = 1; i <= n; i++)
+        {
             //Step 4
-            for (int j = 1; j <= m; j++) {
+            for (int j = 1; j <= m; j++)
+            {
                 // Step 5
                 int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
 

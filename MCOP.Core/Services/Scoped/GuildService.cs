@@ -1,12 +1,8 @@
-﻿using DSharpPlus.Entities;
-using MCOP.Core.Common;
-using MCOP.Core.Exceptions;
-using MCOP.Core.Services.Shared.Common;
+﻿using MCOP.Core.Exceptions;
 using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace MCOP.Core.Services.Scoped
 {

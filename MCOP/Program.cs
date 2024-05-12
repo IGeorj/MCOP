@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
-using System.Reflection;
-using MCOP.Core.Services.Shared;
+﻿using MCOP.Core.Services.Shared;
 using MCOP.Data;
 using MCOP.Extensions;
 using MCOP.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace MCOP;
 
@@ -30,7 +30,8 @@ internal static class Program
     {
         PrintBuildInformation();
 
-        try {
+        try
+        {
             ConfigurationService cfg = await LoadBotConfigAsync();
             Log.Logger = LogExt.CreateLogger(cfg.CurrentConfiguration);
             Log.Information("Logger created.");
@@ -41,12 +42,18 @@ internal static class Program
             Log.Information("Booting complete!");
 
             await Task.Delay(Timeout.Infinite);
-        } catch (TaskCanceledException) {
+        }
+        catch (TaskCanceledException)
+        {
             Log.Information("Shutdown signal received!");
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             Log.Fatal(e, "Critical exception occurred");
             Environment.ExitCode = 1;
-        } finally {
+        }
+        finally
+        {
             await DisposeAsync();
         }
 
@@ -85,7 +92,8 @@ internal static class Program
     private static async Task InitializeDatabaseAsync(ConfigurationService cfg)
     {
         Log.Information("Testing database context creation");
-        using (McopDbContext db = new McopDbContext()) {
+        using (McopDbContext db = new McopDbContext())
+        {
             IEnumerable<string> pendingMigrations = await db.Database.GetPendingMigrationsAsync();
             await db.Database.MigrateAsync();
         }

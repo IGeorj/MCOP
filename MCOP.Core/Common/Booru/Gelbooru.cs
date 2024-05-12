@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
 using Serilog;
-using System.Collections.Concurrent;
 
 namespace MCOP.Core.Common.Booru
 {

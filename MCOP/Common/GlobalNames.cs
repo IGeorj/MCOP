@@ -1,8 +1,4 @@
-﻿using System.Collections.Immutable;
-using DSharpPlus.Entities;
-using MCOP.Core.Common;
-
-namespace MCOP.Common;
+﻿namespace MCOP.Common;
 
 public static class GlobalNames
 {

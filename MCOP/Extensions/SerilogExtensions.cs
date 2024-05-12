@@ -20,7 +20,8 @@ internal static class LogExt
             .WriteTo.Console(outputTemplate: template)
             ;
 
-        if (cfg.LogToFile) {
+        if (cfg.LogToFile)
+        {
             lcfg = lcfg.WriteTo.File(
                 cfg.LogPath,
                 cfg.LogLevel,

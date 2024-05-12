@@ -18,7 +18,7 @@ internal static partial class Listeners
             return;
         }
 
-        if (e.Guild.Id == GlobalVariables.McopServerId &&  e.Message.Content.Contains("@everyone"))
+        if (e.Guild.Id == GlobalVariables.McopServerId && e.Message.Content.Contains("@everyone"))
         {
             var member = e.Author as DiscordMember;
             if (member is not null && !member.IsAdmin())
@@ -34,8 +34,20 @@ internal static partial class Listeners
                     .AddField("Канал", $"<#{e.Channel.Id}>")
                     .AddField("Сообщение", e.Message.Content);
 
-                await e.Guild.PublicUpdatesChannel.SendMessageAsync(embed.Build());
-                await member.GrantRoleAsync(e.Guild.GetRole(622772942761361428)); // САСЁШЬ
+                DiscordChannel? publicChannel = await e.Guild.GetPublicUpdatesChannelAsync();
+
+                if (publicChannel is not null)
+                {
+                    await publicChannel.SendMessageAsync(embed.Build());
+                }
+
+                // САСЁШЬ
+                DiscordRole? role = e.Guild.GetRole(622772942761361428);
+
+                if (role is not null)
+                {
+                    await member.GrantRoleAsync(role);
+                }
             }
         }
         // TODO: remove hardcoded channels
@@ -43,7 +55,7 @@ internal static partial class Listeners
         var mcopNsfwChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 539145624868749327;
         var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
 
-        if ((mcopNsfwChannel || mcopLewdChannel) && e.Message.Attachments.Count > 0)
+        if ((mcopNsfwChannel || mcopLewdChannel || gaysAdminChannel) && e.Message.Attachments.Count > 0)
         {
             await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
         }
@@ -85,16 +97,16 @@ internal static partial class Listeners
                         .WithThumbnail(attachemnt.Url);
 
                         DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
-                        .WithEmbed(embedBuilder)
+                        .AddEmbed(embedBuilder)
                         .AddComponents(new DiscordComponent[]
                         {
                             new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
                             new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
                             new DiscordButtonComponent(
-                                ButtonStyle.Success, 
+                                DiscordButtonStyle.Success,
                                 GlobalNames.Buttons.RemoveMessage + $"UID:{e.Author.Id}",
                                 "Понял",
-                                false, 
+                                false,
                                 new DiscordComponentEmoji(DiscordEmoji.FromName(client, ":heavy_check_mark:" ))),
                         });
                         await e.Channel.SendMessageAsync(messageBuilder);
@@ -163,7 +175,7 @@ internal static partial class Listeners
 
     public static async Task ComponentInteractionCreatedEventHandler(DiscordClient client, ComponentInteractionCreateEventArgs e)
     {
-        await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+        await e.Interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredMessageUpdate);
 
         if (e.Id.StartsWith(GlobalNames.Buttons.RemoveMessage))
         {

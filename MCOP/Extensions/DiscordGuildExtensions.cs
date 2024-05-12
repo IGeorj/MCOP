@@ -11,9 +11,12 @@ internal static class DiscordGuildExtensions
 
     public static async Task<DiscordMember?> GetMemberSilentAsync(this DiscordGuild guild, ulong uid)
     {
-        try {
+        try
+        {
             return await guild.GetMemberAsync(uid);
-        } catch (NotFoundException) {
+        }
+        catch (NotFoundException)
+        {
             Log.Information("GetMemberSilentAsync failed uid: {uid}", uid);
             return null;
         }

@@ -1,6 +1,6 @@
-﻿using System.Collections.Immutable;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 using MCOP.Core.Common;
+using System.Collections.Immutable;
 
 namespace MCOP.Common;
 

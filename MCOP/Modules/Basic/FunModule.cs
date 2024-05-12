@@ -1,21 +1,17 @@
-﻿using DSharpPlus;
+﻿using DSharpPlus.Commands;
+using DSharpPlus.Commands.ArgumentModifiers;
+using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
-using DSharpPlus.SlashCommands;
-using DSharpPlus.SlashCommands.Attributes;
-using MCOP.Common;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Scoped;
-using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.ComponentModel;
 
 namespace MCOP.Modules.Basic
 {
-    [SlashCooldown(1, 3, SlashCooldownBucketType.Channel)]
-    public sealed class FunModule : ApplicationCommandModule
+    public sealed class FunModule
     {
         private static readonly Dictionary<string, string> _nouns = new()
         {
@@ -36,24 +32,23 @@ namespace MCOP.Modules.Basic
                 {"бипки", "Да кто такие эти ваши бипки"},
             };
 
-        [SlashRequirePermissions(Permissions.Administrator)]
-        [SlashCommand("test", "Проверка бота на ответ")]
-        public async Task Test(InteractionContext ctx)
+        [RequirePermissions(DiscordPermissions.Administrator)]
+        [Command("test")]
+        [Description("Проверка бота на ответ")]
+        public async Task Test(CommandContext ctx)
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferResponseAsync();
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
         }
 
-        [SlashRequirePermissions(Permissions.Administrator)]
-        [SlashCommand("emoji-to-message", "Бот оставит емодзи на сообщение")]
-        public async Task EmojiToMessage(InteractionContext ctx,
-            [Option("messageId", "Message ID")] string messageId)
+        [RequirePermissions(DiscordPermissions.Administrator)]
+        [Command("emoji-to-message")]
+        [Description("Бот оставит емодзи на сообщение")]
+        public async Task EmojiToMessage(CommandContext ctx,
+            [Description("Message ID")] string messageId)
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource, new DiscordInteractionResponseBuilder
-            {
-                IsEphemeral = true,
-            });
+            await ctx.DeferResponseAsync();
 
             ulong ulongMessageId = ulong.Parse(messageId);
 
@@ -64,16 +59,14 @@ namespace MCOP.Modules.Basic
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
         }
 
-        [SlashRequireOwner]
-        [SlashCommand("hash", "Хеширует изображение из сообщения")]
-        public async Task Hash(InteractionContext ctx,
-            [Option("messageId", "Message ID")] string messageId)
+        [RequireApplicationOwner]
+        [Command("hash")]
+        [Description("Хеширует изображение из сообщения")]
+        public async Task Hash(CommandContext ctx,
+            [Description("Message ID")] string messageId)
         {
             ulong ulongMessageId = ulong.Parse(messageId);
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource, new DiscordInteractionResponseBuilder
-            {
-                IsEphemeral = true,
-            });
+            await ctx.DeferResponseAsync();
 
             int count = 0;
             DiscordMessage message;
@@ -81,7 +74,7 @@ namespace MCOP.Modules.Basic
 
             try
             {
-                var hashService = ctx.Services.GetRequiredService<ImageHashService>();
+                var hashService = ctx.ServiceProvider.GetRequiredService<ImageHashService>();
                 message = await ctx.Channel.GetMessageAsync(ulongMessageId);
                 hashes = await hashService.GetHashesFromMessageAsync(message);
 
@@ -111,12 +104,13 @@ namespace MCOP.Modules.Basic
 
 
 
-        [SlashCommand("duel", "Дуель за таймач")]
-        public async Task Duel(InteractionContext ctx,
-            [Option("user", "Кому кидаем дуель")] DiscordUser? user = null,
-            [Minimum(20)][Maximum(80)][Option("minutes", "20 - 80 минут, по умолчанию рандомит")] long? timeout = null)
+        [Command("duel")]
+        [Description("Дуель за таймач")]
+        public async Task Duel(CommandContext ctx,
+            [Description("Кому кидаем дуель")] DiscordUser? user = null,
+            [MinMaxValue(20, 80)][Description("20 - 80 минут, по умолчанию рандомит")] int? timeout = null)
         {
-            await ctx.CreateResponseAsync(InteractionResponseType.DeferredChannelMessageWithSource);
+            await ctx.DeferResponseAsync();
 
             try
             {
@@ -137,7 +131,7 @@ namespace MCOP.Modules.Basic
                     .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);
 
                 var duelButton = new DiscordButtonComponent(
-                    ButtonStyle.Primary,
+                    DiscordButtonStyle.Primary,
                     "duel_button",
                     null,
                     false,
@@ -240,7 +234,7 @@ namespace MCOP.Modules.Basic
                 embed.AddField("Победитель", winnerLoser.Item1.DisplayName);
 
 
-                UserStatsService statsService = ctx.Services.GetRequiredService<UserStatsService>();
+                UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
                 await statsService.ChangeWinAsync(ctx.Guild.Id, winnerLoser.Item1.Id, 1);
                 await statsService.ChangeLoseAsync(ctx.Guild.Id, winnerLoser.Item2.Id, 1);
 
@@ -263,7 +257,7 @@ namespace MCOP.Modules.Basic
             {
                 throw;
             }
-            
+
         }
     }
 }

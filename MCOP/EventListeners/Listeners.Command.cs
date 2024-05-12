@@ -1,34 +1,28 @@
-﻿using System.Reflection;
-using MCOP.Common;
-using MCOP.Exceptions;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Exceptions;
+﻿using DSharpPlus.Commands;
+using DSharpPlus.Commands.EventArgs;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
+using MCOP.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using DSharpPlus.SlashCommands.EventArgs;
-using DSharpPlus.SlashCommands;
-using MCOP.Attributes.SlashCommands;
-using DSharpPlus.SlashCommands.Attributes;
-
+using System.Reflection;
 namespace MCOP.EventListeners;
 
 internal static partial class Listeners
 {
-    public static Task CommandExecutionEventHandler(CommandsNextExtension cNext, CommandExecutionEventArgs e)
+    public static Task CommandExecutionEventHandler(CommandsExtension commandEx, CommandExecutedEventArgs e)
     {
-        if (e.Command is null || e.Command.QualifiedName.StartsWith("help"))
+        if (e.CommandObject is null || e.Context.Command.Name.StartsWith("help"))
             return Task.CompletedTask;
 
         Log.Information(
             "Executed: {ExecutedCommand} {User} {Guild} {Channel}",
-            e.Command.QualifiedName, e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
+            e.Context.Command.Name, e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
         );
         return Task.CompletedTask;
     }
 
-    public static async Task CommandErrorEventHandler(CommandsNextExtension cNext, CommandErrorEventArgs e)
+    public static async Task CommandErrorEventHandler(CommandsExtension commandEx, CommandErroredEventArgs e)
     {
         if (e.Exception is null)
             return;
@@ -39,22 +33,20 @@ internal static partial class Listeners
 
         Log.Error(
             "Command errored ({ExceptionName}): {ErroredCommand} {User} {Guild} {Channel}",
-            e.Exception?.GetType().Name ?? "Unknown", e.Command?.QualifiedName ?? "Unknown",
+            e.Exception?.GetType().Name ?? "Unknown", e.Context.Command?.Name ?? "Unknown",
             e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
         );
 
-        var emb = new DiscordEmbedBuilder() {
+        var emb = new DiscordEmbedBuilder()
+        {
             Title = "ОШИБОЧНАЯ!",
-            Description = e.Command?.QualifiedName ?? "",
+            Description = e.Context.Command?.Name ?? "",
             Color = DiscordColor.Red,
         };
 
-        switch (ex) {
-            case ChecksFailedException _:
+        switch (ex)
+        {
             case TaskCanceledException:
-                return;
-            case CommandNotFoundException:
-                await e.Context.Message.CreateReactionAsync(Emojis.Question);
                 return;
             case UnauthorizedException _:
                 emb.WithDescription("403");
@@ -72,76 +64,4 @@ internal static partial class Listeners
 
         await e.Context.RespondAsync(embed: emb.Build());
     }
-
-    public static Task SlashCommandInvokedEventHandler(SlashCommandsExtension sNext, SlashCommandInvokedEventArgs e)
-    {
-        Log.Information(
-            "Slash Invoked: {ExecutedCommand} {User} {Guild} {Channel}",
-            e.Context.CommandName, e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
-        );
-        return Task.CompletedTask;
-    }
-
-    public static Task SlashCommandExecutionEventHandler(SlashCommandsExtension sNext, SlashCommandExecutedEventArgs e)
-    {
-        Log.Information(
-            "Slash Executed: {ExecutedCommand} {User} {Guild} {Channel}",
-            e.Context.CommandName, e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
-        );
-        return Task.CompletedTask;
-    }
-
-    public static async Task SlashCommandErrorEventHandler(SlashCommandsExtension sNext, SlashCommandErrorEventArgs e)
-    {
-        if (e.Exception is null)
-            return;
-
-        Exception ex = e.Exception;
-        while (ex is AggregateException or TargetInvocationException && ex.InnerException is { })
-            ex = ex.InnerException;
-
-        string error = "";
-
-        switch (ex)
-        {
-            case SlashExecutionChecksFailedException slex:
-                foreach (var check in slex.FailedChecks)
-                {
-                    if (check is SlashRequireNsfwAttribute att)
-                        error += $"Команда доступна только в nsfw каналах. ";
-
-                    if (check is SlashCooldownAttribute cooldownAttribute)
-                    {
-                        DateTime time = DateTime.UtcNow;
-                        time += cooldownAttribute.Reset;
-
-                        error += $"Кулдаун между командами: <t:{((DateTimeOffset)time).ToUnixTimeSeconds()}:R>";
-                    }
-                }
-                break;
-            case TaskCanceledException:
-                return;
-            case UnauthorizedException _:
-                error = "403 Unauthorized";
-                Log.Error(ex, error);
-                break;
-            case DbUpdateException _:
-                error = "Database error";
-                Log.Error(ex, error);
-                return;
-            case CommandCancelledException:
-                return;
-            default:
-                error = "Unknown error";
-                Log.Error("Slash Errored ({ExceptionName}): {ErroredCommand} {User} {Guild} {Channel}",
-                    e.Exception?.GetType().Name ?? "Unknown", e.Context.CommandName,
-                    e.Context.User, e.Context.Guild?.ToString() ?? "DM", e.Context.Channel
-                );
-                break;
-        }
-        Log.Error(error);
-        Log.Error(ex.ToString());
-        await e.Context.Channel.SendMessageAsync(new DiscordMessageBuilder().WithContent(error));
-    }
-
 }

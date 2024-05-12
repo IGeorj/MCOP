@@ -1,5 +1,5 @@
 ﻿using DSharpPlus;
-using DSharpPlus.CommandsNext;
+using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 
 namespace MCOP.Modules.Owner.Common;
@@ -7,7 +7,7 @@ namespace MCOP.Modules.Owner.Common;
 public sealed class EvaluationEnvironment
 {
     public CommandContext Context { get; }
-    public DiscordMessage Message => Context.Message;
+    public IReadOnlyDictionary<ulong, DiscordMessage> FollowupMessages => Context.FollowupMessages;
     public DiscordChannel Channel => Context.Channel;
     public DiscordGuild Guild => Context.Guild;
     public DiscordUser User => Context.User;

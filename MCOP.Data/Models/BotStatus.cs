@@ -16,6 +16,6 @@ namespace MCOP.Data.Models
         public string Status { get; set; } = null!;
 
         [Required]
-        public ActivityType Activity { get; set; } = ActivityType.Playing;
+        public DiscordActivityType Activity { get; set; } = DiscordActivityType.Playing;
     }
 }

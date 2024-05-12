@@ -1,7 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Exceptions;
-using MCOP.Core.Services.Scoped;
 using MCOP.Core.Services.Shared;
 using MCOP.Utils.Interfaces;
 using Serilog;
@@ -41,7 +40,7 @@ namespace MCOP.Core.Services.Booru
                 {
                     message = await new DiscordMessageBuilder()
                         .AddFile($"{post.MD5}-temp.jpg", fstream2)
-                        .WithEmbed(embed)
+                        .AddEmbed(embed)
                         .SendAsync(channel);
                 }
 

@@ -1,5 +1,4 @@
-﻿using MCOP.Common;
-using MCOP.Core.Common;
+﻿using MCOP.Core.Common;
 
 namespace MCOP.Extensions;
 
@@ -25,7 +24,8 @@ internal static class EnumerableExtensions
     private static IEnumerable<T> ShuffleIterator<T>(this IEnumerable<T> source, SafeRandom rng)
     {
         var buffer = source.ToList();
-        for (int i = 0; i < buffer.Count; i++) {
+        for (int i = 0; i < buffer.Count; i++)
+        {
             int j = rng.Next(i, buffer.Count);
             yield return buffer[j];
 
