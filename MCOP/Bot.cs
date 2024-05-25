@@ -6,7 +6,6 @@ using DSharpPlus.Commands.Processors.TextCommands.Parsing;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
-using MCOP.Attributes;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Shared;
 using MCOP.Data;
@@ -170,7 +169,6 @@ public sealed class Bot
         slashCommandProcessor.RegisterConverters();
 
         commandsExtensions.AddCommands(typeof(Program).Assembly);
-        commandsExtensions.AddCheck<RequireNsfwChannelAttributeCheck>();
 
         await commandsExtensions.AddProcessorsAsync(textCommandProcessor);
         await commandsExtensions.AddProcessorsAsync(slashCommandProcessor);

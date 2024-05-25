@@ -55,7 +55,7 @@ public sealed class PeriodicTasksService : IDisposable
         {
             if (bot.Client is null)
             {
-                Log.Error("BaseCallback detected null client - this should not happen");
+                Log.Error("DailyTopCallback detected null client - this should not happen");
                 return;
             }
 
@@ -90,7 +90,7 @@ public sealed class PeriodicTasksService : IDisposable
         }
         else
         {
-            Log.Error("BaseCallback failed to cast sender");
+            Log.Error("DailyTopCallback failed to cast sender");
         }
     }
     #endregion

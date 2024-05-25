@@ -5,7 +5,6 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
-using MCOP.Attributes;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Booru;
 using MCOP.Core.Services.Scoped;
@@ -17,7 +16,7 @@ namespace MCOP.Modules.Nsfw
 {
     [Command("nsfw")]
     [Description("18+ комманды")]
-    [RequireNsfwChannel]
+    [RequireNsfw]
     public sealed class NsfwModule
     {
         public SankakuService Sankaku { get; set; }
