@@ -105,10 +105,10 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                var topByLikes = await _context.GuildUserStats.OrderByDescending(x => x.Likes).Take(5).ToListAsync();
-                var topDuels = await _context.GuildUserStats.OrderByDescending(x => x.DuelWin).Take(5).ToListAsync();
+                var topByLikes = await _context.GuildUserStats.OrderByDescending(x => x.Likes).Take(20).ToListAsync();
+                var topDuels = await _context.GuildUserStats.OrderByDescending(x => x.DuelWin).Take(20).ToListAsync();
                 var honorableMention = await _context.GuildUserStats.Where(x => x.GuildId == guildId)
-                    .OrderByDescending(u => u.DuelLose - u.DuelWin).FirstOrDefaultAsync();
+                    .OrderByDescending(u => u.DuelLose - u.DuelWin).Take(20).ToListAsync();
 
                 return new ServerTopVM
                 {

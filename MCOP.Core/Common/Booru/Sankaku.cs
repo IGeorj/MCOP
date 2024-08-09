@@ -132,7 +132,7 @@ namespace MCOP.Core.Common.Booru
                         tags.Add(new Tag
                         {
                             Id = tag["id"]?.Value<string>() ?? throw new Exception("Tag id token not found"),
-                            Name = tag["name"]?.Value<string>() ?? throw new Exception("Tag Name token not found"),
+                            Name = tag["tagName"]?.Value<string>() ?? throw new Exception("Tag Name token not found"),
                             Type = tag["type"]?.Value<int>() ?? throw new Exception("Tag type token not found")
                         });
                     }

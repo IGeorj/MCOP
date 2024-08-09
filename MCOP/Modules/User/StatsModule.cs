@@ -52,33 +52,55 @@ namespace MCOP.Modules.User
             StringBuilder topDuels = new();
             string kek = "5 дуелей минимум";
 
+            int topCounter = 0;
+            int maxTopCount = 5;
             foreach (var item in serverTop.TopLikedUser)
             {
+                if (topCounter >= maxTopCount)
+                {
+                    break;
+                }
+
                 DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
                 if (member != null)
                 {
+                    topCounter++;
                     topLikes.Append($"{member.DisplayName}\n:heart: {item.Likes}\n");
                 }
             }
 
+            topCounter = 0;
             foreach (var item in serverTop.TopDuelUser)
             {
+                if (topCounter >= maxTopCount)
+                {
+                    break;
+                }
+
                 DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
                 if (member != null)
                 {
+                    topCounter++;
                     topDuels.Append($"{member.DisplayName}\n:crossed_swords: {item.DuelWin} - {item.DuelLose}\n");
                 }
             }
 
-            if (serverTop.HonorableMention is not null)
+            topCounter = 0;
+            foreach (var item in serverTop.HonorableMention)
             {
-                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(serverTop.HonorableMention.UserId);
+                if (topCounter >= 1)
+                {
+                    break;
+                }
+
+                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
                 if (member != null)
                 {
-                    kek = $"{member.DisplayName}\n:crossed_swords: {serverTop.HonorableMention.DuelWin} - {serverTop.HonorableMention.DuelLose}";
+                    topCounter++;
+                    kek = $"{member.DisplayName}\n:crossed_swords: {item.DuelWin} - {item.DuelLose}";
+                    break;
                 }
             }
-
 
             var embed = new DiscordEmbedBuilder()
             .WithTitle("Топ пользователей")

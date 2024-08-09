@@ -6,6 +6,6 @@ namespace MCOP.Core.ViewModels
     {
         public List<GuildUserStat> TopLikedUser { get; set; } = new List<GuildUserStat>();
         public List<GuildUserStat> TopDuelUser { get; set; } = new List<GuildUserStat>();
-        public GuildUserStat? HonorableMention { get; set; } = new GuildUserStat();
+        public List<GuildUserStat> HonorableMention { get; set; } = new List<GuildUserStat>();
     }
 }
