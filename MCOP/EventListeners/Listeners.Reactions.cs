@@ -9,7 +9,7 @@ namespace MCOP.EventListeners
 {
     internal static partial class Listeners
     {
-        public static async Task MessageReactionAddedEventHandler(DiscordClient client, MessageReactionAddEventArgs e)
+        public static async Task MessageReactionAddedEventHandler(DiscordClient client, MessageReactionAddedEventArgs e)
         {
             if (e.Guild is null || e.Channel is null || e.Message is null
                 || e.User.IsBot || e.Emoji.GetDiscordName() != ":heart:")
@@ -32,7 +32,7 @@ namespace MCOP.EventListeners
             }
         }
 
-        public static async Task MessageReactionRemovedEventHandler(DiscordClient client, MessageReactionRemoveEventArgs e)
+        public static async Task MessageReactionRemovedEventHandler(DiscordClient client, MessageReactionRemovedEventArgs e)
         {
             if (e.Guild is null || e.Channel is null || e.Message is null
                 || e.User.IsBot || e.Emoji.GetDiscordName() != ":heart:")

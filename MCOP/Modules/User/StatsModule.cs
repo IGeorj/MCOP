@@ -19,10 +19,17 @@ namespace MCOP.Modules.User
         {
             await ctx.DeferResponseAsync();
 
-            var member = user is null ? ctx.Member : user as DiscordMember;
+            if (ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
+                return;
+            }
+
+            var member = user is null ? ctx.Member : await ctx.Guild.GetMemberAsync(user.Id);
+
             if (member is null)
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Пользователь не найден"));
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Member not found!"));
                 return;
             }
 
@@ -45,6 +52,12 @@ namespace MCOP.Modules.User
         {
             await ctx.DeferResponseAsync();
 
+            if (ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
+                return;
+            }
+
             UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
             ServerTopVM serverTop = await statsService.GetServerTopAsync(ctx.Guild.Id);
 
@@ -62,7 +75,7 @@ namespace MCOP.Modules.User
                 }
 
                 DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
-                if (member != null)
+                if (member is not null)
                 {
                     topCounter++;
                     topLikes.Append($"{member.DisplayName}\n:heart: {item.Likes}\n");
@@ -78,7 +91,7 @@ namespace MCOP.Modules.User
                 }
 
                 DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
-                if (member != null)
+                if (member is not null) 
                 {
                     topCounter++;
                     topDuels.Append($"{member.DisplayName}\n:crossed_swords: {item.DuelWin} - {item.DuelLose}\n");
@@ -94,7 +107,7 @@ namespace MCOP.Modules.User
                 }
 
                 DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
-                if (member != null)
+                if (member is not null)
                 {
                     topCounter++;
                     kek = $"{member.DisplayName}\n:crossed_swords: {item.DuelWin} - {item.DuelLose}";
@@ -104,8 +117,8 @@ namespace MCOP.Modules.User
 
             var embed = new DiscordEmbedBuilder()
             .WithTitle("Топ пользователей")
-            .AddField("Топ лайков", topLikes.ToString(), true)
-            .AddField("Топ дуелей", topDuels.ToString(), true)
+            .AddField("Топ лайков", topLikes.Length == 0 ? "Пусто" : topLikes.ToString(), true)
+            .AddField("Топ дуелей", topDuels.Length == 0 ? "Пусто" : topDuels.ToString(), true)
             .AddField("Невезучий", kek, true);
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));

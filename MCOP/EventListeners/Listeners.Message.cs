@@ -11,7 +11,7 @@ using Serilog;
 namespace MCOP.EventListeners;
 internal static partial class Listeners
 {
-    public static async Task MessageCreateEventHandler(DiscordClient client, MessageCreateEventArgs e)
+    public static async Task MessageCreateEventHandler(DiscordClient client, MessageCreatedEventArgs e)
     {
         if (e.Author.IsBot || e.Guild is null)
         {
@@ -20,7 +20,7 @@ internal static partial class Listeners
 
         if (e.Guild.Id == GlobalVariables.McopServerId && e.Message.Content.Contains("@everyone"))
         {
-            var member = e.Author as DiscordMember;
+            var member = await e.Guild.GetMemberAsync(e.Author.Id);
             if (member is not null && !member.IsAdmin())
             {
                 await e.Message.DeleteAsync();
@@ -124,7 +124,7 @@ internal static partial class Listeners
         }
     }
 
-    public static async Task MessageDeleteEventHandler(DiscordClient client, MessageDeleteEventArgs e)
+    public static async Task MessageDeleteEventHandler(DiscordClient client, MessageDeletedEventArgs e)
     {
         // TODO: remove hardcoded channels
         var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
@@ -137,7 +137,7 @@ internal static partial class Listeners
         }
     }
 
-    public static async Task MessageUpdatedEventHandler(DiscordClient client, MessageUpdateEventArgs e)
+    public static async Task MessageUpdatedEventHandler(DiscordClient client, MessageUpdatedEventArgs e)
     {
         // TODO: remove hardcoded channels
         var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
@@ -173,7 +173,7 @@ internal static partial class Listeners
         }
     }
 
-    public static async Task ComponentInteractionCreatedEventHandler(DiscordClient client, ComponentInteractionCreateEventArgs e)
+    public static async Task ComponentInteractionCreatedEventHandler(DiscordClient client, ComponentInteractionCreatedEventArgs e)
     {
         await e.Interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredMessageUpdate);
 
@@ -187,7 +187,7 @@ internal static partial class Listeners
         }
     }
 
-    private static bool IsAttachmentsChanged(DiscordMessage message, DiscordMessage messageBefore)
+    private static bool IsAttachmentsChanged(DiscordMessage message, DiscordMessage? messageBefore)
     {
         if (messageBefore is null)
         {

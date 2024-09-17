@@ -79,7 +79,7 @@ namespace MCOP.Modules.Nsfw
                         if (e.User.IsBot || e.Message != repeatMessage)
                             return false;
 
-                        if ((e.User.Id == ctx.User.Id || ((DiscordMember)e.User).IsAdmin()))
+                        if (e.User.Id == ctx.User.Id || e.Guild.GetMemberAsync(e.User.Id).GetAwaiter().GetResult().IsAdmin())
                         {
                             return true;
                         }
@@ -201,6 +201,13 @@ namespace MCOP.Modules.Nsfw
         public async Task SetLewdChannel(CommandContext ctx)
         {
             await ctx.DeferResponseAsync();
+
+            if (ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
+                return;
+            }
+
             await GuildService.SetLewdChannelAsync(ctx.Guild.Id, ctx.Channel.Id);
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Успешно! Дневной топ будет высылаться сюда в <t:1672592400:t>"));
         }
@@ -242,13 +249,13 @@ namespace MCOP.Modules.Nsfw
 
             var interactivity = ctx.Client.GetInteractivity();
 
-            InteractivityResult<MessageReactionAddEventArgs> res = await interactivity.WaitForReactionAsync(
+            InteractivityResult<MessageReactionAddedEventArgs> res = await interactivity.WaitForReactionAsync(
                 e =>
                 {
                     if (e.User.IsBot || e.Message != message)
                         return false;
 
-                    if ((e.User.Id == ctx.User.Id || ((DiscordMember)e.User).IsAdmin()) && (e.Emoji == removeEmoji))
+                    if ((e.User.Id == ctx.User.Id || e.Guild.GetMemberAsync(e.User.Id).GetAwaiter().GetResult().IsAdmin()) && (e.Emoji == removeEmoji))
                     {
                         return true;
                     }

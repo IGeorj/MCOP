@@ -1,31 +1,45 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using DSharpPlus;
+using DSharpPlus.Commands;
+using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace MCOP.EventListeners;
 
 internal static partial class Listeners
 {
-    private static ServiceProvider Services { get; set; } = default!;
-    public static void RegisterEvents(Bot bot)
+    private static IServiceProvider Services { get; set; } = default!;
+    public static void RegisterEvents(DiscordClientBuilder clientBuilder)
     {
-        Services = bot.Services;
-        bot.Client.ClientErrored += ClientErrorEventHandler;
-        bot.Client.GuildAvailable += GuildAvailableEventHandler;
-        bot.Client.GuildUnavailable += GuildUnvailableEventHandler;
-        bot.Client.GuildDownloadCompleted += GuildDownloadCompletedEventHandler;
-        bot.Client.GuildCreated += GuildCreateEventHandler;
-        bot.Client.SocketOpened += SocketOpenedEventHandler;
-        bot.Client.SocketClosed += SocketClosedEventHandler;
-        bot.Client.SocketErrored += SocketErroredEventHandler;
-        bot.Client.UnknownEvent += UnknownEventHandler;
-        bot.Client.UserUpdated += UserUpdatedEventHandler;
-        bot.Client.UserSettingsUpdated += UserSettingsUpdatedEventHandler;
-        bot.CommandsEx.CommandExecuted += CommandExecutionEventHandler;
-        bot.CommandsEx.CommandErrored += CommandErrorEventHandler;
-        bot.Client.MessageCreated += MessageCreateEventHandler;
-        bot.Client.MessageDeleted += MessageDeleteEventHandler;
-        bot.Client.MessageUpdated += MessageUpdatedEventHandler;
-        bot.Client.MessageReactionAdded += MessageReactionAddedEventHandler;
-        bot.Client.MessageReactionRemoved += MessageReactionRemovedEventHandler;
-        bot.Client.ComponentInteractionCreated += ComponentInteractionCreatedEventHandler;
+        clientBuilder.ConfigureEventHandlers(x =>
+        {
+            x.HandleGuildAvailable(GuildAvailableEventHandler);
+            x.HandleGuildUnavailable(GuildUnvailableEventHandler);
+            x.HandleGuildAvailable(GuildAvailableEventHandler);
+            x.HandleGuildUnavailable(GuildUnvailableEventHandler);
+            x.HandleGuildDownloadCompleted(GuildDownloadCompletedEventHandler);
+            x.HandleGuildCreated(GuildCreateEventHandler);
+            x.HandleSocketOpened(SocketOpenedEventHandler);
+            x.HandleSocketClosed(SocketClosedEventHandler);
+            x.HandleUnknownEvent(UnknownEventHandler);
+            x.HandleUserUpdated(UserUpdatedEventHandler);
+            x.HandleUserSettingsUpdated(UserSettingsUpdatedEventHandler);
+            x.HandleMessageCreated(MessageCreateEventHandler);
+            x.HandleMessageDeleted(MessageDeleteEventHandler);
+            x.HandleMessageUpdated(MessageUpdatedEventHandler);
+            x.HandleMessageReactionAdded(MessageReactionAddedEventHandler);
+            x.HandleMessageReactionRemoved(MessageReactionRemovedEventHandler);
+            x.HandleComponentInteractionCreated(ComponentInteractionCreatedEventHandler);
+        });
+    }
+
+    public static void RegisterCommandsEvent(CommandsExtension commandsExtension)
+    {
+        commandsExtension.CommandExecuted += CommandExecutionEventHandler;
+        commandsExtension.CommandErrored += CommandErrorEventHandler;
+    }
+
+    public static void RegisterServiceProvider(IServiceProvider serviceProvider)
+    {
+        Services = serviceProvider;
     }
 }

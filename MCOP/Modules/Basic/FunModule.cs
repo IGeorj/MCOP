@@ -15,21 +15,22 @@ namespace MCOP.Modules.Basic
     {
         private static readonly Dictionary<string, string> _nouns = new()
         {
-                {"яйца", "НЕ ТРОГАЙ ЯЯЯЯЯИИИЦАААААА"},
-                {"крысу", "Крыса укусила за жэпу"},
-                {"cum", "Выпил просроченный cum"},
-                {"гавно", "Вкусно пожрал.."},
-                {"хуй", "Хуй оказался сзади...."},
-                {"шаверму", "Мясо в шавухе просроченное..."},
-                {"мать", "Проебали..."},
-                {"майонез", "Это не майонез"},
-                {"битву", "Умер от кринжа"},
-                {"плотину", "Камень не дали"},
-                {"сыр с плесенью", "Плесень была настоящая..."},
-                {"лупой", "А ты в ней пупа..."},
-                {"мид", "Пудж хукнул из кустов"},
-                {"туалет", "Утонул..."},
-                {"бипки", "Да кто такие эти ваши бипки"},
+                {"Битва за штангу", "Поперхнулся протеином..."},
+                {"Битва в аниме мире", "Переродился в жопную затычку..."},
+                {"Битва на члениксе", "Умер от кринжа..."},
+                {"Битва в туалете", "Утонул в говне..."},
+                {"Битва умом", "Потерял хромосому..."},
+                {"Битва за шаверму", "С фирменным соусом..."},
+                {"Битва а мать", "Та за шо..."},
+                {"Битва в dungeon", "А ты в ней Slave..."},
+                {"Битва в космосе", "Улетел за жопной тяге..."},
+                {"Битва за профурсетку", "Приехала мама..."},
+                {"Битва за круасан", "Круасан сгорел..."},
+                {"Битва под пледиком", "А ты в ней тяночка..."},
+                {"Битва на миде", "Слил мид..."},
+                {"Старый бог?", "Старый бог..."},
+                {"Битва возле Сируса", "Наступил в жижу..."},
+                {"Биба боба", "Соснул у долбаёба..."},
             };
 
         [RequirePermissions(DiscordPermissions.Administrator)]
@@ -78,6 +79,12 @@ namespace MCOP.Modules.Basic
                 message = await ctx.Channel.GetMessageAsync(ulongMessageId);
                 hashes = await hashService.GetHashesFromMessageAsync(message);
 
+                if (ctx.Guild is null || message.Author is null)
+                {
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild or Author not found!"));
+                    return;
+                }
+
                 foreach (var hash in hashes)
                 {
                     var hashFound = await hashService.SearchHashAsync(hash, 94);
@@ -112,6 +119,13 @@ namespace MCOP.Modules.Basic
         {
             await ctx.DeferResponseAsync();
 
+
+            if (ctx.Member is null || ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("User or Guild not found!"));
+                return;
+            }
+
             try
             {
                 SafeRandom rng = new();
@@ -125,7 +139,7 @@ namespace MCOP.Modules.Basic
 
                 KeyValuePair<string, string> randomNoun = _nouns.ElementAt(rng.Next(0, _nouns.Count));
                 var embed = new DiscordEmbedBuilder()
-                    .WithTitle($"Битва за {randomNoun.Key}")
+                    .WithTitle($"{randomNoun.Key}")
                     .AddField("Время бана", $"{strTimeout} минут", true)
                     .AddField("Кулдаун", "5 минут", true)
                     .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);
@@ -133,7 +147,7 @@ namespace MCOP.Modules.Basic
                 var duelButton = new DiscordButtonComponent(
                     DiscordButtonStyle.Primary,
                     "duel_button",
-                    null,
+                    "",
                     false,
                     new DiscordComponentEmoji("⚔️"));
 
@@ -142,14 +156,14 @@ namespace MCOP.Modules.Basic
 
                 if (user is not null)
                 {
-                    member2 = (DiscordMember)user;
+                    member2 = await ctx.Guild.GetMemberAsync(user.Id);
 
                     if (ctx.User.Id == user.Id)
                     {
                         var mcopGuild = await ctx.Client.GetGuildAsync(GlobalVariables.McopServerId);
                         var durka = DiscordEmoji.FromGuildEmote(ctx.Client, 839771710265229314);
 
-                        embed.AddField("Победитель", durka);
+                        embed.AddField("Результат", $"🥇**{durka}** vs {ctx.Member.DisplayName}");
                         embed.WithThumbnail(member2.AvatarUrl);
                         duelButton = duelButton.Disable();
 
@@ -168,6 +182,7 @@ namespace MCOP.Modules.Basic
                     }
 
                     embed.WithThumbnail(member2.AvatarUrl);
+                    embed.AddField("Бойцы", $"{ctx.Member.DisplayName} vs {member2.DisplayName}");
 
                     duelMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton));
 
@@ -231,7 +246,7 @@ namespace MCOP.Modules.Basic
 
                 (DiscordMember, DiscordMember) winnerLoser = rng.Next(2) == 1 ? (ctx.Member, member2) : (member2, ctx.Member);
 
-                embed.AddField("Победитель", winnerLoser.Item1.DisplayName);
+                embed.AddField("Результат", $"🥇**{winnerLoser.Item1.DisplayName}** vs {winnerLoser.Item2.DisplayName}");
 
 
                 UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
@@ -239,7 +254,7 @@ namespace MCOP.Modules.Basic
                 await statsService.ChangeLoseAsync(ctx.Guild.Id, winnerLoser.Item2.Id, 1);
 
                 var emoji = DiscordEmoji.FromGuildEmote(ctx.Client, 475694805691793409);
-                await ctx.Channel.SendMessageAsync($"{winnerLoser.Item2.Mention} - {randomNoun.Value}, помянем {emoji}");
+                await ctx.Channel.SendMessageAsync($"{winnerLoser.Item2.Mention} - {randomNoun.Value} помянем {emoji}");
 
                 await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed).AddComponents(duelButton));
 

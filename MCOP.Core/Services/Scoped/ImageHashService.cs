@@ -162,9 +162,14 @@ namespace MCOP.Core.Services.Scoped
 
                 foreach (var item in message.Attachments.ToList())
                 {
+                    if (item.MediaType is null)
+                    {
+                        continue;
+                    }
+
                     string type = item.MediaType;
 
-                    if (type.Contains("png") || type.Contains("jpeg") || type.Contains("webp"))
+                    if ((type.Contains("png") || type.Contains("jpeg") || type.Contains("webp")) && item.Url is not null)
                     {
                         byte[] imgBytes = await HttpService.GetByteArrayAsync(item.Url);
                         using var bitmap = SkiaSharp.SKBitmap.Decode(imgBytes);

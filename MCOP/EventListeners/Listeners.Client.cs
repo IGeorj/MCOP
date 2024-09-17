@@ -18,13 +18,13 @@ internal static partial class Listeners
         return Task.CompletedTask;
     }
 
-    public static Task GuildAvailableEventHandler(DiscordClient client, GuildCreateEventArgs e)
+    public static Task GuildAvailableEventHandler(DiscordClient client, GuildCreatedEventArgs e)
     {
         Log.Information("Available: {AvailableGuild}", e.Guild);
         return Task.CompletedTask;
     }
 
-    public static Task GuildUnvailableEventHandler(DiscordClient client, GuildDeleteEventArgs e)
+    public static Task GuildUnvailableEventHandler(DiscordClient client, GuildDeletedEventArgs e)
     {
         Log.Warning("Unvailable: {UnvailableGuild}", e.Guild);
         return Task.CompletedTask;
@@ -36,7 +36,7 @@ internal static partial class Listeners
         return Task.CompletedTask;
     }
 
-    public static async Task GuildCreateEventHandler(DiscordClient client, GuildCreateEventArgs e)
+    public static async Task GuildCreateEventHandler(DiscordClient client, GuildCreatedEventArgs e)
     {
         Log.Information("Joined {NewGuild}", e.Guild);
         var guildService = Services.GetRequiredService<GuildService>();
@@ -50,7 +50,7 @@ internal static partial class Listeners
         return Task.CompletedTask;
     }
 
-    public static Task SocketClosedEventHandler(DiscordClient client, SocketCloseEventArgs e)
+    public static Task SocketClosedEventHandler(DiscordClient client, SocketClosedEventArgs e)
     {
         Log.Debug("Socket closed with code {Code}: {Message}", e.CloseCode, e.CloseMessage);
         return Task.CompletedTask;
@@ -68,13 +68,13 @@ internal static partial class Listeners
         return Task.CompletedTask;
     }
 
-    public static Task UserUpdatedEventHandler(DiscordClient client, UserUpdateEventArgs e)
+    public static Task UserUpdatedEventHandler(DiscordClient client, UserUpdatedEventArgs e)
     {
         Log.Information("Bot updated");
         return Task.CompletedTask;
     }
 
-    public static Task UserSettingsUpdatedEventHandler(DiscordClient client, UserSettingsUpdateEventArgs e)
+    public static Task UserSettingsUpdatedEventHandler(DiscordClient client, UserSettingsUpdatedEventArgs e)
     {
         Log.Information("User settings updated");
         return Task.CompletedTask;
