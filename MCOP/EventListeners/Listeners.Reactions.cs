@@ -24,7 +24,7 @@ namespace MCOP.EventListeners
                 msg = await e.Channel.GetMessageAsync(msg.Id);
             }
 
-            if (e.Emoji.GetDiscordName() == ":heart:")
+            if (e.Emoji.GetDiscordName() == ":heart:" && !(msg.Author.Id == e.User.Id))
             {
                 UserStatsService statsService = Services.GetRequiredService<UserStatsService>();
                 await statsService.ChangeLikeAsync(e.Guild.Id, msg.Author.Id, msg.Id, 1);

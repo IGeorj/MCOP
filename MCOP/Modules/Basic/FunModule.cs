@@ -132,13 +132,9 @@ namespace MCOP.Modules.Basic
             {
                 SafeRandom rng = new();
 
-                int timeoutMinutes = rng.Next(19, 80);
-                string timeoutString = timeoutMinutes.ToString();
+                int timeoutMinutes = timeout ?? rng.Next(19, 80);
+                string timeoutString = TimeSpan.FromMinutes(timeoutMinutes).Humanize(culture: new CultureInfo("ru"));
 
-                if (timeout.HasValue)
-                {
-                    timeoutString = TimeSpan.FromMinutes(timeout.Value).Humanize(culture: new CultureInfo("ru"));
-                }
 
                 KeyValuePair<string, string> randomNoun = _nouns.ElementAt(rng.Next(0, _nouns.Count));
                 var embed = new DiscordEmbedBuilder()
