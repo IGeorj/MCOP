@@ -17,6 +17,7 @@
     <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02350" />
     <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02350" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02350" />
+    <PackageReference Include="Humanizer" Version="2.14.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.10.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.7" />

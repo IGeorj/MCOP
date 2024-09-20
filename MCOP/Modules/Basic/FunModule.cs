@@ -3,11 +3,13 @@ using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Extensions;
+using Humanizer;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Scoped;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace MCOP.Modules.Basic
 {
@@ -134,13 +136,13 @@ namespace MCOP.Modules.Basic
 
                 if (timeout.HasValue)
                 {
-                    strTimeout = timeout.Value.ToString();
+                    strTimeout = TimeSpan.FromMinutes(timeout.Value).Humanize(culture: new CultureInfo("ru"));
                 }
 
                 KeyValuePair<string, string> randomNoun = _nouns.ElementAt(rng.Next(0, _nouns.Count));
                 var embed = new DiscordEmbedBuilder()
                     .WithTitle($"{randomNoun.Key}")
-                    .AddField("Время бана", $"{strTimeout} минут", true)
+                    .AddField("Время бана", $"{strTimeout}", true)
                     .AddField("Кулдаун", "5 минут", true)
                     .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);
 
