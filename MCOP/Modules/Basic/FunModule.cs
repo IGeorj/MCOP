@@ -132,17 +132,18 @@ namespace MCOP.Modules.Basic
             {
                 SafeRandom rng = new();
 
-                string strTimeout = rng.Next(19, 80).ToString();
+                int timeoutMinutes = rng.Next(19, 80);
+                string timeoutString = timeoutMinutes.ToString();
 
                 if (timeout.HasValue)
                 {
-                    strTimeout = TimeSpan.FromMinutes(timeout.Value).Humanize(culture: new CultureInfo("ru"));
+                    timeoutString = TimeSpan.FromMinutes(timeout.Value).Humanize(culture: new CultureInfo("ru"));
                 }
 
                 KeyValuePair<string, string> randomNoun = _nouns.ElementAt(rng.Next(0, _nouns.Count));
                 var embed = new DiscordEmbedBuilder()
                     .WithTitle($"{randomNoun.Key}")
-                    .AddField("Время бана", $"{strTimeout}", true)
+                    .AddField("Время бана", $"{timeoutString}", true)
                     .AddField("Кулдаун", "5 минут", true)
                     .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);
 
@@ -173,7 +174,7 @@ namespace MCOP.Modules.Basic
 
                         try
                         {
-                            await member2.TimeoutAsync(DateTime.Now.AddMinutes(int.Parse(strTimeout)), randomNoun.Value);
+                            await member2.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), randomNoun.Value);
                         }
                         catch (Exception)
                         {
@@ -262,7 +263,7 @@ namespace MCOP.Modules.Basic
 
                 try
                 {
-                    await winnerLoser.Item2.TimeoutAsync(DateTime.Now.AddMinutes(int.Parse(strTimeout)), randomNoun.Value);
+                    await winnerLoser.Item2.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), randomNoun.Value);
                 }
                 catch (Exception)
                 {
