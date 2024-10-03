@@ -7,6 +7,7 @@ using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace MCOP.Core.Services.Scoped
 {
@@ -96,48 +97,79 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<HashFoundVM?> SearchHashAsync(byte[] hash, double diffProcent = 90)
+        public async Task<HashFoundVM> SearchHashAsync(byte[] hash, double diffProcent = 90)
         {
+            double bestMatch = 0;
             try
             {
                 List<ImageHash> hashes = await GetAllHashesAsync();
                 foreach (var item in hashes)
                 {
                     double diff = SkiaSharpService.GetPercentageDifference(hash, item.Hash);
+
+                    if (diff > bestMatch)
+                    {
+                        bestMatch = diff;
+                    }
+
                     if (diff >= diffProcent)
                     {
                         return new HashFoundVM
                         {
                             MessageId = item.MessageId,
                             Difference = diff,
+                            isFound = true
                         };
                     }
                 }
-                return null;
+
+                Log.Information("SearchHashAsync - Best match: {bestMatch}", bestMatch);
+
+                return new HashFoundVM
+                {
+                    MessageId = null,
+                    Difference = bestMatch,
+                    isFound = false
+                };
             }
             catch (Exception ex)
             {
                 throw new McopException(ex, ex.Message);
             }
         }
-        public async Task<HashFoundVM?> SearchHashByGuildAsync(ulong guildId, byte[] hash, double diffProcent = 90)
+        public async Task<HashFoundVM> SearchHashByGuildAsync(ulong guildId, byte[] hash, double diffProcent = 90)
         {
+            double bestMatch = 0;
+
             try
             {
                 List<ImageHash> hashes = await GetHashesByGuildAsync(guildId);
                 foreach (var item in hashes)
                 {
                     double diff = SkiaSharpService.GetPercentageDifference(hash, item.Hash);
+
+                    if (diff > bestMatch)
+                    {
+                        bestMatch = diff;
+                    }
+
                     if (diff >= diffProcent)
                     {
                         return new HashFoundVM
                         {
                             MessageId = item.MessageId,
                             Difference = diff,
+                            isFound = true
                         };
                     }
                 }
-                return null;
+
+                return new HashFoundVM
+                {
+                    MessageId = null,
+                    Difference = bestMatch,
+                    isFound = false
+                };
             }
             catch (Exception ex)
             {
@@ -184,6 +216,7 @@ namespace MCOP.Core.Services.Scoped
                 throw new McopException(ex, ex.Message);
             }
         }
+
         public async Task RemoveHashesByMessageId(ulong guildId, ulong messageId)
         {
             var toRemove = await _context.ImageHashes.Where(x => x.GuildId == guildId && x.MessageId == messageId).ToListAsync();

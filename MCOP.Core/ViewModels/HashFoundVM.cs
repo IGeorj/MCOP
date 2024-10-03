@@ -2,7 +2,8 @@
 {
     public class HashFoundVM
     {
-        public ulong MessageId { get; set; }
+        public ulong? MessageId { get; set; }
         public double Difference { get; set; }
+        public bool isFound { get; set; }    
     }
 }

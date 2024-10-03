@@ -17,6 +17,8 @@ internal static class LogExt
             .Enrich.With<Enrichers.ThreadIdEnricher>()
             .Enrich.With<Enrichers.ApplicationNameEnricher>()
             .MinimumLevel.Is(cfg.LogLevel)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
             .WriteTo.Console(outputTemplate: template)
             ;
 

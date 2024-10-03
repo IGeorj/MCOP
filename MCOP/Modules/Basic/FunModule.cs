@@ -62,57 +62,6 @@ namespace MCOP.Modules.Basic
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
         }
 
-        [RequireApplicationOwner]
-        [Command("hash")]
-        [Description("Хеширует изображение из сообщения")]
-        public async Task Hash(CommandContext ctx,
-            [Description("Message ID")] string messageId)
-        {
-            ulong ulongMessageId = ulong.Parse(messageId);
-            await ctx.DeferResponseAsync();
-
-            int count = 0;
-            DiscordMessage message;
-            List<byte[]> hashes;
-
-            try
-            {
-                var hashService = ctx.ServiceProvider.GetRequiredService<ImageHashService>();
-                message = await ctx.Channel.GetMessageAsync(ulongMessageId);
-                hashes = await hashService.GetHashesFromMessageAsync(message);
-
-                if (ctx.Guild is null || message.Author is null)
-                {
-                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild or Author not found!"));
-                    return;
-                }
-
-                foreach (var hash in hashes)
-                {
-                    var hashFound = await hashService.SearchHashAsync(hash, 94);
-
-                    if (hashFound is not null)
-                    {
-                        continue;
-                    }
-
-                    await hashService.SaveHashAsync(ctx.Guild.Id, message.Id, message.Author.Id, hash);
-                    count++;
-                }
-
-                await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":heart:"));
-            }
-            catch (Exception)
-            {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Message not found!"));
-                return;
-            }
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Added {count} of {hashes.Count} images"));
-        }
-
-
-
         [Command("duel")]
         [Description("Дуель за таймач")]
         public async Task Duel(CommandContext ctx,

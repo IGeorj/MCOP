@@ -71,9 +71,23 @@ namespace MCOP.Core.Services.Image
             int numberOfPixels = differences.Length;
             int diffAmount = differences.Count(p => p < threshold);
 
-            double proc = (double)diffAmount / (double)numberOfPixels * 100;
+            double proc = GetNormalizedCorrelation(img1, img2) * 100;
 
-            return Math.Round(proc, 2);
+            return proc;
+        }
+
+        public static double GetNormalizedCorrelation(byte[] img1, byte[] img2)
+        {
+            int correlation = 0;
+            double denominator = 0;
+
+            for (int i = 0; i < img1.Length; i++)
+            {
+                correlation += img1[i] * img2[i];
+            }
+
+            denominator = Math.Sqrt(img1.Sum(x => Math.Pow(x, 2)) * img2.Sum(x => Math.Pow(x, 2)));
+            return correlation / denominator;
         }
 
         public static byte[] GetBitmapHash(SKBitmap bitmap, int arraySize = 16)

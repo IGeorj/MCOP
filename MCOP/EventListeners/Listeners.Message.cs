@@ -3,6 +3,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using MCOP.Common;
 using MCOP.Core.Common;
+using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,29 +72,42 @@ internal static partial class Listeners
 
                 foreach (var hash in hashes)
                 {
-                    var hashFound = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 94);
+                    var searchHashResult = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 99);
+                    Log.Information("SearchHashByGuildAsync - Best match: {bestMatch}", searchHashResult.Difference);
 
-                    if (hashFound is not null)
+                    if (searchHashResult.isFound && searchHashResult.MessageId.HasValue)
                     {
                         DiscordMessage messageFromHash;
                         try
                         {
-                            messageFromHash = await e.Channel.GetMessageAsync(hashFound.MessageId);
+                            messageFromHash = await e.Channel.GetMessageAsync(searchHashResult.MessageId.Value);
                         }
                         catch (Exception)
                         {
-                            Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", hashFound.MessageId, e.Channel.Id, e.Guild.Id);
-                            await hashService.RemoveHashesByMessageId(e.Guild.Id, hashFound.MessageId);
+                            Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", searchHashResult.MessageId, e.Channel.Id, e.Guild.Id);
+                            await hashService.RemoveHashesByMessageId(e.Guild.Id, searchHashResult.MessageId.Value);
                             continue;
                         }
 
-                        var attachemnt = messageFromHash.Attachments[hashes.IndexOf(hash)];
+                        List<byte[]> oldHashes = await hashService.GetHashesFromMessageAsync(messageFromHash);
+                        double bestMatch = 0;
+                        int indexMatch = 0;
+                        for (int i = 0; i < oldHashes.Count; i++)
+                        {
+                            var percentage = SkiaSharpService.GetPercentageDifference(oldHashes[i], hash);
+                            if (percentage > bestMatch)
+                            {
+                                indexMatch = i;
+                                bestMatch = percentage;
+                            }
+                        }
+                        var attachemnt = messageFromHash.Attachments[indexMatch];
 
                         DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
                         .WithTitle("Найдено совпадение")
                         .AddField("Новое", e.Author.Username, true)
                         .AddField("Прошлое", messageFromHash.Author.Username, true)
-                        .AddField("Процент", ((int)hashFound.Difference).ToString())
+                        .AddField("Процент", ((int)searchHashResult.Difference).ToString())
                         .WithThumbnail(attachemnt.Url);
 
                         DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
@@ -156,9 +170,10 @@ internal static partial class Listeners
 
                 foreach (var hash in hashes)
                 {
-                    var hashFound = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 94);
+                    var searchHashResult = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 99);
+                    Log.Information("SearchHashByGuildAsync - Best match: {bestMatch}", searchHashResult.Difference);
 
-                    if (hashFound is not null)
+                    if (searchHashResult.isFound)
                     {
                         continue;
                     }
