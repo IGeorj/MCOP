@@ -46,17 +46,17 @@ namespace MCOP.Modules.Basic
                     return;
                 }
 
-                foreach (var hash in hashes)
-                {
-                    var searchHashResult = await hashService.SearchHashAsync(hash, 99);
-                    Log.Information("hash command - Best match: {bestMatch}", searchHashResult.Difference);
+                var searchHashResult = await hashService.SearchHashesAsync(hashes);
 
-                    if (searchHashResult.isFound)
+                foreach (var hashResult in searchHashResult)
+                {
+                    var resultMessageId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
+                    if (resultMessageId is not null)
                     {
                         continue;
                     }
 
-                    await hashService.SaveHashAsync(ctx.Guild.Id, message.Id, message.Author.Id, hash);
+                    await hashService.SaveHashAsync(ctx.Guild.Id, message.Id, message.Author.Id, hashResult.HashToCheck);
                     count++;
                 }
 
@@ -98,9 +98,9 @@ namespace MCOP.Modules.Basic
                     return;
                 }
 
-                var percent = SkiaSharpService.GetNormalizedCorrelation(hash1, hash2);
+                var percent = SkiaSharpService.GetNormalizedDifference(hash1, hash2);
 
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Корреляция от -1 до 1: {percent}"));
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Шанк корреляции двух изображений: {percent}"));
             }
             catch (Exception)
             {

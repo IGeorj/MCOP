@@ -58,10 +58,14 @@ namespace MCOP.Core.Services.Image
             }
         }
 
-
         public static double GetPercentageDifference(SKBitmap img1, SKBitmap img2, int threshold = 3)
         {
             return GetPercentageDifference(GetBitmapHash(img1), GetBitmapHash(img2), threshold);
+        }
+
+        public static double GetNormalizedDifference(SKBitmap img1, SKBitmap img2)
+        {
+            return GetNormalizedDifference(GetBitmapHash(img1), GetBitmapHash(img2));
         }
 
         public static double GetPercentageDifference(byte[] img1, byte[] img2, int threshold = 3)
@@ -71,12 +75,12 @@ namespace MCOP.Core.Services.Image
             int numberOfPixels = differences.Length;
             int diffAmount = differences.Count(p => p < threshold);
 
-            double proc = GetNormalizedCorrelation(img1, img2) * 100;
+            double proc = (double)diffAmount / (double)numberOfPixels * 100;
 
             return proc;
         }
 
-        public static double GetNormalizedCorrelation(byte[] img1, byte[] img2)
+        public static double GetNormalizedDifference(byte[] img1, byte[] img2)
         {
             int correlation = 0;
             double denominator = 0;
@@ -87,7 +91,7 @@ namespace MCOP.Core.Services.Image
             }
 
             denominator = Math.Sqrt(img1.Sum(x => Math.Pow(x, 2)) * img2.Sum(x => Math.Pow(x, 2)));
-            return correlation / denominator;
+            return (correlation / denominator) * 100;
         }
 
         public static byte[] GetBitmapHash(SKBitmap bitmap, int arraySize = 16)

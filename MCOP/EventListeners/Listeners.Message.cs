@@ -5,6 +5,7 @@ using MCOP.Common;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
+using MCOP.Core.ViewModels;
 using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -69,66 +70,33 @@ internal static partial class Listeners
             if (hashes.Count > 0)
             {
                 int added = 0;
+                var searchHashResult = await hashService.SearchHashesByGuildAsync(e.Guild.Id, hashes);
 
-                foreach (var hash in hashes)
+                foreach (var hashResult in searchHashResult)
                 {
-                    var searchHashResult = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 99);
-                    Log.Information("SearchHashByGuildAsync - Best match: {bestMatch}", searchHashResult.Difference);
-
-                    if (searchHashResult.isFound && searchHashResult.MessageId.HasValue)
+                    var resultMessageId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
+                    if (resultMessageId is not null)
                     {
                         DiscordMessage messageFromHash;
                         try
                         {
-                            messageFromHash = await e.Channel.GetMessageAsync(searchHashResult.MessageId.Value);
+                            messageFromHash = await e.Channel.GetMessageAsync(resultMessageId.Value);
                         }
                         catch (Exception)
                         {
-                            Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", searchHashResult.MessageId, e.Channel.Id, e.Guild.Id);
-                            await hashService.RemoveHashesByMessageId(e.Guild.Id, searchHashResult.MessageId.Value);
+                            Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", resultMessageId, e.Channel.Id, e.Guild.Id);
+                            await hashService.RemoveHashesByMessageId(e.Guild.Id, resultMessageId.Value);
                             continue;
                         }
 
-                        List<byte[]> oldHashes = await hashService.GetHashesFromMessageAsync(messageFromHash);
-                        double bestMatch = 0;
-                        int indexMatch = 0;
-                        for (int i = 0; i < oldHashes.Count; i++)
-                        {
-                            var percentage = SkiaSharpService.GetPercentageDifference(oldHashes[i], hash);
-                            if (percentage > bestMatch)
-                            {
-                                indexMatch = i;
-                                bestMatch = percentage;
-                            }
-                        }
-                        var attachemnt = messageFromHash.Attachments[indexMatch];
-
-                        DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
-                        .WithTitle("Найдено совпадение")
-                        .AddField("Новое", e.Author.Username, true)
-                        .AddField("Прошлое", messageFromHash.Author.Username, true)
-                        .AddField("Процент", ((int)searchHashResult.Difference).ToString())
-                        .WithThumbnail(attachemnt.Url);
-
-                        DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
-                        .AddEmbed(embedBuilder)
-                        .AddComponents(new DiscordComponent[]
-                        {
-                            new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
-                            new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
-                            new DiscordButtonComponent(
-                                DiscordButtonStyle.Success,
-                                GlobalNames.Buttons.RemoveMessage + $"UID:{e.Author.Id}",
-                                "Понял",
-                                false,
-                                new DiscordComponentEmoji(DiscordEmoji.FromName(client, ":heavy_check_mark:" ))),
-                        });
-                        await e.Channel.SendMessageAsync(messageBuilder);
-                        continue;
+                        await SendCopyFoundMessageAsync(client, e, hashResult, messageFromHash);
                     }
-
-                    added += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hash);
+                    else
+                    {
+                        added += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
+                    }
                 }
+
                 if (added > 0)
                 {
                     Log.Information("Added {Amount} hashes ({Total} total)", added, await hashService.GetTotalCountAsync());
@@ -137,6 +105,7 @@ internal static partial class Listeners
 
         }
     }
+
 
     public static async Task MessageDeleteEventHandler(DiscordClient client, MessageDeletedEventArgs e)
     {
@@ -168,18 +137,18 @@ internal static partial class Listeners
 
                 await hashService.RemoveHashesByMessageId(e.Guild.Id, e.Message.Id);
 
-                foreach (var hash in hashes)
-                {
-                    var searchHashResult = await hashService.SearchHashByGuildAsync(e.Guild.Id, hash, 99);
-                    Log.Information("SearchHashByGuildAsync - Best match: {bestMatch}", searchHashResult.Difference);
+                var searchHashResult = await hashService.SearchHashesByGuildAsync(e.Guild.Id, hashes);
 
-                    if (searchHashResult.isFound)
+                foreach (var hashResult in searchHashResult)
+                {
+                    var resultMessageId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
+                    if (resultMessageId is not null)
                     {
                         continue;
                     }
-
-                    updated += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hash);
+                    updated += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
                 }
+
                 if (updated > 0)
                 {
                     Log.Information("Updated {Amount} hashes ({Total} total)", updated, await hashService.GetTotalCountAsync());
@@ -227,4 +196,51 @@ internal static partial class Listeners
 
         return false;
     }
+
+    private static async Task<int> GetAttachmentsHashIndex(DiscordMessage messageFromHash, byte[] hash)
+    {
+        var hashService = Services.GetRequiredService<ImageHashService>();
+        List<byte[]> oldHashes = await hashService.GetHashesFromMessageAsync(messageFromHash);
+        double bestMatch = 0;
+        int indexMatch = 0;
+        for (int i = 0; i < oldHashes.Count; i++)
+        {
+            var percentage = SkiaSharpService.GetPercentageDifference(oldHashes[i], hash);
+            if (percentage > bestMatch)
+            {
+                indexMatch = i;
+                bestMatch = percentage;
+            }
+        }
+        return indexMatch;
+    }
+
+    private static async Task SendCopyFoundMessageAsync(DiscordClient client, MessageCreatedEventArgs e, HashSearchResultVM hashResult, DiscordMessage messageFromHash)
+    {
+        var matchIndex = await GetAttachmentsHashIndex(messageFromHash, hashResult.HashFound ?? hashResult.HashFoundNormalized);
+        var attachemnt = messageFromHash.Attachments[matchIndex];
+        var diff = hashResult.MessageId.HasValue ? hashResult.Difference : hashResult.DifferenceNormalized;
+        DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
+        .WithTitle("Найдено совпадение")
+        .AddField("Новое", e.Author.Username, true)
+        .AddField("Прошлое", messageFromHash.Author.Username, true)
+        .AddField("Совпадение", $"{diff:0.00}")
+        .WithThumbnail(attachemnt.Url);
+
+        DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
+        .AddEmbed(embedBuilder)
+        .AddComponents(new DiscordComponent[]
+        {
+                            new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
+                            new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
+                            new DiscordButtonComponent(
+                                DiscordButtonStyle.Success,
+                                GlobalNames.Buttons.RemoveMessage + $"UID:{e.Author.Id}",
+                                "Понял",
+                                false,
+                                new DiscordComponentEmoji(DiscordEmoji.FromName(client, ":heavy_check_mark:" ))),
+        });
+        await e.Channel.SendMessageAsync(messageBuilder);
+    }
+
 }

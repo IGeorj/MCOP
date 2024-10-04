@@ -14,6 +14,8 @@ namespace MCOP.Core.Services.Scoped
     public class ImageHashService : IScoped
     {
         private readonly McopDbContext _context;
+        private const double _defaultNormalizedThreshold = 99.4;
+        private const double _defaultDiffThreshold = 95;
 
         public ImageHashService(McopDbContext context, MessageService messageService)
         {
@@ -25,7 +27,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                return await _context.ImageHashes.ToListAsync();
+                return (await _context.ImageHashes.ToListAsync()).OrderByDescending(x => x.Id).ToList();
             }
             catch (Exception ex)
             {
@@ -37,7 +39,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                return await _context.ImageHashes.Where(x => x.GuildId == guildId).ToListAsync();
+                return (await _context.ImageHashes.Where(x => x.GuildId == guildId).ToListAsync()).OrderByDescending(x => x.Id).ToList();
             }
             catch (Exception ex)
             {
@@ -97,85 +99,33 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<HashFoundVM> SearchHashAsync(byte[] hash, double diffProcent = 90)
+        public async Task<List<HashSearchResultVM>> SearchHashesAsync(List<byte[]> hashes, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold)
         {
-            double bestMatch = 0;
             try
             {
-                List<ImageHash> hashes = await GetAllHashesAsync();
-                foreach (var item in hashes)
-                {
-                    double diff = SkiaSharpService.GetPercentageDifference(hash, item.Hash);
+                List<ImageHash> hashesDB = await GetAllHashesAsync();
+                return FindBestMatches(hashesDB, hashes, diffThreshold, normalizedThreshold);
 
-                    if (diff > bestMatch)
-                    {
-                        bestMatch = diff;
-                    }
-
-                    if (diff >= diffProcent)
-                    {
-                        return new HashFoundVM
-                        {
-                            MessageId = item.MessageId,
-                            Difference = diff,
-                            isFound = true
-                        };
-                    }
-                }
-
-                Log.Information("SearchHashAsync - Best match: {bestMatch}", bestMatch);
-
-                return new HashFoundVM
-                {
-                    MessageId = null,
-                    Difference = bestMatch,
-                    isFound = false
-                };
             }
             catch (Exception ex)
             {
                 throw new McopException(ex, ex.Message);
             }
         }
-        public async Task<HashFoundVM> SearchHashByGuildAsync(ulong guildId, byte[] hash, double diffProcent = 90)
-        {
-            double bestMatch = 0;
 
+        public async Task<List<HashSearchResultVM>> SearchHashesByGuildAsync(ulong guildId, List<byte[]> hashes, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold)
+        {
             try
             {
-                List<ImageHash> hashes = await GetHashesByGuildAsync(guildId);
-                foreach (var item in hashes)
-                {
-                    double diff = SkiaSharpService.GetPercentageDifference(hash, item.Hash);
-
-                    if (diff > bestMatch)
-                    {
-                        bestMatch = diff;
-                    }
-
-                    if (diff >= diffProcent)
-                    {
-                        return new HashFoundVM
-                        {
-                            MessageId = item.MessageId,
-                            Difference = diff,
-                            isFound = true
-                        };
-                    }
-                }
-
-                return new HashFoundVM
-                {
-                    MessageId = null,
-                    Difference = bestMatch,
-                    isFound = false
-                };
+                List<ImageHash> hashesDB = await GetHashesByGuildAsync(guildId);
+                return FindBestMatches(hashesDB, hashes, diffThreshold, normalizedThreshold);
             }
             catch (Exception ex)
             {
                 throw new McopException(ex, ex.Message);
             }
         }
+
         public async Task<List<byte[]>> GetHashesFromMessageAsync(DiscordMessage message)
         {
             try
@@ -239,6 +189,73 @@ namespace MCOP.Core.Services.Scoped
             {
                 throw new McopException(ex, ex.Message);
             }
+        }
+
+        public List<HashSearchResultVM> FindBestMatches(List<ImageHash> imageHashes, List<byte[]> hashesToCheck, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold)
+        {
+            List<HashSearchResultVM> results = [];
+            hashesToCheck.ForEach(checkedHash => results.Add(new HashSearchResultVM() { HashToCheck = checkedHash}));
+
+            foreach (var imageHash in imageHashes)
+            {
+                if (results.All(x => x.Difference > diffThreshold))
+                {
+                    foreach (var res in results)
+                    {
+                        Log.Information("FindBestMatches result: {bestMatch}", res.Difference);
+                    }
+                    return results;
+                }
+
+                for (int i = 0; i < hashesToCheck.Count; i++)
+                {
+                    double diff = SkiaSharpService.GetPercentageDifference(imageHash.Hash, hashesToCheck[i]);
+
+                    if (diff > results[i].Difference)
+                    {
+                        results[i].Difference = diff;
+                        if(diff > diffThreshold)
+                        {
+                            results[i].MessageId = imageHash.MessageId;
+                            results[i].HashFound = imageHash.Hash;
+                        }
+                    }
+                }
+            }
+
+            foreach (var imageHash in imageHashes)
+            {
+                if (results.All(x => x.Difference > diffThreshold || x.DifferenceNormalized > normalizedThreshold))
+                {
+                    foreach (var res in results)
+                    {
+                        Log.Information("FindBestMatches normalized result: {bestMatch}", res.DifferenceNormalized);
+                    }
+                    return results;
+                }
+
+                for (int i = 0; i < hashesToCheck.Count; i++)
+                {
+                    if (results[i].Difference > diffThreshold || results[i].DifferenceNormalized > normalizedThreshold)
+                    {
+                        continue;
+                    }
+
+                    double diff = SkiaSharpService.GetNormalizedDifference(imageHash.Hash, hashesToCheck[i]);
+
+                    if (diff > results[i].DifferenceNormalized)
+                    {
+                        results[i].DifferenceNormalized = diff;
+                        if (diff > normalizedThreshold)
+                        {
+                            results[i].MessageIdNormalized = imageHash.MessageId;
+                            results[i].HashFoundNormalized = imageHash.Hash;
+                        }
+                    }
+                }
+            }
+
+            return results;
         }
     }
 }
