@@ -95,7 +95,10 @@ internal static class Program
         using (McopDbContext db = new McopDbContext())
         {
             IEnumerable<string> pendingMigrations = await db.Database.GetPendingMigrationsAsync();
-            await db.Database.MigrateAsync();
+            if (pendingMigrations.Any())
+            {
+                await db.Database.MigrateAsync();
+            }
         }
     }
 

@@ -46,7 +46,7 @@ public sealed class OwnerModule
         try
         {
             using MemoryStream ms = await HttpService.GetMemoryStreamAsync(url);
-            await ctx.Client.UpdateCurrentUserAsync(avatar: ms);
+            await ctx.Client.ModifyCurrentUserAsync(avatar: ms);
         }
         catch (WebException e)
         {
@@ -67,7 +67,7 @@ public sealed class OwnerModule
         if (name.Length > DiscordLimits.NameLimit)
             throw new InvalidCommandUsageException($"Name must be shorter than {DiscordLimits.NameLimit} characters!");
 
-        await ctx.Client.UpdateCurrentUserAsync(username: name);
+        await ctx.Client.ModifyCurrentUserAsync(username: name);
     }
     #endregion
 

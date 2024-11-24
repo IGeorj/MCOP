@@ -8,7 +8,7 @@ namespace MCOP.Extensions
         {
             if (member.IsBot) { return false; }
 
-            return (member.Permissions == DiscordPermissions.All || member.Permissions == DiscordPermissions.Administrator);
+            return member.Permissions == DiscordPermission.Administrator;
         }
 
     }

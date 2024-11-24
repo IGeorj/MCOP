@@ -54,8 +54,6 @@ public sealed class Bot
 
         SetupClient();
 
-        cnext = await SetupCommands();
-        interactivity = SetupInteractivity();
         await Client.ConnectAsync();
     }
 
@@ -134,16 +132,16 @@ public sealed class Bot
             EventListeners.Listeners.RegisterServiceProvider(serviceProvider);
         });
 
+        SetupCommands(clientBuilder);
+        SetupInteractivity(clientBuilder);
         var discordClient = clientBuilder.Build();
         client = discordClient;
         return discordClient;
     }
 
-    private async Task<CommandsExtension> SetupCommands()
+    private void SetupCommands(DiscordClientBuilder clientBuilder)
     {
         Log.Information("Registering commands...");
-
-        CommandsExtension commandsExtensions = Client.UseCommands();
 
         TextCommandProcessor textCommandProcessor = new(new()
         {
@@ -158,18 +156,18 @@ public sealed class Bot
         textCommandProcessor.RegisterConverters();
         slashCommandProcessor.RegisterConverters();
 
-        commandsExtensions.AddCommands(typeof(Program).Assembly);
-        commandsExtensions.AddProcessors(textCommandProcessor);
-        commandsExtensions.AddProcessors(slashCommandProcessor);
-
-        EventListeners.Listeners.RegisterCommandsEvent(commandsExtensions);
-
-        return commandsExtensions;
+        var discordClient = clientBuilder.UseCommands((serviceProvider, extension) =>
+        {
+            extension.AddProcessor(textCommandProcessor);
+            extension.AddProcessor(slashCommandProcessor);
+            extension.AddCommands(typeof(Program).Assembly);
+            EventListeners.Listeners.RegisterCommandsEvent(extension);
+        });
     }
 
-    private InteractivityExtension SetupInteractivity()
+    private void SetupInteractivity(DiscordClientBuilder clientBuilder)
     {
-        return Client.UseInteractivity(new InteractivityConfiguration
+        clientBuilder.UseInteractivity(new InteractivityConfiguration
         {
             PaginationBehaviour = PaginationBehaviour.WrapAround,
             PaginationDeletion = PaginationDeletion.KeepEmojis,

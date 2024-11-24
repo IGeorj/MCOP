@@ -5,6 +5,7 @@ using MCOP.Core.Services.Shared;
 using MCOP.Core.Services.Shared.Common;
 using MCOP.Data.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Polly;
 using Serilog;
 
 namespace MCOP.Services;
@@ -51,46 +52,55 @@ public sealed class PeriodicTasksService : IDisposable
 
     private static async void DailyTopCallback(object? _)
     {
-        if (_ is Bot bot)
-        {
-            if (bot.Client is null)
-            {
-                Log.Error("DailyTopCallback detected null client - this should not happen");
-                return;
-            }
+        await Policy
+            .Handle<Exception>()
+            .WaitAndRetry(3, _ => TimeSpan.FromMinutes(10))
+            .Execute(async () => { await TryGetDailyTop(_); });
 
-            try
+        static async Task TryGetDailyTop(object? _)
+        {
+            if (_ is Bot bot)
             {
-                SankakuService sankaku = bot.Services.GetRequiredService<SankakuService>();
-                GuildService guildService = bot.Services.GetRequiredService<GuildService>();
-                var guildConfigs = await guildService.GetGuildConfigsWithLewdChannelAsync();
-                List<DiscordChannel> channels = new List<DiscordChannel>();
-                foreach (var config in guildConfigs)
+                if (bot.Client is null)
                 {
-                    if (bot.Client.Guilds.ContainsKey(config.GuildId) && config.LewdChannelId is not null)
+                    Log.Error("DailyTopCallback detected null client - this should not happen");
+                    return;
+                }
+
+                try
+                {
+                    SankakuService sankaku = bot.Services.GetRequiredService<SankakuService>();
+                    GuildService guildService = bot.Services.GetRequiredService<GuildService>();
+                    var guildConfigs = await guildService.GetGuildConfigsWithLewdChannelAsync();
+                    List<DiscordChannel> channels = new List<DiscordChannel>();
+                    foreach (var config in guildConfigs)
                     {
-                        try
+                        if (bot.Client.Guilds.ContainsKey(config.GuildId) && config.LewdChannelId is not null)
                         {
-                            channels.Add(await bot.Client.GetChannelAsync(config.LewdChannelId.Value));
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, $"Cannot send daily Guild: {config.GuildId}, Channel: {config.LewdChannelId.Value}");
-                            continue;
+                            try
+                            {
+                                channels.Add(await bot.Client.GetChannelAsync(config.LewdChannelId.Value));
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Error(e, $"Cannot send daily Guild: {config.GuildId}, Channel: {config.LewdChannelId.Value}");
+                                continue;
+                            }
                         }
                     }
-                }
-                await sankaku.SendDailyTopToChannelsAsync(channels);
+                    await sankaku.SendDailyTopToChannelsAsync(channels);
 
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "An error occured during BaseCallback timer callback");
+                    throw;
+                }
             }
-            catch (Exception e)
+            else
             {
-                Log.Error(e, "An error occured during BaseCallback timer callback");
+                Log.Error("DailyTopCallback failed to cast sender");
             }
-        }
-        else
-        {
-            Log.Error("DailyTopCallback failed to cast sender");
         }
     }
     #endregion

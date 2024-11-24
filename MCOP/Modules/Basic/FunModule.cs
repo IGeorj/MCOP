@@ -2,6 +2,7 @@
 using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using Humanizer;
 using MCOP.Core.Common;
@@ -35,7 +36,7 @@ namespace MCOP.Modules.Basic
                 {"Биба боба", "Соснул у долбаёба..."},
             };
 
-        [RequirePermissions(DiscordPermissions.Administrator)]
+        [RequirePermissions(DiscordPermission.Administrator)]
         [Command("test")]
         [Description("Проверка бота на ответ")]
         public async Task Test(CommandContext ctx)
@@ -45,7 +46,7 @@ namespace MCOP.Modules.Basic
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
         }
 
-        [RequirePermissions(DiscordPermissions.Administrator)]
+        [RequirePermissions(DiscordPermission.Administrator)]
         [Command("emoji-to-message")]
         [Description("Бот оставит емодзи на сообщение")]
         public async Task EmojiToMessage(CommandContext ctx,
@@ -154,7 +155,7 @@ namespace MCOP.Modules.Basic
                     var webhookBuilder = new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton);
                     duelMessage = await ctx.EditResponseAsync(webhookBuilder);
 
-                    var interactivity = ctx.Client.GetInteractivity();
+                    var interactivity = ctx.Client.ServiceProvider.GetRequiredService<InteractivityExtension>();
                     var interactivityResult = await interactivity.WaitForButtonAsync(duelMessage,
                         e =>
                         {

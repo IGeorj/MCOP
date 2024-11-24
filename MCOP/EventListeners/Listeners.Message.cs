@@ -44,7 +44,7 @@ internal static partial class Listeners
                 }
 
                 // САСЁШЬ
-                DiscordRole? role = e.Guild.GetRole(622772942761361428);
+                DiscordRole? role = await e.Guild.GetRoleAsync(622772942761361428);
 
                 if (role is not null)
                 {

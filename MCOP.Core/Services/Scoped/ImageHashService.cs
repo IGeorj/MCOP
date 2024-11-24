@@ -14,7 +14,7 @@ namespace MCOP.Core.Services.Scoped
     public class ImageHashService : IScoped
     {
         private readonly McopDbContext _context;
-        private const double _defaultNormalizedThreshold = 99.4;
+        private const double _defaultNormalizedThreshold = 99.5;
         private const double _defaultDiffThreshold = 95;
 
         public ImageHashService(McopDbContext context, MessageService messageService)

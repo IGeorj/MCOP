@@ -3,6 +3,8 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using MCOP.Common;
+using MCOP.Core.Services.Scoped;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MCOP.Extensions;
 
@@ -42,7 +44,7 @@ internal static class CommandContextExtensions
         }
 
         return pages.Count > 1
-            ? ctx.Client.GetInteractivity().SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages)
+            ? ctx.Client.ServiceProvider.GetRequiredService<InteractivityExtension>().SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages)
             : ctx.Channel.SendMessageAsync(content: pages.First().Content, embed: pages.First().Embed);
     }
 
@@ -62,7 +64,7 @@ internal static class CommandContextExtensions
             });
 
         return count > 1
-            ? ctx.Client.GetInteractivity().SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages)
+            ? ctx.Client.ServiceProvider.GetRequiredService<InteractivityExtension>().SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages)
             : ctx.Channel.SendMessageAsync(content: pages.Single().Content, embed: pages.Single().Embed);
     }
 }

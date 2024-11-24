@@ -9,6 +9,7 @@ using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Booru;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.ComponentModel;
 
@@ -195,7 +196,7 @@ namespace MCOP.Modules.Nsfw
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Держи свои картиночки"));
         }
 
-        [RequirePermissions(DiscordPermissions.Administrator)]
+        [RequirePermissions(DiscordPermission.Administrator)]
         [Command("set-daily-channel")]
         [Description("Устанавливает канал для ежедневного топа")]
         public async Task SetLewdChannel(CommandContext ctx)
@@ -247,7 +248,7 @@ namespace MCOP.Modules.Nsfw
 
             await message.CreateReactionAsync(removeEmoji);
 
-            var interactivity = ctx.Client.GetInteractivity();
+            var interactivity = ctx.Client.ServiceProvider.GetRequiredService<InteractivityExtension>();
 
             InteractivityResult<MessageReactionAddedEventArgs> res = await interactivity.WaitForReactionAsync(
                 e =>
