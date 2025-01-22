@@ -37,11 +37,8 @@ namespace MCOP.Core.Common.Booru
 
                 if (!File.Exists(path))
                 {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, ImageUrl);
-                    if (!string.IsNullOrEmpty(authToken))
-                    {
-                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-                    }
+                    HttpRequestMessage request = CreateDownloadRequest(authToken);
+
                     HttpResponseMessage responce = new HttpResponseMessage();
 
                     try
@@ -56,6 +53,7 @@ namespace MCOP.Core.Common.Booru
                     // If failed retry 1 times
                     if (!responce.IsSuccessStatusCode)
                     {
+                        request = CreateDownloadRequest(authToken);
                         responce = await httpclient.SendAsync(request);
                     }
 
@@ -76,6 +74,19 @@ namespace MCOP.Core.Common.Booru
             catch (Exception)
             {
                 throw;
+            }
+
+            return;
+
+            HttpRequestMessage CreateDownloadRequest(string? authToken)
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, ImageUrl);
+                if (!string.IsNullOrEmpty(authToken))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                }
+
+                return request;
             }
         }
 

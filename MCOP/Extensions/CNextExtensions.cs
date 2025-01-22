@@ -15,7 +15,7 @@ internal static class CNextExtensions
 
             commandProcessor.AddConverters(assembly);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Log.Error("Failed to register converters:");
         }
@@ -29,7 +29,7 @@ internal static class CNextExtensions
 
             commandProcessor.AddConverters(assembly);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             Log.Error("Failed to register converters:");
         }

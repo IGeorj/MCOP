@@ -11,7 +11,7 @@ namespace MCOP.Core.Services.Image
             {
                 if (resizeRation != 0)
                 {
-                    bitmap = bitmap.Resize(new SKImageInfo((int)(bitmap.Width / resizeRation), (int)(bitmap.Height / resizeRation)), SKFilterQuality.High);
+                    bitmap = bitmap.Resize(new SKImageInfo((int)(bitmap.Width / resizeRation), (int)(bitmap.Height / resizeRation)), new SKSamplingOptions(SKCubicResampler.Mitchell));
                 }
                 var info = new SKImageInfo(bitmap.Width, bitmap.Height);
                 using (SKSurface surface = SKSurface.Create(info))
@@ -139,7 +139,7 @@ namespace MCOP.Core.Services.Image
 
         public static SKBitmap ResizeBitmap(SKBitmap bitmap, int width, int height)
         {
-            return bitmap.Resize(new SKImageInfo(width, height), SKFilterQuality.High);
+            return bitmap.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKCubicResampler.Mitchell));
         }
 
 

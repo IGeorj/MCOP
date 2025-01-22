@@ -3,7 +3,6 @@ using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Commands.Processors.TextCommands.Parsing;
-using DSharpPlus.Extensions;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
@@ -12,7 +11,6 @@ using MCOP.Core.Services.Shared;
 using MCOP.Data;
 using MCOP.Exceptions;
 using MCOP.Extensions;
-using MCOP.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
@@ -93,7 +91,7 @@ public sealed class Bot
             serviceConfig.AddHttpClient("sankaku", client =>
             {
                 client.Timeout = TimeSpan.FromMinutes(3);
-                client.BaseAddress = new Uri("https://capi-v2.sankakucomplex.com");
+                client.BaseAddress = new Uri("https://sankakuapi.com");
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
             }).AddPolicyHandler(retryPolicy);
             serviceConfig.AddHttpClient("e621", client =>

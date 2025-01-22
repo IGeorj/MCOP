@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using DSharpPlus.Entities;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using System.Net.Http.Headers;
 using System.Text;
@@ -101,11 +102,10 @@ namespace MCOP.Core.Common.Booru
             if (strJson == "[]")
             {
                 // TODO: Tags prediction
-                throw new Exception("Sankaku. Nothing found");
+                throw new Exception("Sankaku. Полная пизда, запрос вернул вообще нихуя, возможно сайт сдох");
             }
 
             JObject json = JObject.Parse(strJson);
-            Log.Debug("Sankaku Json" + Environment.NewLine + json.ToString(Newtonsoft.Json.Formatting.Indented));
             JToken? meta = json.SelectToken("meta");
             JToken? posts = json.SelectToken("data");
 
@@ -117,9 +117,9 @@ namespace MCOP.Core.Common.Booru
                 searchResult.SetNext((string?)meta["next"]);
             }
 
-            if (posts is null)
+            if (posts is null || !posts.Any())
             {
-                throw new Exception("Sankaku. Nothing found");
+                throw new Exception("Sankaku. Ничего не найдено");
             }
 
             Parallel.ForEach(posts.Children(), (post) =>
@@ -188,7 +188,7 @@ namespace MCOP.Core.Common.Booru
                     throw new Exception(error);
                 }
 
-                Log.Information(url);
+                Log.Information(HttpClient.BaseAddress + url);
 
                 string strJson = await response.Content.ReadAsStringAsync();
 
@@ -303,6 +303,43 @@ namespace MCOP.Core.Common.Booru
             try
             {
                 return await SearchBaseAsync(url);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<DiscordAutoCompleteChoice>> GetSuggestionsAsync(string tag)
+        {
+            try
+            {
+                var url = $"/tags/autosuggestCreating?lang=en&tag={tag}&show_meta=1&target=post";
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+
+                var response = await HttpClient.SendAsync(request);
+
+                Log.Information(HttpClient.BaseAddress + url);
+
+                string strJson = await response.Content.ReadAsStringAsync();
+
+                if (strJson == "[]")
+                {
+                    return [];
+                }
+
+                List<DiscordAutoCompleteChoice> choices = new List<DiscordAutoCompleteChoice>();
+
+                JArray jArray = JArray.Parse(strJson);
+                foreach (var item in jArray)
+                {
+                    string name = item["name"]?.Value<string>() ?? throw new Exception("Name token not found");
+                    int count = item["count"]?.Value<int>() ?? throw new Exception("Name token not found");
+                    choices.Add(new DiscordAutoCompleteChoice($"{name} ({count} шт.)", name));
+                }
+
+                return choices;
             }
             catch (Exception)
             {

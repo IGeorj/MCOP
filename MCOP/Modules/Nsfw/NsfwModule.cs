@@ -1,6 +1,7 @@
 ﻿using DSharpPlus.Commands;
 using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
@@ -12,6 +13,7 @@ using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 
 namespace MCOP.Modules.Nsfw
 {
@@ -37,12 +39,18 @@ namespace MCOP.Modules.Nsfw
         [Description("Скидывает рандомную 18+ аниме картику")]
         public async Task Lewd(CommandContext ctx,
             [MinMaxValue(1, 5)][Description("Кол-во картинок за раз. Максимум - 5 шт.")] int amount = 1,
-            [Description("Пример: genshin_impact female")] string tags = "")
+            [SlashAutoCompleteProvider<SankakuTagsCompleteProvider>][Description("Пример: genshin_impact female")] string tag_1 = "",
+            [SlashAutoCompleteProvider<SankakuTagsCompleteProvider>][Description("Пример: genshin_impact female")] string tag_2 = "",
+            [SlashAutoCompleteProvider<SankakuTagsCompleteProvider>][Description("Пример: genshin_impact female")] string tag_3 = "",
+            [SlashAutoCompleteProvider<SankakuTagsCompleteProvider>][Description("Пример: genshin_impact female")] string tag_4 = "",
+            [SlashAutoCompleteProvider<SankakuTagsCompleteProvider>][Description("Пример: genshin_impact female")] string tag_5 = "")
         {
             await ctx.DeferResponseAsync();
 
             try
             {
+                var regEx = new Regex(@"\(\d* шт\.\)");
+                string tags = Regex.Replace($"{regEx.Replace(tag_1, "")} {regEx.Replace(tag_2, "")} {regEx.Replace(tag_3, "")} {regEx.Replace(tag_4, "")} {regEx.Replace(tag_5, "")}", @"\s+", " ");
                 SearchResult searchResult = await Sankaku.GetRandomSearchResultAsync(tags: tags);
 
                 var posts = searchResult.ToBooruPosts();

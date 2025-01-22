@@ -62,7 +62,7 @@ namespace MCOP.Core.Services.Booru
         {
             if (!string.IsNullOrEmpty(tags))
             {
-                tags = $"{_baseTags} {tags}";
+                tags = $"-animated {tags}";
             }
             else
             {
@@ -132,7 +132,7 @@ namespace MCOP.Core.Services.Booru
 
                 searchResult.DeleteUnwantedFiles();
 
-                Log.Information("Sankaku {name} {count1}/{count2} finished.", nameof(SendDailyTopToChannelsAsync), messages.Count, searchResult.Count());
+                Log.Information("Sankaku {name} {count1}/{count2} finished.", nameof(SendDailyTopToChannelsAsync), messages.Count, searchResult.Count() * channels.Count);
 
                 return messages;
             }
