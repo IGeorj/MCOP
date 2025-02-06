@@ -14,6 +14,8 @@ namespace MCOP.Data
         public virtual DbSet<GuildMessage> GuildMessages { get; protected set; }
         public virtual DbSet<ImageHash> ImageHashes { get; protected set; }
         public virtual DbSet<BotStatus> BotStatuses { get; protected set; }
+        public virtual DbSet<GuildEmoji> GuildEmoji { get; protected set; }
+        public virtual DbSet<GuildUserEmoji> GuildUserEmoji { get; protected set; }
 
         public McopDbContext() { }
         public McopDbContext(DbContextOptions<McopDbContext> options) : base(options) { }

@@ -36,11 +36,21 @@ namespace MCOP.Modules.User
             UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
             GuildUserStat stats = await statsService.GetOrAddAsync(ctx.Guild.Id, member.Id);
 
+            GuildEmojiService guildEmojiService = ctx.ServiceProvider.GetRequiredService<GuildEmojiService>();
+            List<GuildUserEmoji> recievedEmojies = await guildEmojiService.GetUserTopEmoji(ctx.Guild.Id, member.Id);
+            StringBuilder topEmoji = new();
+
+            foreach (var item in recievedEmojies)
+            {
+                topEmoji.Append($"{DiscordEmoji.FromName(ctx.Client, item.GuildEmoji.DiscordName).ToString()} {item.RecievedAmount}  ");
+            }
+
             var embed = new DiscordEmbedBuilder()
             .WithTitle(member.Username)
             .WithThumbnail(member.AvatarUrl)
             .AddField("Лайки", $":heart: {stats.Likes}", true)
-            .AddField("Дуели", $":crossed_swords: {stats.DuelWin} - {stats.DuelLose}", true);
+            .AddField("Дуели", $":crossed_swords: {stats.DuelWin} - {stats.DuelLose}", true)
+            .AddField("Медали за отвагу", recievedEmojies.Count > 0 ? topEmoji.ToString() : DiscordEmoji.FromName(ctx.Client, ":jokerge:").ToString());
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));
         }
