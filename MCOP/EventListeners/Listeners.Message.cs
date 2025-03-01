@@ -2,11 +2,11 @@
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using MCOP.Common;
+using MCOP.Common.Helpers;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
 using MCOP.Core.ViewModels;
-using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -20,38 +20,12 @@ internal static partial class Listeners
             return;
         }
 
-        if (e.Guild.Id == GlobalVariables.McopServerId && e.Message.Content.Contains("@everyone"))
-        {
-            var member = await e.Guild.GetMemberAsync(e.Author.Id);
-            if (member is not null && !member.IsAdmin())
-            {
-                await e.Message.DeleteAsync();
+        await MessageHelper.CheckEveryoneAsync(client, e);
+        await MessageHelper.CheckDulyaAsync(client, e);
 
-                DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
-                    .WithAuthor(member.Username, null, member.AvatarUrl)
-                    .WithColor(DiscordColor.Yellow)
-                    .AddField("Пользователь", $"<@!{member.Id}>", true)
-                    .AddField("Модератор", client.CurrentUser.Mention, true)
-                    .AddField("Результат", "Вадана роль САСЁШЬ", true)
-                    .AddField("Канал", $"<#{e.Channel.Id}>")
-                    .AddField("Сообщение", e.Message.Content);
+        var levelingService = Services.GetRequiredService<LevelingService>();
+        await levelingService.OnUserMessageCreatedAsync(e.Guild.Id, e.Author.Id);
 
-                DiscordChannel? publicChannel = await e.Guild.GetPublicUpdatesChannelAsync();
-
-                if (publicChannel is not null)
-                {
-                    await publicChannel.SendMessageAsync(embed.Build());
-                }
-
-                // САСЁШЬ
-                DiscordRole? role = await e.Guild.GetRoleAsync(622772942761361428);
-
-                if (role is not null)
-                {
-                    await member.GrantRoleAsync(role);
-                }
-            }
-        }
         // TODO: remove hardcoded channels
         var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
         var mcopNsfwChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 539145624868749327;
@@ -105,7 +79,6 @@ internal static partial class Listeners
 
         }
     }
-
 
     public static async Task MessageDeleteEventHandler(DiscordClient client, MessageDeletedEventArgs e)
     {
@@ -217,30 +190,36 @@ internal static partial class Listeners
 
     private static async Task SendCopyFoundMessageAsync(DiscordClient client, MessageCreatedEventArgs e, HashSearchResultVM hashResult, DiscordMessage messageFromHash)
     {
-        var matchIndex = await GetAttachmentsHashIndex(messageFromHash, hashResult.HashFound ?? hashResult.HashFoundNormalized);
+        if (hashResult.HashFound is null && hashResult.HashFoundNormalized is null)
+        {
+            return;
+        }
+
+        var matchIndex = await GetAttachmentsHashIndex(messageFromHash, hashResult.HashFound ?? hashResult.HashFoundNormalized ?? []);
         var attachemnt = messageFromHash.Attachments[matchIndex];
         var diff = hashResult.MessageId.HasValue ? hashResult.Difference : hashResult.DifferenceNormalized;
+
         DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
         .WithTitle("Найдено совпадение")
         .AddField("Новое", e.Author.Username, true)
-        .AddField("Прошлое", messageFromHash.Author.Username, true)
+        .AddField("Прошлое", messageFromHash.Author?.Username ?? "", true)
         .AddField("Совпадение", $"{diff:0.00}")
-        .WithThumbnail(attachemnt.Url);
+        .WithThumbnail(attachemnt.Url ?? "");
 
         DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
         .AddEmbed(embedBuilder)
-        .AddComponents(new DiscordComponent[]
-        {
-                            new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
-                            new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
-                            new DiscordButtonComponent(
-                                DiscordButtonStyle.Success,
-                                GlobalNames.Buttons.RemoveMessage + $"UID:{e.Author.Id}",
-                                "Понял",
-                                false,
-                                new DiscordComponentEmoji(DiscordEmoji.FromName(client, ":heavy_check_mark:" ))),
-        });
+        .AddComponents(
+        [
+            new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
+            new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
+            new DiscordButtonComponent(
+                DiscordButtonStyle.Success,
+                GlobalNames.Buttons.RemoveMessage + $"UID:{e.Author.Id}",
+                "Понял",
+                false,
+                new DiscordComponentEmoji(DiscordEmoji.FromName(client, ":heavy_check_mark:" ))),
+        ]);
+
         await e.Channel.SendMessageAsync(messageBuilder);
     }
-
 }

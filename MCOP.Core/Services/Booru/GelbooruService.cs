@@ -128,7 +128,7 @@ namespace MCOP.Core.Services.Booru
             catch (Exception e)
             {
                 Log.Error(e, "Gelbooru. SendRandomImages error");
-                await channel.SendMessageAsync("Gelbooru. SendRandomImages error");
+                await channel.SendMessageAsync(e.Message);
                 return (new List<DiscordMessage>(), null);
             }
         }

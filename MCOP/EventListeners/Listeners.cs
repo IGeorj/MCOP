@@ -1,7 +1,5 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Commands;
-using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 
 namespace MCOP.EventListeners;
 
@@ -29,6 +27,7 @@ internal static partial class Listeners
             x.HandleMessageReactionAdded(MessageReactionAddedEventHandler);
             x.HandleMessageReactionRemoved(MessageReactionRemovedEventHandler);
             x.HandleComponentInteractionCreated(ComponentInteractionCreatedEventHandler);
+            x.HandleGuildEmojisUpdated(GuildEmojisUpdated);
         });
     }
 

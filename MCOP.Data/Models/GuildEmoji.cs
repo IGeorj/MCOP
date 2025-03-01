@@ -15,6 +15,5 @@ namespace MCOP.Data.Models
         public ulong GuildId { get; set; }
 
         public Guild Guild { get; set; }
-
     }
 }

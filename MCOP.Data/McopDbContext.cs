@@ -26,7 +26,7 @@ namespace MCOP.Data
             ConfigurationService configurationService = new ConfigurationService();
             AsyncExecutionService asyncExecution = new AsyncExecutionService();
             BotConfiguration config = asyncExecution.Execute(configurationService.GetCurrentConfigAsync());
-            optionsBuilder.UseSqlite($"Data Source={config.DatabaseConfig.DatabaseName}.db;");
+            optionsBuilder.UseSqlite($"Data Source={config.DatabaseConfig.DatabaseName}.db;Foreign Keys=True");
             optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         }
 

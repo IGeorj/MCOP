@@ -7,7 +7,9 @@ namespace MCOP.Data.Models
     public class GuildUserEmoji
     {
         public ulong GuildId { get; set; }
+
         public ulong UserId { get; set; }
+
         public int RecievedAmount { get; set; } = 0;
 
         [ForeignKey($"{nameof(GuildId)},{nameof(UserId)}")]

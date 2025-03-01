@@ -33,7 +33,7 @@ namespace MCOP.Core.Common.Booru
             if (strJson == "[]")
             {
                 // TODO: Tags prediction
-                throw new Exception("Gelbooru. Nothing found");
+                throw new Exception("Gelbooru. Ничего не найдено");
             }
 
             JObject json = JObject.Parse(strJson);
@@ -44,7 +44,7 @@ namespace MCOP.Core.Common.Booru
 
             if (jsonPosts is null)
             {
-                throw new Exception("Gelbooru. Nothing found");
+                throw new Exception("Gelbooru. Ничего не найдено");
             }
 
             Parallel.ForEach(jsonPosts.Children(), (post) =>

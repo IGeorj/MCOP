@@ -12,7 +12,9 @@ namespace MCOP.Data.Models
         public ulong MessageId { get; set; }
 
         public ulong GuildId { get; set; }
+
         public required byte[] Hash { get; set; }
+
 
         [ForeignKey($"{nameof(GuildId)},{nameof(MessageId)}")]
         public GuildMessage GuildMessage { get; set; }

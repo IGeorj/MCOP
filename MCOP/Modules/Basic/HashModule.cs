@@ -2,10 +2,8 @@
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
-using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 using System.ComponentModel;
 
 namespace MCOP.Modules.Basic
@@ -69,44 +67,6 @@ namespace MCOP.Modules.Basic
             }
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Added {count} of {hashes.Count} images"));
-        }
-
-        [RequireApplicationOwner]
-        [Command("compare")]
-        [Description("Тест нового алгоритма сравнения")]
-        public async Task CompareImageFromMessages(CommandContext ctx,
-            [Description("Message ID 1")] string messageId1,
-            [Description("Message ID 2")] string messageId2)
-        {
-            await ctx.DeferResponseAsync();
-
-            ulong ulongMessageId1 = ulong.Parse(messageId1);
-            ulong ulongMessageId2 = ulong.Parse(messageId2);
-
-            try
-            {
-                var hashService = ctx.ServiceProvider.GetRequiredService<ImageHashService>();
-                var message1 = await ctx.Channel.GetMessageAsync(ulongMessageId1);
-                var message2 = await ctx.Channel.GetMessageAsync(ulongMessageId2);
-                var hash1 = (await hashService.GetHashesFromMessageAsync(message1)).FirstOrDefault();
-                var hash2 = (await hashService.GetHashesFromMessageAsync(message2)).FirstOrDefault();
-
-
-                if (ctx.Guild is null || hash1 is null || hash2 is null)
-                {
-                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild or Image not found!"));
-                    return;
-                }
-
-                var percent = SkiaSharpService.GetNormalizedDifference(hash1, hash2);
-
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Шанк корреляции двух изображений: {percent}"));
-            }
-            catch (Exception)
-            {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Message not found!"));
-                return;
-            }
         }
     }
 }

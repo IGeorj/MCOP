@@ -18,21 +18,21 @@ namespace MCOP.Modules.Basic
     {
         private static readonly Dictionary<string, string> _nouns = new()
         {
-                {"Битва за штангу", "Поперхнулся протеином..."},
-                {"Битва в аниме мире", "Переродился в жопную затычку..."},
-                {"Битва на члениксе", "Умер от кринжа..."},
-                {"Битва в туалете", "Утонул в говне..."},
-                {"Битва умом", "Потерял хромосому..."},
-                {"Битва за шаверму", "С фирменным соусом..."},
-                {"Битва а мать", "Та за шо..."},
-                {"Битва в dungeon", "А ты в ней Slave..."},
-                {"Битва в космосе", "Улетел за жопной тяге..."},
-                {"Битва за профурсетку", "Приехала мама..."},
-                {"Битва за круасан", "Круасан сгорел..."},
-                {"Битва под пледиком", "А ты в ней тяночка..."},
-                {"Битва на миде", "Слил мид..."},
+                {"Дуель за штангу", "Поперхнулся протеином..."},
+                {"Дуель в аниме мире", "Переродился в жопную затычку..."},
+                {"Дуель на члениксе", "Умер от кринжа..."},
+                {"Дуель в туалете", "Утонул в говне..."},
+                {"Дуель умом", "Потерял хромосому..."},
+                {"Дуель за шаверму", "С фирменным соусом..."},
+                {"Дуель за мать", "Та за шо..."},
+                {"Дуель в dungeon", "А ты в ней Slave..."},
+                {"Дуель в космосе", "Улетел за жопной тяге..."},
+                {"Дуель за профурсетку", "Приехала мама..."},
+                {"Дуель за круасан", "Круасан сгорел..."},
+                {"Дуель под пледиком", "А ты в ней тяночка..."},
+                {"Дуель на миде", "Слил мид..."},
                 {"Старый бог?", "Старый бог..."},
-                {"Битва возле Сируса", "Наступил в жижу..."},
+                {"Дуель возле Сируса", "Наступил в жижу..."},
                 {"Биба боба", "Соснул у долбаёба..."},
             };
 
@@ -42,23 +42,6 @@ namespace MCOP.Modules.Basic
         public async Task Test(CommandContext ctx)
         {
             await ctx.DeferResponseAsync();
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
-        }
-
-        [RequirePermissions(DiscordPermission.Administrator)]
-        [Command("emoji-to-message")]
-        [Description("Бот оставит емодзи на сообщение")]
-        public async Task EmojiToMessage(CommandContext ctx,
-            [Description("Message ID")] string messageId)
-        {
-            await ctx.DeferResponseAsync();
-
-            ulong ulongMessageId = ulong.Parse(messageId);
-
-            var targetMessage = await ctx.Channel.GetMessageAsync(ulongMessageId);
-
-            await targetMessage.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":heart:"));
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("success"));
         }
@@ -209,7 +192,7 @@ namespace MCOP.Modules.Basic
 
                 try
                 {
-                    await winnerLoser.Item2.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), randomNoun.Value);
+                    await winnerLoser.Item2.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), "Проебал дуель");
                 }
                 catch (Exception)
                 {

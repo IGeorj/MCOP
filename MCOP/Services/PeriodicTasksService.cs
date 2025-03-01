@@ -55,7 +55,9 @@ public sealed class PeriodicTasksService : IDisposable
         await Policy
             .Handle<Exception>()
             .WaitAndRetry(3, _ => TimeSpan.FromMinutes(10))
-            .Execute(async () => { await TryGetDailyTop(_); });
+            .Execute(async () => { 
+                await TryGetDailyTop(_); 
+            });
 
         static async Task TryGetDailyTop(object? _)
         {
@@ -94,7 +96,6 @@ public sealed class PeriodicTasksService : IDisposable
                 catch (Exception e)
                 {
                     Log.Error(e, "An error occured during BaseCallback timer callback");
-                    throw;
                 }
             }
             else

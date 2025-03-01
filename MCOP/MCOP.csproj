@@ -10,6 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Attributes\**" />
+    <Compile Remove="Modules\Owner\Services\**" />
+    <EmbeddedResource Remove="Attributes\**" />
+    <EmbeddedResource Remove="Modules\Owner\Services\**" />
+    <None Remove="Attributes\**" />
+    <None Remove="Modules\Owner\Services\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="coplogo.ico" />
   </ItemGroup>
 
@@ -41,11 +50,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MCOP.Core\MCOP.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Attributes\" />
-    <Folder Include="Modules\Owner\Services\" />
   </ItemGroup>
 
 </Project>

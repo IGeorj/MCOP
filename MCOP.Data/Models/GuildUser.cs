@@ -11,7 +11,9 @@ namespace MCOP.Data.Models
 
         [ForeignKey(nameof(User))]
         public ulong UserId { get; set; }
+
         public Guild Guild { get; set; }
+
         public User User { get; set; }
     }
 }

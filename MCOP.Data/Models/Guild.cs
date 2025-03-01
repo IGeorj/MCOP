@@ -8,6 +8,7 @@ namespace MCOP.Data.Models
         public ulong Id { get; set; }
 
         public ICollection<GuildUser> GuildUsers { get; set; }
+
         public ICollection<GuildEmoji> GuildEmoji { get; set; }
 
         public GuildConfig GuildConfig { get; set; } = null!;

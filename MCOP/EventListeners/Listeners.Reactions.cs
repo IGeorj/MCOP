@@ -76,7 +76,7 @@ namespace MCOP.EventListeners
             if (!(msg?.Author?.Id == user.Id))
             {
                 GuildEmojiService guildEmojiService = Services.GetRequiredService<GuildEmojiService>();
-                await guildEmojiService.ChangeGuildUserEmojiRecievedCount(emoji, guild.Id, msg.Author.Id, count);
+                await guildEmojiService.ChangeUserRecievedEmojiCountAsync(emoji, guild.Id, msg.Author.Id, count);
                 var emojiName = emoji.Name;
                 Log.Information("User {Username} emoji {emojiName} {count}. MessageId:{Id} AuthorId:{authorId}", user.Username, emojiName, count, msg.Id, msg.Author.Id);
             }

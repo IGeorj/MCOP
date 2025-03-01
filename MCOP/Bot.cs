@@ -79,7 +79,8 @@ public sealed class Bot
             Log.Information("Initializing services...");
 
             serviceConfig.AddSingleton(Config)
-            .AddDbContext<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;"), ServiceLifetime.Transient)
+            .AddMemoryCache()
+            .AddDbContext<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
             .AddSharedServices()
             .AddScopedClasses();
 

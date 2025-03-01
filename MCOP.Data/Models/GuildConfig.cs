@@ -14,6 +14,7 @@ namespace MCOP.Data.Models
         public string Prefix { get; set; } = "!m";
 
         public ulong? LogChannelId { get; set; }
+
         [NotMapped]
         public bool LoggingEnabled => LogChannelId != default;
 

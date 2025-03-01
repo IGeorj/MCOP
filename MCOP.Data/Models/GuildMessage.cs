@@ -19,10 +19,10 @@ namespace MCOP.Data.Models
         public int Likes { get; set; } = 0;
 
         public Guild Guild { get; set; }
+
         public User User { get; set; }
 
         public ICollection<ImageHash> ImageHashes { get; set; }
-
     }
 }
 

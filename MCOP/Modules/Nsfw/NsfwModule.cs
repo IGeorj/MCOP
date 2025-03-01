@@ -182,7 +182,7 @@ namespace MCOP.Modules.Nsfw
         }
 
         [RequireApplicationOwner]
-        [Command("daily-top")]
+        [Command("send-top")]
         [Description("Скидывает ежедневный топ картинок")]
         public async Task LewdTop(CommandContext ctx,
             [MinMaxValue(1, 80)][Description("Кол-во картинок за раз. Максимум - 80 шт.")] int amount = 80,
@@ -222,7 +222,8 @@ namespace MCOP.Modules.Nsfw
         }
 
         [RequireApplicationOwner]
-        [Command("send-daily")]
+        [Command("send-daily-all")]
+        [Description("Скидывает ежедневный топ картинок на все сервера")]
         public async Task SendDaily(CommandContext ctx)
         {
             await ctx.DeferResponseAsync();

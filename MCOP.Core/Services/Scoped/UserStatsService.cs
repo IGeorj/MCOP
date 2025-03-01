@@ -1,66 +1,110 @@
-﻿using MCOP.Core.Exceptions;
+﻿using MCOP.Core.Common;
+using MCOP.Core.Exceptions;
 using MCOP.Core.ViewModels;
 using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace MCOP.Core.Services.Scoped
 {
     public class UserStatsService : IScoped
     {
+        public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
+
+        private readonly IMemoryCache _cache;
         private readonly McopDbContext _context;
         private readonly UserService _userService;
 
-        public UserStatsService(McopDbContext context, UserService userService)
+        public UserStatsService(IMemoryCache cache, McopDbContext context, UserService userService)
         {
+            _cache = cache;
             _context = context;
             _userService = userService;
         }
 
-        public async Task<GuildUserStat> GetOrAddAsync(ulong guildId, ulong userId)
+        public async Task<GuildUserStat> GetOrAddAsync(ulong guildId, ulong userId, bool isLocked = false)
         {
             try
             {
-                GuildUserStat? userStats = await _context.GuildUserStats.FindAsync(guildId, userId);
-                if (userStats is null)
+                string cacheKey = GetCacheKey(guildId, userId);
+
+                if (!isLocked)
                 {
-                    await _userService.GetOrAddUserAsync(guildId, userId);
-                    userStats = (await _context.GuildUserStats.AddAsync(new GuildUserStat() { GuildId = guildId, UserId = userId })).Entity;
-                    await _context.SaveChangesAsync();
+                    var lockKey = $"{cacheKey}_lock";
+                    using (var lockHandle = await SemaphoreLock.LockAsync(lockKey))
+                    {
+                        return await GetOrAddAsyncInternal(guildId, userId, cacheKey);
+                    }
                 }
-                return userStats;
+                else
+                {
+                    return await GetOrAddAsyncInternal(guildId, userId, cacheKey);
+                }
             }
             catch (Exception ex)
             {
                 throw new McopException(ex, ex.Message);
             }
         }
+        private async Task<GuildUserStat> GetOrAddAsyncInternal(ulong guildId, ulong userId, string cacheKey)
+        {
+            if (_cache.TryGetValue(cacheKey, out GuildUserStat? cachedUserStat))
+            {
+                return cachedUserStat;
+            }
+
+            var userStats = await _context.GuildUserStats.FindAsync(guildId, userId);
+
+            if (userStats is null)
+            {
+                await _userService.GetOrAddUserAsync(guildId, userId);
+
+                userStats = new GuildUserStat { GuildId = guildId, UserId = userId };
+                _context.GuildUserStats.Add(userStats);
+                await _context.SaveChangesAsync();
+            }
+
+            //_cache.Set(cacheKey, userStats, CacheExpiration);
+
+            return userStats;
+        }
 
         public async Task<bool> ChangeLikeAsync(ulong guildId, ulong userId, ulong messageId, int count)
         {
             try
             {
-                GuildUserStat userStats = await GetOrAddAsync(guildId, userId);
-                userStats.Likes += count;
+                var cacheKey = GetCacheKey(guildId, userId);
+                var lockKey = $"{cacheKey}_lock";
 
-                _context.GuildUserStats.Update(userStats);
-                await _context.SaveChangesAsync();
-                var message = await _context.GuildMessages.FindAsync(guildId, messageId);
-                if (message is null)
+                using (var lockHandle = await SemaphoreLock.LockAsync(lockKey))
                 {
-                    message = (await _context.GuildMessages.AddAsync(new GuildMessage()
+                    GuildUserStat userStats = await GetOrAddAsync(guildId, userId, isLocked: true);
+                    userStats.Likes += count;
+
+                    var message = await _context.GuildMessages.FindAsync(guildId, messageId);
+                    if (message is null)
                     {
-                        GuildId = guildId,
-                        Id = messageId,
-                        UserId = userId,
-                    }))
-                    .Entity;
+                        message = (await _context.GuildMessages.AddAsync(new GuildMessage()
+                        {
+                            GuildId = guildId,
+                            Id = messageId,
+                            UserId = userId,
+                            Likes = count
+                        })).Entity;
+                    }
+                    else
+                    {
+                        message.Likes += count;
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    _cache.Set(cacheKey, userStats, CacheExpiration);
+
+                    return true;
                 }
-                message.Likes += count;
-                _context.GuildUserStats.Update(userStats);
-                await _context.SaveChangesAsync();
-                return true;
             }
             catch (Exception ex)
             {
@@ -72,12 +116,20 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                GuildUserStat userStats = await GetOrAddAsync(guildId, userId);
-                userStats.DuelWin += count;
+                var cacheKey = GetCacheKey(guildId, userId);
+                var lockKey = $"{cacheKey}_lock";
 
-                _context.GuildUserStats.Update(userStats);
-                await _context.SaveChangesAsync();
-                return true;
+                using (var lockHandle = await SemaphoreLock.LockAsync(lockKey))
+                {
+                    GuildUserStat userStats = await GetOrAddAsync(guildId, userId, isLocked: true);
+                    userStats.DuelWin += count;
+
+                    await _context.SaveChangesAsync();
+
+                    _cache.Set(cacheKey, userStats, CacheExpiration);
+
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -89,18 +141,27 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                GuildUserStat userStats = await GetOrAddAsync(guildId, userId);
-                userStats.DuelLose += count;
+                var cacheKey = GetCacheKey(guildId, userId);
+                var lockKey = $"{cacheKey}_lock";
 
-                _context.GuildUserStats.Update(userStats);
-                await _context.SaveChangesAsync();
-                return true;
+                using (var lockHandle = await SemaphoreLock.LockAsync(lockKey))
+                {
+                    GuildUserStat userStats = await GetOrAddAsync(guildId, userId, isLocked: true);
+                    userStats.DuelLose += count;
+
+                    await _context.SaveChangesAsync();
+
+                    _cache.Set(cacheKey, userStats, CacheExpiration);
+
+                    return true;
+                }
             }
             catch (Exception ex)
             {
                 throw new McopException(ex, ex.Message);
             }
         }
+
         public async Task<ServerTopVM> GetServerTopAsync(ulong guildId)
         {
             try
@@ -121,6 +182,11 @@ namespace MCOP.Core.Services.Scoped
             {
                 throw new McopException(ex, ex.Message);
             }
+        }
+
+        public string GetCacheKey(ulong guildId, ulong userId)
+        {
+            return $"GuildUserStat_{guildId}_{userId}";
         }
     }
 }
