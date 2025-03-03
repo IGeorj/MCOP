@@ -5,6 +5,7 @@ using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace MCOP.Core.Services.Scoped
 {
@@ -30,11 +31,15 @@ namespace MCOP.Core.Services.Scoped
                     var lockKey = $"{cacheKey}_lock";
                     using (var lockHandle = await SemaphoreLock.LockAsync(lockKey))
                     {
+                        Log.Information("GetOrAddGuildEmojiAsync guildId: {guildId}, emoji: {emoji}, isLocked: {isLocked}", guildId, emojiName, isLocked);
+
                         return await GetOrAddGuildEmojiInternalAsync(guildId, emojiId, emojiName, cacheKey);
                     }
                 }
                 else
                 {
+                    Log.Information("GetOrAddGuildEmojiAsync guildId: {guildId}, emoji: {emoji}, isLocked: {isLocked}", guildId, emojiName, isLocked);
+
                     return await GetOrAddGuildEmojiInternalAsync(guildId, emojiId, emojiName, cacheKey);
                 }
             }
@@ -69,11 +74,15 @@ namespace MCOP.Core.Services.Scoped
                     var lockKey = $"{cacheKey}_lock";
                     using (var lockHandle = await SemaphoreLock.LockAsync(lockKey))
                     {
+                        Log.Information("GetOrAddGuildUserEmojiAsync guildId: {guildId}, userId: {userId}, emoji: {emoji}, isLocked: {isLocked}", guildId, userId, emoji.Name, isLocked);
+
                         return await GetOrAddGuildUserEmojiInternalAsync(emoji, guildId, userId, cacheKey);
                     }
                 }
                 else
                 {
+                    Log.Information("GetOrAddGuildUserEmojiAsync guildId: {guildId}, userId: {userId}, emoji: {emoji}, isLocked: {isLocked}", guildId, userId, emoji.Name, isLocked);
+
                     return await GetOrAddGuildUserEmojiInternalAsync(emoji, guildId, userId, cacheKey);
                 }
             }
@@ -97,7 +106,9 @@ namespace MCOP.Core.Services.Scoped
                     UserId = guildUser.UserId,
                     EmojiId = emoji.Id
                 };
+
                 _context.GuildUserEmoji.Add(guildUserEmoji);
+
                 await _context.SaveChangesAsync();
             }
 
@@ -121,6 +132,8 @@ namespace MCOP.Core.Services.Scoped
                     _context.GuildUserEmoji.Update(guildUserEmoji);
                     await _context.SaveChangesAsync();
 
+                    Log.Information("ChangeUserRecievedEmojiCountAsync guildId: {guildId}, userId: {userId}, emoji: {emoji}, total:{RecievedAmount}, changed: {count}", guildId, userId, emoji.GetDiscordName(), guildUserEmoji.RecievedAmount, count);
+
                     return true;
                 }
             }
@@ -134,6 +147,8 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
+                Log.Information("GetUserTopEmojiAsync guildId: {guildId}, userId: {userId}", guildId, userId);
+
                 return await _context.GuildUserEmoji
                     .Include(x => x.GuildEmoji)
                     .Where(x => x.GuildId == guildId && x.UserId == userId)
@@ -162,6 +177,8 @@ namespace MCOP.Core.Services.Scoped
                 }
 
                 await _context.SaveChangesAsync();
+
+                Log.Information("UpdateGuildEmojiesAsync guildId: {guildId}, {count}", guildId, discordEmojis.Count);
             }
             catch (Exception ex)
             {
@@ -182,6 +199,8 @@ namespace MCOP.Core.Services.Scoped
                 _context.GuildUserEmoji.Update(guildUserEmoji);
 
                 await _context.SaveChangesAsync();
+
+                Log.Information("SetGuildUserEmojiCountAsync guildId: {guildId}, userId: {userId}, emoji: {emoji}, {count}", guildId, userId, discordEmoji.GetDiscordName(), count);
             }
             catch (Exception ex)
             {

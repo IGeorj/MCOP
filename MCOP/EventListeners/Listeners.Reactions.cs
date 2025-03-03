@@ -1,7 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using MCOP.Common;
 using MCOP.Core.Services.Scoped;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -20,10 +19,8 @@ namespace MCOP.EventListeners
                 return;
             }
 
-            if (e.Emoji.GetDiscordName() == HeartEmojiName)
-            {
-                await ChangeLikeAsync(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, 1);
-            }
+            await ChangeLikeAsync(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, 1);
+
 
             if (e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _) && e.Emoji.GetDiscordName() != HeartEmojiName)
             {
@@ -39,10 +36,7 @@ namespace MCOP.EventListeners
                 return;
             }
 
-            if (e.Emoji.GetDiscordName() == HeartEmojiName)
-            {
-                await ChangeLikeAsync(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, -1);
-            }
+            await ChangeLikeAsync(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, -1);
 
             if (e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _) && e.Emoji.GetDiscordName() != HeartEmojiName)
             {
@@ -52,17 +46,20 @@ namespace MCOP.EventListeners
 
         private static async Task ChangeLikeAsync(DiscordGuild? guild, DiscordChannel? channel, DiscordMessage msg, DiscordEmoji emoji, DiscordUser user, int count)
         {
+            if (emoji.GetDiscordName() != HeartEmojiName) return;
+
             if (msg.Author is null && channel is not null)
             {
                 msg = await channel.GetMessageAsync(msg.Id);
             }
 
-            if (emoji.GetDiscordName() == HeartEmojiName && !(msg?.Author?.Id == user.Id))
+            if (!(msg?.Author?.Id == user.Id))
             {
-                UserStatsService statsService = Services.GetRequiredService<UserStatsService>();
-                await statsService.ChangeLikeAsync(guild.Id, msg.Author.Id, msg.Id, count);
-                Log.Information("User {Username} heart emoji {count}. MessageId:{Id} AuthorId:{authorId}", user.Username, count, msg.Id, msg.Author.Id);
+                Log.Information("User {Username} change {emoji} {count}", user.Username, emoji.GetDiscordName(), count);
 
+                UserStatsService statsService = Services.GetRequiredService<UserStatsService>();
+
+                await statsService.ChangeLikeAsync(guild.Id, msg.Author.Id, msg.Id, count);
             }
         }
 
@@ -75,10 +72,11 @@ namespace MCOP.EventListeners
 
             if (!(msg?.Author?.Id == user.Id))
             {
+                Log.Information("User {Username} change {emoji} {count}", user.Username, emoji.GetDiscordName(), count);
+
                 GuildEmojiService guildEmojiService = Services.GetRequiredService<GuildEmojiService>();
+
                 await guildEmojiService.ChangeUserRecievedEmojiCountAsync(emoji, guild.Id, msg.Author.Id, count);
-                var emojiName = emoji.Name;
-                Log.Information("User {Username} emoji {emojiName} {count}. MessageId:{Id} AuthorId:{authorId}", user.Username, emojiName, count, msg.Id, msg.Author.Id);
             }
         }
     }

@@ -3,7 +3,6 @@ using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Serilog;
 
 namespace MCOP.Core.Services.Scoped
@@ -11,13 +10,11 @@ namespace MCOP.Core.Services.Scoped
     public class LevelingService : IScoped
     {
 
-        private readonly IMemoryCache _cache;
         private readonly McopDbContext _context;
         private readonly UserStatsService _userStatsService;
 
-        public LevelingService(IMemoryCache cache, McopDbContext context, UserStatsService userStatsService, UserService userService)
+        public LevelingService(McopDbContext context, UserStatsService userStatsService, UserService userService)
         {
-            _cache = cache;
             _context = context;
             _userStatsService = userStatsService;
         }
@@ -48,8 +45,6 @@ namespace MCOP.Core.Services.Scoped
 
                     _context.GuildUserStats.Update(userStats);
                     await _context.SaveChangesAsync();
-
-                    // _cache.Set(cacheKey, userStats, _userStatsService.CacheExpiration);
 
                     Log.Information("Exp added userId: {userId} amount: {exp}", userId, gainedExp);
                 }

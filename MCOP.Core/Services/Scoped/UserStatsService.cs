@@ -1,11 +1,12 @@
-﻿using MCOP.Core.Common;
+﻿using Humanizer;
+using MCOP.Core.Common;
 using MCOP.Core.Exceptions;
 using MCOP.Core.ViewModels;
 using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Serilog;
 
 namespace MCOP.Core.Services.Scoped
 {
@@ -13,13 +14,11 @@ namespace MCOP.Core.Services.Scoped
     {
         public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
 
-        private readonly IMemoryCache _cache;
         private readonly McopDbContext _context;
         private readonly UserService _userService;
 
-        public UserStatsService(IMemoryCache cache, McopDbContext context, UserService userService)
+        public UserStatsService(McopDbContext context, UserService userService)
         {
-            _cache = cache;
             _context = context;
             _userService = userService;
         }
@@ -35,12 +34,16 @@ namespace MCOP.Core.Services.Scoped
                     var lockKey = $"{cacheKey}_lock";
                     using (var lockHandle = await SemaphoreLock.LockAsync(lockKey))
                     {
-                        return await GetOrAddAsyncInternal(guildId, userId, cacheKey);
+                        Log.Information("GetOrAddAsyncInternal UserStats guildId: {guildId}, userId: {userId}, isLocked: {isLocked}", guildId, userId, isLocked);
+
+                        return await GetOrAddAsyncInternal(guildId, userId);
                     }
                 }
                 else
                 {
-                    return await GetOrAddAsyncInternal(guildId, userId, cacheKey);
+                    Log.Information("GetOrAddAsyncInternal UserStats guildId: {guildId}, userId: {userId}, isLocked: {isLocked}", guildId, userId, isLocked);
+
+                    return await GetOrAddAsyncInternal(guildId, userId);
                 }
             }
             catch (Exception ex)
@@ -48,12 +51,8 @@ namespace MCOP.Core.Services.Scoped
                 throw new McopException(ex, ex.Message);
             }
         }
-        private async Task<GuildUserStat> GetOrAddAsyncInternal(ulong guildId, ulong userId, string cacheKey)
+        private async Task<GuildUserStat> GetOrAddAsyncInternal(ulong guildId, ulong userId)
         {
-            if (_cache.TryGetValue(cacheKey, out GuildUserStat? cachedUserStat))
-            {
-                return cachedUserStat;
-            }
 
             var userStats = await _context.GuildUserStats.FindAsync(guildId, userId);
 
@@ -66,7 +65,7 @@ namespace MCOP.Core.Services.Scoped
                 await _context.SaveChangesAsync();
             }
 
-            //_cache.Set(cacheKey, userStats, CacheExpiration);
+            Log.Information("GetOrAddAsyncInternal UserStats likes: {Likes}, win: {DuelWin}, lose: {DuelLose}, exp: {Exp}, lastExp: {LastExpAwardedAt}", userStats.Likes, userStats.DuelWin, userStats.DuelLose, userStats.Exp.ToMetric(), userStats.LastExpAwardedAt);
 
             return userStats;
         }
@@ -101,7 +100,7 @@ namespace MCOP.Core.Services.Scoped
 
                     await _context.SaveChangesAsync();
 
-                    _cache.Set(cacheKey, userStats, CacheExpiration);
+                    Log.Information("ChangeLikeAsync guildId: {guildId}, userId: {userId}, {count}", guildId, userId, count);
 
                     return true;
                 }
@@ -126,7 +125,7 @@ namespace MCOP.Core.Services.Scoped
 
                     await _context.SaveChangesAsync();
 
-                    _cache.Set(cacheKey, userStats, CacheExpiration);
+                    Log.Information("ChangeWinAsync guildId: {guildId}, userId: {userId}, count ", guildId, userId, count);
 
                     return true;
                 }
@@ -151,7 +150,7 @@ namespace MCOP.Core.Services.Scoped
 
                     await _context.SaveChangesAsync();
 
-                    _cache.Set(cacheKey, userStats, CacheExpiration);
+                    Log.Information("ChangeLoseAsync guildId: {guildId}, userId: {userId}, count ", guildId, userId, count);
 
                     return true;
                 }
@@ -170,6 +169,8 @@ namespace MCOP.Core.Services.Scoped
                 var topDuels = await _context.GuildUserStats.OrderByDescending(x => x.DuelWin).Take(20).ToListAsync();
                 var honorableMention = await _context.GuildUserStats.Where(x => x.GuildId == guildId)
                     .OrderByDescending(u => u.DuelLose - u.DuelWin).Take(20).ToListAsync();
+
+                Log.Information("GetServerTopAsync guildId: {guildId}", guildId);
 
                 return new ServerTopVM
                 {

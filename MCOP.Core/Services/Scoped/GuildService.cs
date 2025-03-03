@@ -3,6 +3,8 @@ using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+using System.Threading.Channels;
 
 namespace MCOP.Core.Services.Scoped
 {
@@ -14,6 +16,7 @@ namespace MCOP.Core.Services.Scoped
         {
             _context = context;
         }
+
         public async Task<Guild> GetOrAddGuildAsync(ulong guildId)
         {
             try
@@ -24,6 +27,8 @@ namespace MCOP.Core.Services.Scoped
                     guild = (await _context.Guilds.AddAsync(new Guild { Id = guildId })).Entity;
                     await _context.SaveChangesAsync();
                 }
+
+                Log.Information("GetOrAddGuildAsync Guild guildId: {guildId}", guildId);
 
                 return guild;
             }
@@ -45,6 +50,8 @@ namespace MCOP.Core.Services.Scoped
                     await _context.SaveChangesAsync();
                 }
 
+                Log.Information("GetOrAddGuildConfigAsync guildId: {guildId}", guildId);
+
                 return config;
             }
             catch (Exception ex)
@@ -57,6 +64,8 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
+                Log.Information("GetGuildConfigsWithLewdChannelAsync");
+
                 return await _context.GuildConfigs.Where(x => x.LewdChannelId != null).ToListAsync();
             }
             catch (Exception ex)
@@ -75,6 +84,9 @@ namespace MCOP.Core.Services.Scoped
                 _context.GuildConfigs.Update(config);
 
                 await _context.SaveChangesAsync();
+
+                Log.Information("SetLewdChannelAsync guildId: {guildId}, channelId: {channelId}", guildId, channelId);
+
             }
             catch (Exception ex)
             {
@@ -92,6 +104,9 @@ namespace MCOP.Core.Services.Scoped
                 _context.GuildConfigs.Update(config);
 
                 await _context.SaveChangesAsync();
+
+                Log.Information("SetLoggingChannelAsync guildId: {guildId}, channelId: {channelId}", guildId, channelId);
+
             }
             catch (Exception ex)
             {

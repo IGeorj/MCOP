@@ -7,6 +7,7 @@ using MCOP.Core.Common;
 using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
 using MCOP.Core.ViewModels;
+using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -31,7 +32,7 @@ internal static partial class Listeners
         var mcopNsfwChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 539145624868749327;
         var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
 
-        if ((mcopNsfwChannel || mcopLewdChannel || gaysAdminChannel) && e.Message.Attachments.Count > 0)
+        if ((mcopNsfwChannel || mcopLewdChannel || gaysAdminChannel) && (e.Message.Attachments.Count > 0 || e.Message.ContainsImageLink()))
         {
             await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
         }
@@ -174,8 +175,10 @@ internal static partial class Listeners
     {
         var hashService = Services.GetRequiredService<ImageHashService>();
         List<byte[]> oldHashes = await hashService.GetHashesFromMessageAsync(messageFromHash);
+
         double bestMatch = 0;
         int indexMatch = 0;
+
         for (int i = 0; i < oldHashes.Count; i++)
         {
             var percentage = SkiaSharpService.GetPercentageDifference(oldHashes[i], hash);
@@ -185,6 +188,7 @@ internal static partial class Listeners
                 bestMatch = percentage;
             }
         }
+
         return indexMatch;
     }
 
