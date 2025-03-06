@@ -27,7 +27,6 @@ internal static partial class Listeners
             x.HandleMessageReactionAdded(MessageReactionAddedEventHandler);
             x.HandleMessageReactionRemoved(MessageReactionRemovedEventHandler);
             x.HandleComponentInteractionCreated(ComponentInteractionCreatedEventHandler);
-            x.HandleGuildEmojisUpdated(GuildEmojisUpdated);
         });
     }
 

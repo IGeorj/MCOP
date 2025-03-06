@@ -23,7 +23,7 @@ public sealed class PeriodicTasksService : IDisposable
                 return;
             }
 
-            ActivityService bas = bot.Services.GetRequiredService<ActivityService>();
+            BotStatusesService bas = bot.Services.GetRequiredService<BotStatusesService>();
 
             try
             {
@@ -72,7 +72,7 @@ public sealed class PeriodicTasksService : IDisposable
                 try
                 {
                     SankakuService sankaku = bot.Services.GetRequiredService<SankakuService>();
-                    GuildService guildService = bot.Services.GetRequiredService<GuildService>();
+                    GuildConfigService guildService = bot.Services.GetRequiredService<GuildConfigService>();
                     var guildConfigs = await guildService.GetGuildConfigsWithLewdChannelAsync();
                     List<DiscordChannel> channels = new List<DiscordChannel>();
                     foreach (var config in guildConfigs)

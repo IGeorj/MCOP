@@ -22,9 +22,6 @@ namespace MCOP.Data.Models
 
         [NotMapped]
         public bool LewdEnabled => LewdChannelId != default;
-
-        [ForeignKey(nameof(GuildId))]
-        public Guild Guild { get; set; }
     }
 }
 

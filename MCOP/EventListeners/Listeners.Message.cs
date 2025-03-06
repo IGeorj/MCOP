@@ -24,8 +24,9 @@ internal static partial class Listeners
         await MessageHelper.CheckEveryoneAsync(client, e);
         await MessageHelper.CheckDulyaAsync(client, e);
 
-        var levelingService = Services.GetRequiredService<LevelingService>();
-        await levelingService.OnUserMessageCreatedAsync(e.Guild.Id, e.Author.Id);
+        var levelingService = Services.GetRequiredService<GuildUserStatsService>();
+
+        await levelingService.AddMessageExpAsync(e.Guild.Id, e.Author.Id);
 
         // TODO: remove hardcoded channels
         var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
@@ -89,7 +90,7 @@ internal static partial class Listeners
 
         if (mcopLewdChannel || gaysAdminChannel)
         {
-            var messageService = Services.GetRequiredService<MessageService>();
+            var messageService = Services.GetRequiredService<GuildMessageService>();
             await messageService.RemoveMessageAsync(e.Guild.Id, e.Message.Id);
         }
     }

@@ -61,7 +61,7 @@ namespace MCOP.Core.Helpers
                 }
             }
 
-            return high;
+            return high < 0 ? 0 : high;
         }
 
         public static int GetExpToLvlUp(int level, int totalExp)

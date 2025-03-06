@@ -9,14 +9,15 @@ using System.Diagnostics;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class ActivityService : IScoped
+    public class BotStatusesService : IScoped
     {
-        private readonly McopDbContext _context;
+        private readonly IDbContextFactory<McopDbContext> _contextFactory;
+
         public UptimeInformation UptimeInformation { get; }
 
-        public ActivityService(McopDbContext context)
+        public BotStatusesService(IDbContextFactory<McopDbContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             UptimeInformation = new UptimeInformation(Process.GetCurrentProcess().StartTime);
         }
 
@@ -24,7 +25,9 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                List<BotStatus> statuses = await _context.BotStatuses.ToListAsync();
+                await using var context = _contextFactory.CreateDbContext();
+
+                List<BotStatus> statuses = await context.BotStatuses.ToListAsync();
 
                 if (statuses.Count < 1)
                 {

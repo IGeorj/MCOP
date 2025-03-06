@@ -144,7 +144,7 @@ public sealed class OwnerModule
     [Command("uptime")]
     public async Task UptimeAsync(CommandContext ctx)
     {
-        ActivityService bas = ctx.ServiceProvider.GetRequiredService<ActivityService>();
+        BotStatusesService bas = ctx.ServiceProvider.GetRequiredService<BotStatusesService>();
         TimeSpan processUptime = bas.UptimeInformation.ProgramUptime;
         TimeSpan socketUptime = bas.UptimeInformation.SocketUptime;
 

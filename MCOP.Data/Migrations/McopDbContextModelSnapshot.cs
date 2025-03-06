@@ -36,20 +36,10 @@ namespace MCOP.Data.Migrations
                     b.ToTable("BotStatuses");
                 });
 
-            modelBuilder.Entity("MCOP.Data.Models.Guild", b =>
-                {
-                    b.Property<ulong>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Guilds");
-                });
-
             modelBuilder.Entity("MCOP.Data.Models.GuildConfig", b =>
                 {
                     b.Property<ulong>("GuildId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<ulong?>("LewdChannelId")
@@ -65,26 +55,6 @@ namespace MCOP.Data.Migrations
                     b.HasKey("GuildId");
 
                     b.ToTable("GuildConfigs");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildEmoji", b =>
-                {
-                    b.Property<ulong>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("DiscordName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GuildId");
-
-                    b.ToTable("GuildEmoji");
                 });
 
             modelBuilder.Entity("MCOP.Data.Models.GuildMessage", b =>
@@ -103,24 +73,7 @@ namespace MCOP.Data.Migrations
 
                     b.HasKey("GuildId", "Id");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("GuildMessages");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildUser", b =>
-                {
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ulong>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("GuildId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("GuildUsers");
                 });
 
             modelBuilder.Entity("MCOP.Data.Models.GuildUserEmoji", b =>
@@ -135,16 +88,15 @@ namespace MCOP.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("RecievedAmount")
+                        .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
                     b.HasKey("GuildId", "UserId", "EmojiId");
 
-                    b.HasIndex("EmojiId");
-
-                    b.ToTable("GuildUserEmoji");
+                    b.ToTable("GuildUserEmojies");
                 });
 
-            modelBuilder.Entity("MCOP.Data.Models.GuildUserStat", b =>
+            modelBuilder.Entity("MCOP.Data.Models.GuildUserStats", b =>
                 {
                     b.Property<ulong>("GuildId")
                         .HasColumnType("INTEGER");
@@ -153,18 +105,22 @@ namespace MCOP.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("DuelLose")
+                        .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("DuelWin")
+                        .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Exp")
+                        .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("LastExpAwardedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Likes")
+                        .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
 
                     b.HasKey("GuildId", "UserId");
@@ -195,107 +151,6 @@ namespace MCOP.Data.Migrations
                     b.ToTable("ImageHashes");
                 });
 
-            modelBuilder.Entity("MCOP.Data.Models.User", b =>
-                {
-                    b.Property<ulong>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildConfig", b =>
-                {
-                    b.HasOne("MCOP.Data.Models.Guild", "Guild")
-                        .WithOne("GuildConfig")
-                        .HasForeignKey("MCOP.Data.Models.GuildConfig", "GuildId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Guild");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildEmoji", b =>
-                {
-                    b.HasOne("MCOP.Data.Models.Guild", "Guild")
-                        .WithMany("GuildEmoji")
-                        .HasForeignKey("GuildId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Guild");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildMessage", b =>
-                {
-                    b.HasOne("MCOP.Data.Models.Guild", "Guild")
-                        .WithMany()
-                        .HasForeignKey("GuildId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MCOP.Data.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Guild");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildUser", b =>
-                {
-                    b.HasOne("MCOP.Data.Models.Guild", "Guild")
-                        .WithMany("GuildUsers")
-                        .HasForeignKey("GuildId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MCOP.Data.Models.User", "User")
-                        .WithMany("GuildUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Guild");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildUserEmoji", b =>
-                {
-                    b.HasOne("MCOP.Data.Models.GuildEmoji", "GuildEmoji")
-                        .WithMany()
-                        .HasForeignKey("EmojiId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MCOP.Data.Models.GuildUser", "GuildUser")
-                        .WithMany()
-                        .HasForeignKey("GuildId", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GuildEmoji");
-
-                    b.Navigation("GuildUser");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.GuildUserStat", b =>
-                {
-                    b.HasOne("MCOP.Data.Models.GuildUser", "GuildUser")
-                        .WithMany()
-                        .HasForeignKey("GuildId", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GuildUser");
-                });
-
             modelBuilder.Entity("MCOP.Data.Models.ImageHash", b =>
                 {
                     b.HasOne("MCOP.Data.Models.GuildMessage", "GuildMessage")
@@ -307,24 +162,9 @@ namespace MCOP.Data.Migrations
                     b.Navigation("GuildMessage");
                 });
 
-            modelBuilder.Entity("MCOP.Data.Models.Guild", b =>
-                {
-                    b.Navigation("GuildConfig")
-                        .IsRequired();
-
-                    b.Navigation("GuildEmoji");
-
-                    b.Navigation("GuildUsers");
-                });
-
             modelBuilder.Entity("MCOP.Data.Models.GuildMessage", b =>
                 {
                     b.Navigation("ImageHashes");
-                });
-
-            modelBuilder.Entity("MCOP.Data.Models.User", b =>
-                {
-                    b.Navigation("GuildUsers");
                 });
 #pragma warning restore 612, 618
         }

@@ -181,9 +181,9 @@ namespace MCOP.Modules.Basic
                 embed.AddField("Результат", $"🥇**{winnerLoser.Item1.DisplayName}** vs {winnerLoser.Item2.DisplayName}");
 
 
-                UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
-                await statsService.ChangeWinAsync(ctx.Guild.Id, winnerLoser.Item1.Id, 1);
-                await statsService.ChangeLoseAsync(ctx.Guild.Id, winnerLoser.Item2.Id, 1);
+                GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+                await statsService.AddDuelWinAsync(ctx.Guild.Id, winnerLoser.Item1.Id);
+                await statsService.AddDuelLoseAsync(ctx.Guild.Id, winnerLoser.Item2.Id);
 
                 var emoji = DiscordEmoji.FromGuildEmote(ctx.Client, 475694805691793409);
                 await ctx.Channel.SendMessageAsync($"{winnerLoser.Item2.Mention} - {randomNoun.Value} помянем {emoji}");

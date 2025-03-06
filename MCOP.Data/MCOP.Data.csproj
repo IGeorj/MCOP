@@ -36,8 +36,4 @@
     <ProjectReference Include="..\MCOP.Utils\MCOP.Utils.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Migrations\" />
-  </ItemGroup>
-
 </Project>

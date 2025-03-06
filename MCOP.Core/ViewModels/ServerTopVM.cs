@@ -4,8 +4,8 @@ namespace MCOP.Core.ViewModels
 {
     public class ServerTopVM
     {
-        public List<GuildUserStat> TopLikedUser { get; set; } = new List<GuildUserStat>();
-        public List<GuildUserStat> TopDuelUser { get; set; } = new List<GuildUserStat>();
-        public List<GuildUserStat> HonorableMention { get; set; } = new List<GuildUserStat>();
+        public List<GuildUserStats> TopLikedUser { get; set; } = new List<GuildUserStats>();
+        public List<GuildUserStats> TopDuelUser { get; set; } = new List<GuildUserStats>();
+        public List<GuildUserStats> HonorableMention { get; set; } = new List<GuildUserStats>();
     }
 }

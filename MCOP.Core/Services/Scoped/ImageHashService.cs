@@ -13,21 +13,23 @@ namespace MCOP.Core.Services.Scoped
 {
     public class ImageHashService : IScoped
     {
-        private readonly McopDbContext _context;
+        private readonly IDbContextFactory<McopDbContext> _contextFactory;
+
         private const double _defaultNormalizedThreshold = 99.5;
         private const double _defaultDiffThreshold = 95;
 
-        public ImageHashService(McopDbContext context, MessageService messageService)
+        public ImageHashService(IDbContextFactory<McopDbContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
         }
-
 
         public async Task<List<ImageHash>> GetAllHashesAsync()
         {
             try
             {
-                return (await _context.ImageHashes.ToListAsync()).OrderByDescending(x => x.Id).ToList();
+                await using var context = _contextFactory.CreateDbContext();
+
+                return (await context.ImageHashes.ToListAsync()).OrderByDescending(x => x.Id).ToList();
             }
             catch (Exception ex)
             {
@@ -39,7 +41,9 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                return (await _context.ImageHashes.Where(x => x.GuildId == guildId).ToListAsync()).OrderByDescending(x => x.Id).ToList();
+                await using var context = _contextFactory.CreateDbContext();
+
+                return (await context.ImageHashes.Where(x => x.GuildId == guildId).ToListAsync()).OrderByDescending(x => x.Id).ToList();
             }
             catch (Exception ex)
             {
@@ -51,46 +55,29 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                GuildMessage? message = await _context.GuildMessages.FindAsync(guildId, messageId);
+                await using var context = _contextFactory.CreateDbContext();
+
+                GuildMessage? message = await context.GuildMessages.FindAsync(guildId, messageId);
                 if (message is null)
                 {
-                    var guild = await _context.Guilds.FindAsync(guildId);
-                    if (guild is null)
+                    message = (await context.GuildMessages.AddAsync(new GuildMessage
                     {
-                        guild = (await _context.Guilds.AddAsync(new Guild { Id = guildId })).Entity;
-                        await _context.SaveChangesAsync();
-                    }
-                    var user = await _context.Users.FindAsync(userId);
-                    if (user is null)
-                    {
-                        user = (await _context.Users.AddAsync(new User { Id = userId })).Entity;
-                        await _context.SaveChangesAsync();
-                    }
-                    var guildUser = await _context.GuildUsers.FindAsync(guildId, userId);
-                    if (guildUser is null)
-                    {
-                        guildUser = (await _context.GuildUsers.AddAsync(new GuildUser { GuildId = guildId, UserId = user.Id })).Entity;
-                        await _context.SaveChangesAsync();
-                    }
-
-                    message = (await _context.GuildMessages.AddAsync(new GuildMessage
-                    {
-                        GuildId = guildUser.GuildId,
+                        GuildId = guildId,
                         Id = messageId,
-                        UserId = guildUser.UserId,
+                        UserId = userId,
                     })).Entity;
 
-                    await _context.SaveChangesAsync();
+                    await context.SaveChangesAsync();
                 }
 
-                await _context.ImageHashes.AddAsync(new ImageHash
+                await context.ImageHashes.AddAsync(new ImageHash
                 {
                     Hash = hash,
                     MessageId = message.Id,
                     GuildId = message.GuildId
                 });
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return 1;
             }
             catch (Exception ex)
@@ -169,21 +156,25 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task RemoveHashesByMessageId(ulong guildId, ulong messageId)
         {
-            var toRemove = await _context.ImageHashes.Where(x => x.GuildId == guildId && x.MessageId == messageId).ToListAsync();
+            await using var context = _contextFactory.CreateDbContext();
+
+            var toRemove = await context.ImageHashes.Where(x => x.GuildId == guildId && x.MessageId == messageId).ToListAsync();
 
             if (toRemove.Count > 0)
             {
-                _context.ImageHashes.RemoveRange(toRemove);
+                context.ImageHashes.RemoveRange(toRemove);
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task<int> GetTotalCountAsync()
         {
             try
             {
-                return await _context.ImageHashes.CountAsync();
+                await using var context = _contextFactory.CreateDbContext();
+
+                return await context.ImageHashes.CountAsync();
             }
             catch (Exception ex)
             {

@@ -39,14 +39,14 @@ internal static partial class Listeners
     public static async Task GuildCreateEventHandler(DiscordClient client, GuildCreatedEventArgs e)
     {
         Log.Information("Joined {NewGuild}", e.Guild);
-        var guildService = Services.GetRequiredService<GuildService>();
+        var guildService = Services.GetRequiredService<GuildConfigService>();
         await guildService.GetOrAddGuildConfigAsync(e.Guild.Id);
     }
 
     public static Task SocketOpenedEventHandler(DiscordClient client, SocketEventArgs _)
     {
         Log.Debug("Socket opened");
-        Services.GetRequiredService<ActivityService>().UptimeInformation.SocketStartTime = DateTimeOffset.Now;
+        Services.GetRequiredService<BotStatusesService>().UptimeInformation.SocketStartTime = DateTimeOffset.Now;
         return Task.CompletedTask;
     }
 

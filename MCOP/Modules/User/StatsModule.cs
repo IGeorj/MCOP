@@ -2,6 +2,7 @@
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
+using MCOP.Common;
 using MCOP.Core.Helpers;
 using MCOP.Core.Services.Scoped;
 using MCOP.Core.ViewModels;
@@ -37,16 +38,17 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
-            GuildUserStat stats = await statsService.GetOrAddAsync(ctx.Guild.Id, member.Id);
+            GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+            GuildUserStats stats = await statsService.GetGuildUserStatAsync(ctx.Guild.Id, member.Id);
 
-            GuildEmojiService guildEmojiService = ctx.ServiceProvider.GetRequiredService<GuildEmojiService>();
-            List<GuildUserEmoji> recievedEmojies = await guildEmojiService.GetUserTopEmojiAsync(ctx.Guild.Id, member.Id);
+            GuildUserEmojiService guildEmojiService = ctx.ServiceProvider.GetRequiredService<GuildUserEmojiService>();
+            List<GuildUserEmoji> recievedEmojies = await guildEmojiService.GetTopEmojisForUserAsync(ctx.Guild.Id, member.Id);
             StringBuilder topEmoji = new();
 
             foreach (var item in recievedEmojies)
             {
-                topEmoji.Append($"{DiscordEmoji.FromName(ctx.Client, item.GuildEmoji.DiscordName).ToString()} {item.RecievedAmount}  ");
+                var emojiString = (await ctx.Guild.GetEmojiAsync(item.EmojiId)).ToString();
+                topEmoji.Append($"{emojiString} {item.RecievedAmount}  ");
             }
 
             int userLevel = LevelingHelper.GetLevelFromTotalExp(stats.Exp);
@@ -75,7 +77,7 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            UserStatsService statsService = ctx.ServiceProvider.GetRequiredService<UserStatsService>();
+            GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
             ServerTopVM serverTop = await statsService.GetServerTopAsync(ctx.Guild.Id);
 
             StringBuilder topLikes = new();
@@ -171,7 +173,7 @@ namespace MCOP.Modules.User
 
             try
             {
-                var guildEmojiService = ctx.ServiceProvider.GetRequiredService<GuildEmojiService>();
+                var guildEmojiService = ctx.ServiceProvider.GetRequiredService<GuildUserEmojiService>();
                 await guildEmojiService.SetGuildUserEmojiCountAsync(ctx.Guild.Id, user.Id, discordEmoji, count);
 
             }
@@ -242,7 +244,7 @@ namespace MCOP.Modules.User
 
             if (isAllParsed && userIdExp.Any() && ctx.Guild is not null)
             {
-                var levelingService = ctx.ServiceProvider.GetRequiredService<LevelingService>();
+                var levelingService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
                 await levelingService.SetUsersExperienceAsync(ctx.Guild.Id, userIdExp);
             }
 

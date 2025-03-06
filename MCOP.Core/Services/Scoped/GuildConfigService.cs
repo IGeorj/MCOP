@@ -3,51 +3,32 @@ using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 using Serilog;
 using System.Threading.Channels;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class GuildService : IScoped
+    public class GuildConfigService : IScoped
     {
-        private readonly McopDbContext _context;
+        private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
-        public GuildService(McopDbContext context)
+        public GuildConfigService(IDbContextFactory<McopDbContext> contextFactory)
         {
-            _context = context;
-        }
-
-        public async Task<Guild> GetOrAddGuildAsync(ulong guildId)
-        {
-            try
-            {
-                Guild? guild = await _context.Guilds.FindAsync(guildId);
-                if (guild is null)
-                {
-                    guild = (await _context.Guilds.AddAsync(new Guild { Id = guildId })).Entity;
-                    await _context.SaveChangesAsync();
-                }
-
-                Log.Information("GetOrAddGuildAsync Guild guildId: {guildId}", guildId);
-
-                return guild;
-            }
-            catch (Exception ex)
-            {
-                throw new McopException(ex, ex.Message);
-            }
+            _contextFactory = contextFactory;
         }
 
         public async Task<GuildConfig> GetOrAddGuildConfigAsync(ulong guildId)
         {
             try
             {
-                GuildConfig? config = await _context.GuildConfigs.FindAsync(guildId);
+                await using var context = _contextFactory.CreateDbContext();
+
+                GuildConfig? config = await context.GuildConfigs.FindAsync(guildId);
                 if (config is null)
                 {
-                    var guild = await GetOrAddGuildAsync(guildId);
-                    config = (await _context.GuildConfigs.AddAsync(new GuildConfig { Guild = guild })).Entity;
-                    await _context.SaveChangesAsync();
+                    config = (await context.GuildConfigs.AddAsync(new GuildConfig { GuildId = guildId })).Entity;
+                    await context.SaveChangesAsync();
                 }
 
                 Log.Information("GetOrAddGuildConfigAsync guildId: {guildId}", guildId);
@@ -64,9 +45,11 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
+                await using var context = _contextFactory.CreateDbContext();
+
                 Log.Information("GetGuildConfigsWithLewdChannelAsync");
 
-                return await _context.GuildConfigs.Where(x => x.LewdChannelId != null).ToListAsync();
+                return await context.GuildConfigs.Where(x => x.LewdChannelId != null).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -78,12 +61,14 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
+                await using var context = _contextFactory.CreateDbContext();
+
                 GuildConfig config = await GetOrAddGuildConfigAsync(guildId);
                 config.LewdChannelId = channelId;
 
-                _context.GuildConfigs.Update(config);
+                context.GuildConfigs.Update(config);
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 Log.Information("SetLewdChannelAsync guildId: {guildId}, channelId: {channelId}", guildId, channelId);
 
@@ -98,12 +83,14 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
+                await using var context = _contextFactory.CreateDbContext();
+
                 GuildConfig config = await GetOrAddGuildConfigAsync(guildId);
                 config.LogChannelId = channelId;
 
-                _context.GuildConfigs.Update(config);
+                context.GuildConfigs.Update(config);
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 Log.Information("SetLoggingChannelAsync guildId: {guildId}, channelId: {channelId}", guildId, channelId);
 

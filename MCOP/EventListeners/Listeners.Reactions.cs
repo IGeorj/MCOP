@@ -46,7 +46,7 @@ namespace MCOP.EventListeners
 
         private static async Task ChangeLikeAsync(DiscordGuild? guild, DiscordChannel? channel, DiscordMessage msg, DiscordEmoji emoji, DiscordUser user, int count)
         {
-            if (emoji.GetDiscordName() != HeartEmojiName) return;
+            if (emoji.GetDiscordName() != HeartEmojiName || guild is null) return;
 
             if (msg.Author is null && channel is not null)
             {
@@ -57,9 +57,16 @@ namespace MCOP.EventListeners
             {
                 Log.Information("User {Username} change {emoji} {count}", user.Username, emoji.GetDiscordName(), count);
 
-                UserStatsService statsService = Services.GetRequiredService<UserStatsService>();
+                LikeService likeService = Services.GetRequiredService<LikeService>();
 
-                await statsService.ChangeLikeAsync(guild.Id, msg.Author.Id, msg.Id, count);
+                if (count > 0)
+                {
+                    await likeService.AddLikeAsync(guild.Id, msg.Author.Id, msg.Id);
+                }
+                else
+                {
+                    await likeService.RemoveLikeAsync(guild.Id, msg.Author.Id, msg.Id);
+                }
             }
         }
 
@@ -74,9 +81,15 @@ namespace MCOP.EventListeners
             {
                 Log.Information("User {Username} change {emoji} {count}", user.Username, emoji.GetDiscordName(), count);
 
-                GuildEmojiService guildEmojiService = Services.GetRequiredService<GuildEmojiService>();
+                GuildUserEmojiService guildEmojiService = Services.GetRequiredService<GuildUserEmojiService>();
 
-                await guildEmojiService.ChangeUserRecievedEmojiCountAsync(emoji, guild.Id, msg.Author.Id, count);
+                if (count > 0) {
+                    await guildEmojiService.AddRecievedAmountAsync(guild.Id, msg.Author.Id, emoji.Id, count);
+                }
+                else
+                {
+                    await guildEmojiService.RemoveRecievedAmountAsync(guild.Id, msg.Author.Id, emoji.Id, count * -1);
+                }
             }
         }
     }

@@ -80,7 +80,7 @@ public sealed class Bot
 
             serviceConfig.AddSingleton(Config)
             .AddMemoryCache()
-            .AddDbContext<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
+            .AddDbContextFactory<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
             .AddSharedServices()
             .AddScopedClasses();
 

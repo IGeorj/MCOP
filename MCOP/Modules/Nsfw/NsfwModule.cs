@@ -25,9 +25,9 @@ namespace MCOP.Modules.Nsfw
         public SankakuService Sankaku { get; set; }
         public E621Service E621 { get; set; }
         public GelbooruService Gelbooru { get; set; }
-        public GuildService GuildService { get; set; }
+        public GuildConfigService GuildService { get; set; }
 
-        public NsfwModule(SankakuService sankaku, E621Service e621, GelbooruService gelbooru, GuildService guildService)
+        public NsfwModule(SankakuService sankaku, E621Service e621, GelbooruService gelbooru, GuildConfigService guildService)
         {
             Sankaku = sankaku;
             E621 = e621;

@@ -17,6 +17,6 @@ namespace MCOP.Data.Models
 
 
         [ForeignKey($"{nameof(GuildId)},{nameof(MessageId)}")]
-        public GuildMessage GuildMessage { get; set; }
+        public GuildMessage GuildMessage { get; set; } = null!;
     }
 }
