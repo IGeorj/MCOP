@@ -33,7 +33,7 @@ internal static partial class Listeners
         var mcopNsfwChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 539145624868749327;
         var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
 
-        if ((mcopNsfwChannel || mcopLewdChannel || gaysAdminChannel) && (e.Message.Attachments.Count > 0 || e.Message.ContainsImageLink()))
+        if ((e.Guild.Id == GlobalVariables.McopServerId || gaysAdminChannel) && (e.Message.Attachments.Count > 0 || e.Message.ContainsImageLink()))
         {
             await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
         }

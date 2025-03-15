@@ -7,10 +7,10 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using MCOP.Core.Common.Booru;
-using MCOP.Core.Services.Shared;
 using MCOP.Data;
 using MCOP.Exceptions;
 using MCOP.Extensions;
+using MCOP.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
@@ -78,7 +78,10 @@ public sealed class Bot
         {
             Log.Information("Initializing services...");
 
-            serviceConfig.AddSingleton(Config)
+            serviceConfig
+            .AddSingleton(Config)
+            .AddSingleton<CooldownService>()
+            .AddSingleton<DuelService>()
             .AddMemoryCache()
             .AddDbContextFactory<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
             .AddSharedServices()
