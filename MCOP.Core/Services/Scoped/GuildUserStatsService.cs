@@ -272,7 +272,7 @@ namespace MCOP.Core.Services.Scoped
                 .ToDictionary(p => p.Name, p => p.GetValue(userStats));
         }
 
-        private void LogChanges(Dictionary<string, object> originalValues, Dictionary<string, object> updatedValues, ulong guildId, ulong userId)
+        private void LogChanges(Dictionary<string, object?> originalValues, Dictionary<string, object?> updatedValues, ulong guildId, ulong userId)
         {
             var changes = new List<string>();
 
@@ -287,7 +287,7 @@ namespace MCOP.Core.Services.Scoped
                 }
             }
 
-            if (changes.Any())
+            if (changes.Count != 0)
             {
                 Log.Information(
                     "ModifyUserStatsAsync: Changes detected for guildId: {guildId}, userId: {userId}. Changes: {changes}",

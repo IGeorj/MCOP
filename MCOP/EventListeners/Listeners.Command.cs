@@ -51,7 +51,7 @@ internal static partial class Listeners
             case UnauthorizedException _:
                 emb.WithDescription("403");
                 break;
-            case DbUpdateException _:
+            case DbUpdateException or DbUpdateConcurrencyException:
                 Log.Error(ex, "Database error");
                 return;
             case CommandCancelledException:

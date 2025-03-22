@@ -22,7 +22,7 @@ namespace MCOP.EventListeners
             await ChangeLikeAsync(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, 1);
 
 
-            if (e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _) && e.Emoji.GetDiscordName() != HeartEmojiName)
+            if (!e.Emoji.IsManaged && e.Emoji.GetDiscordName() != HeartEmojiName && e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _))
             {
                await ChangeEmojiRecievedCount(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, 1);
             }
@@ -38,7 +38,7 @@ namespace MCOP.EventListeners
 
             await ChangeLikeAsync(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, -1);
 
-            if (e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _) && e.Emoji.GetDiscordName() != HeartEmojiName)
+            if (!e.Emoji.IsManaged && e.Emoji.GetDiscordName() != HeartEmojiName && e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _))
             {
                 await ChangeEmojiRecievedCount(e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, -1);
             }

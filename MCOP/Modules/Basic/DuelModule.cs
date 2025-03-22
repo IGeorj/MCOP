@@ -1,10 +1,13 @@
 ﻿using DSharpPlus.Commands;
 using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Entities;
 using MCOP.Core.Common;
 using MCOP.Extensions;
 using MCOP.Services;
+using Polly;
 using Serilog;
 using System.ComponentModel;
 
@@ -49,25 +52,30 @@ namespace MCOP.Modules.Basic
             [Description("Кому кидаем дуель")] DiscordUser? user = null,
             [MinMaxValue(20, 120)][Description("20 - 120 минут, по умолчанию рандомит")] int? timeout = null)
         {
-            await ctx.DeferResponseAsync();
-
             if (ctx.Member is null || ctx.Guild is null)
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("User or Guild not found!"));
+                await ctx.RespondAsync(new DiscordMessageBuilder().WithContent("User or Guild not found!"));
                 return;
             }
 
             string commandName = "duel";
-            int cooldownDurationMinutes = 5;
-            TimeSpan cooldownDuration = TimeSpan.FromMinutes(cooldownDurationMinutes);
+            bool isOnCooldown = _cooldownService.IsOnCooldown(ctx.User, commandName) && !ctx.Member.IsAdmin();
+            var timeRemaining = _cooldownService.GetRemainingCooldown(ctx.User, commandName);
 
-            if (_cooldownService.IsOnCooldown(ctx.User, commandName) && !ctx.Member.IsAdmin())
+            if (ctx is TextCommandContext && isOnCooldown)
             {
-                var timeRemaining = _cooldownService.GetRemainingCooldown(ctx.User, commandName);
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Вы можете использовать команду `{commandName}` снова через {timeRemaining:mm\\:ss}."));
+                await ctx.RespondAsync($"Вы можете использовать команду `{commandName}` снова через {timeRemaining:mm\\:ss}.");
+            }
+            else if (ctx is SlashCommandContext slashCommandContext && isOnCooldown)
+            {
+                await slashCommandContext.RespondAsync($"Вы можете использовать команду `{commandName}` снова через {timeRemaining:mm\\:ss}.", true);
                 return;
             }
 
+            await ctx.DeferResponseAsync();
+
+            int cooldownDurationMinutes = 5;
+            TimeSpan cooldownDuration = TimeSpan.FromMinutes(cooldownDurationMinutes);
             _cooldownService.UpdateCooldown(ctx.User, commandName, cooldownDuration);
 
             try
@@ -80,11 +88,11 @@ namespace MCOP.Modules.Basic
 
                 if (user is not null)
                 {
-                    await _duelService.HandleSpecificUserDuel(ctx, user, timeoutMinutes, embed, duelButton);
+                    await _duelService.HandleSpecificUserDuelAsync(ctx, user, timeoutMinutes, embed, duelButton);
                 }
                 else
                 {
-                    await _duelService.HandleOpenDuel(ctx, timeoutMinutes, embed, duelButton);
+                    await _duelService.HandleOpenDuelAsync(ctx, timeoutMinutes, embed, duelButton);
                 }
             }
             catch (Exception ex)

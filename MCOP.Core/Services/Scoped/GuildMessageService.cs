@@ -30,7 +30,7 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                Log.Information("Error in AddLikeAsync for guildId: {guildId}, messageId: {messageId}, userId: {userId}", guildId, messageId, userId);
+                Log.Error(ex, "Error in AddLikeAsync for guildId: {guildId}, messageId: {messageId}, userId: {userId}", guildId, messageId, userId);
             }
 
         }
@@ -52,7 +52,7 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                Log.Information("Error in RemoveLikeAsync for guildId: {guildId}, messageId: {messageId}, userId: {userId}", guildId, messageId, userId);
+                Log.Error(ex, "Error in RemoveLikeAsync for guildId: {guildId}, messageId: {messageId}, userId: {userId}", guildId, messageId, userId);
             }
         }
 

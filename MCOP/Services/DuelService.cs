@@ -5,6 +5,8 @@ using DSharpPlus.Interactivity.Extensions;
 using Humanizer;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Scoped;
+using MCOP.Services.Duels;
+using MCOP.Services.Duels.Anomalies;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.Globalization;
@@ -57,6 +59,30 @@ namespace MCOP.Services
                 .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);
         }
 
+        private DiscordEmbedBuilder UpdateDuelEmbed(
+            CommandContext ctx,
+            DiscordEmbedBuilder embed,
+            Duel duel,
+            string actionString = "")
+        {
+            embed.ClearFields();
+
+            embed.AddField("Здоровье", $"{duel.DuelMember1.Name}: {duel.DuelMember1.HP} ❤️\n{duel.DuelMember2.Name}: {duel.DuelMember2.HP} ❤️");
+
+            if (!string.IsNullOrEmpty(actionString))
+            {
+                embed.AddField("Действие", actionString);
+            }
+
+            if (duel.ActiveAnomaly != null)
+            {
+                string anomalyDescription = string.IsNullOrEmpty(duel.ActiveAnomaly.Description) ? $": {duel.ActiveAnomaly.Description}" : "";
+                embed.AddField("Аномалия", $"{duel.ActiveAnomaly.Name}{anomalyDescription}");
+            }
+
+            return embed;
+        }
+
         public DiscordButtonComponent CreateDuelButton()
         {
             return new DiscordButtonComponent(
@@ -67,13 +93,13 @@ namespace MCOP.Services
                 new DiscordComponentEmoji("⚔️"));
         }
 
-        public async Task HandleSpecificUserDuel(CommandContext ctx, DiscordUser user, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton)
+        public async Task HandleSpecificUserDuelAsync(CommandContext ctx, DiscordUser user, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton)
         {
             var member2 = await ctx.Guild.GetMemberAsync(user.Id);
 
             if (ctx.User.Id == user.Id)
             {
-                await HandleSelfDuel(ctx, member2, timeoutMinutes, embed, duelButton);
+                await HandleSelfDuelAsync(ctx, member2, timeoutMinutes, embed, duelButton);
                 return;
             }
 
@@ -85,7 +111,7 @@ namespace MCOP.Services
             var interactivityResult = await duelMessage.WaitForButtonAsync(member2, TimeSpan.FromMinutes(5));
             if (interactivityResult.TimedOut)
             {
-                await DeleteDuelMessage(duelMessage);
+                await DeleteDuelMessageAsync(duelMessage);
                 return;
             }
 
@@ -93,10 +119,10 @@ namespace MCOP.Services
 
             duelMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton));
 
-            await StartDuelAnimation(ctx, ctx.Member, member2, duelMessage, timeoutMinutes);
+            await StartDuelAnimationAsync(ctx, ctx.Member, member2, duelMessage, timeoutMinutes);
         }
 
-        private async Task HandleSelfDuel(CommandContext ctx, DiscordMember member2, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton)
+        private async Task HandleSelfDuelAsync(CommandContext ctx, DiscordMember member2, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton)
         {
             var mcopGuild = await ctx.Client.GetGuildAsync(GlobalVariables.McopServerId);
             var durka = await mcopGuild.GetEmojiAsync(839771710265229314);
@@ -117,7 +143,7 @@ namespace MCOP.Services
             }
         }
 
-        public async Task HandleOpenDuel(CommandContext ctx, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton)
+        public async Task HandleOpenDuelAsync(CommandContext ctx, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton)
         {
             var webhookBuilder = new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton);
             var duelMessage = await ctx.EditResponseAsync(webhookBuilder);
@@ -141,7 +167,7 @@ namespace MCOP.Services
 
             if (interactivityResult.TimedOut)
             {
-                await DeleteDuelMessage(duelMessage);
+                await DeleteDuelMessageAsync(duelMessage);
                 return;
             }
 
@@ -150,10 +176,10 @@ namespace MCOP.Services
 
             await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed).AddComponents(duelButton));
 
-            await StartDuelAnimation(ctx, ctx.Member, member2, duelMessage, timeoutMinutes);
+            await StartDuelAnimationAsync(ctx, ctx.Member, member2, duelMessage, timeoutMinutes);
         }
 
-        private async Task DeleteDuelMessage(DiscordMessage duelMessage)
+        private async Task DeleteDuelMessageAsync(DiscordMessage duelMessage)
         {
             try
             {
@@ -165,39 +191,52 @@ namespace MCOP.Services
             }
         }
 
-        public async Task StartDuelAnimation(CommandContext ctx, DiscordMember member1, DiscordMember member2, DiscordMessage duelMessage, int timeoutMinutes)
+        public async Task StartDuelAnimationAsync(CommandContext ctx, DiscordMember member1, DiscordMember member2, DiscordMessage duelMessage, int timeoutMinutes, bool activateAnomaly = true)
         {
-            int player1HP = 120;
-            int player2HP = 120;
+            var duel = new Duel(member1, member2, duelMessage, activateAnomaly);
 
-            SafeRandom rng = new();
-            bool isPlayer1First = rng.Next(2) == 0;
-
-            var embed = await InitializeDuelEmbedAsync(ctx, member1, member2, player1HP, player2HP);
-            await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
+            var embed = await InitializeDuelEmbedAsync(ctx, duel);
+            var newDuelMessage = await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
+            duel.DuelMessage = newDuelMessage;
 
             await Task.Delay(1500);
 
-            while (player1HP > 0 && player2HP > 0)
+            bool isPlayer1First = new SafeRandom().Next(2) == 0;
+
+            string actionString = "";
+            while (duel.DuelMember1.HP > 0 && duel.DuelMember2.HP > 0 || (duel.ActiveAnomaly is GlitchHorrorAnomaly && duel.IsDuelEndedPrematurely == false))
             {
                 if (isPlayer1First)
                 {
-                    (player1HP, player2HP) = await ProcessPlayerTurn(ctx, embed, member1, member2, member1, member2, player1HP, player2HP, duelMessage);
-                    if (player2HP <= 0) break;
+                    (duel.DuelMember1.HP, duel.DuelMember2.HP, actionString) = duel.ProcessTurn(duel.DuelMember1, duel.DuelMember2);
+                    if (duel.ActiveAnomaly is GlitchHorrorAnomaly && duel.IsDuelEndedPrematurely == true) break;
+
+                    embed = UpdateDuelEmbed(ctx, embed, duel, actionString);
+                    newDuelMessage = await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
+                    duel.DuelMessage = newDuelMessage;
+
+                    if (duel.DuelMember2.HP <= 0 && duel.ActiveAnomaly is not GlitchHorrorAnomaly) break;
                 }
                 else
                 {
-                    (player1HP, player2HP) = await ProcessPlayerTurn(ctx, embed, member2, member1, member1, member2, player1HP, player2HP, duelMessage);
-                    if (player1HP <= 0) break;
+                    (duel.DuelMember1.HP, duel.DuelMember2.HP, actionString) = duel.ProcessTurn(duel.DuelMember2, duel.DuelMember1);
+                    if (duel.ActiveAnomaly is GlitchHorrorAnomaly && duel.IsDuelEndedPrematurely == true) break;
+
+                    embed = UpdateDuelEmbed(ctx, embed, duel, actionString);
+                    newDuelMessage = await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
+                    duel.DuelMessage = newDuelMessage;
+
+                    if (duel.DuelMember1.HP <= 0 && duel.ActiveAnomaly is not GlitchHorrorAnomaly) break;
                 }
 
                 isPlayer1First = !isPlayer1First;
+                await Task.Delay(1500);
             }
 
-            await FinishDuel(ctx, embed, member1, member2, player1HP, player2HP, duelMessage, timeoutMinutes);
+            await FinishDuel(ctx, embed, timeoutMinutes, duel, actionString);
         }
 
-        private async Task<DiscordEmbedBuilder> InitializeDuelEmbedAsync(CommandContext ctx, DiscordMember member1, DiscordMember member2, int player1HP, int player2HP)
+        private async Task<DiscordEmbedBuilder> InitializeDuelEmbedAsync(CommandContext ctx, Duel duel)
         {
             var appEmojies = await ctx.Client.GetApplicationEmojisAsync();
             var duelEmoji = appEmojies.FirstOrDefault(x => x.Name == "legionCommander");
@@ -206,90 +245,45 @@ namespace MCOP.Services
             var member1Emoji = rng.ChooseRandomElement(ctx.Guild.Emojis.Where(x => !x.Value.IsManaged)).Value;
             var member2Emoji = rng.ChooseRandomElement(ctx.Guild.Emojis.Where(x => !x.Value.IsManaged)).Value;
 
-            return new DiscordEmbedBuilder()
+            var embed = new DiscordEmbedBuilder()
                 .WithTitle($"{duelEmoji} Дуэль началась {duelEmoji}")
-                .WithDescription($"{member1Emoji} {member1.DisplayName} vs {member2.DisplayName} {member2Emoji}")
-                .AddField("Здоровье", $"{member1.DisplayName}: {player1HP} ❤️\n{member2.DisplayName}: {player2HP} ❤️")
+                .AddField("Здоровье", $"{duel.DuelMember1.Name}: {duel.DuelMember1.HP} ❤️\n{duel.DuelMember2.Name}: {duel.DuelMember2.HP} ❤️")
                 .WithColor(DiscordColor.Red);
+
+            if (duel.ActiveAnomaly is not GlitchHorrorAnomaly)
+                embed.WithDescription($"{member1Emoji} {duel.DuelMember1.Name} vs {duel.DuelMember2.Name} {member2Emoji}");
+
+            if (duel.ActiveAnomaly is not null)
+            {
+                embed.AddField("Аномалия", $"{duel.ActiveAnomaly.Name}: {duel.ActiveAnomaly.Description}");
+            }
+
+            return embed;
         }
 
-        private async Task<(int Member1HP, int Member2HP)> ProcessPlayerTurn(
-            CommandContext ctx,
-            DiscordEmbedBuilder embed,
-            DiscordMember attacker,
-            DiscordMember defender,
-            DiscordMember player1,
-            DiscordMember player2,
-            int member1HP,
-            int member2HP,
-            DiscordMessage duelMessage)
+        private async Task FinishDuel(CommandContext ctx, DiscordEmbedBuilder embed, int timeoutMinutes, Duel duel, string actionString)
         {
-            SafeRandom rng = new();
-            int damage = rng.Next(10, 25);
-            bool isDodged = rng.Next(100) < 20;
-
-            var mcopGuild = await ctx.Client.GetGuildAsync(GlobalVariables.McopServerId);
-            var jokergeEmoji = await mcopGuild.GetEmojiAsync(1220499135745097809);
-
-            embed.ClearFields();
-
-            string actionString = "";
-
-            if (member1HP <= 20 && member2HP <= 20 && rng.Next(100) < 10)
+            if (duel.IsDuelEndedPrematurely && duel.DuelMessage is not null)
             {
-                member1HP = 0;
-                member2HP = 0;
-
-                actionString = $"Вы оба умерли от кринжа!";
+                await DeleteDuelMessageAsync(duel.DuelMessage);
+                return;
             }
 
-            bool isDraw = member1HP == 0 && member2HP == 0;
-
-            if (isDodged && !isDraw)
-            {
-                actionString = $"{attacker.DisplayName} бьет вилкой, но {defender.DisplayName} уворачивается! {jokergeEmoji}";
-            }
-            else if(!isDraw)
-            {
-                if (defender.Id == player1.Id)
-                {
-                    member1HP = Math.Max(0, member1HP - damage);
-                }
-                else
-                {
-                    member2HP = Math.Max(0, member2HP - damage);
-                }
-
-                actionString = $"{attacker.DisplayName} бьет вилкой и наносит {damage} урона! ⚔️";
-            }
-
-            string healthField = $"{player1.DisplayName}: {member1HP} ❤️\n{player2.DisplayName}: {member2HP} ❤️";
-            embed.AddField("Здоровье", healthField);
-            embed.AddField("Действие", actionString);
-
-            await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
-            await Task.Delay(1500);
-
-            return (member1HP, member2HP);
-        }
-
-        private async Task FinishDuel(CommandContext ctx, DiscordEmbedBuilder embed, DiscordMember member1, DiscordMember member2, int player1HP, int player2HP, DiscordMessage duelMessage, int timeoutMinutes)
-        {
             string resultMessage;
             DiscordMember? winner;
             DiscordMember? loser;
 
-            if (player1HP > 0 && player2HP <= 0)
+            if (duel.DuelMember1.HP > 0 && duel.DuelMember2.HP <= 0)
             {
-                resultMessage = $"{member1.DisplayName} побеждает! 🏆";
-                winner = member1;
-                loser = member2;
+                resultMessage = $"{duel.DuelMember1.Name} побеждает! 🏆";
+                winner = duel.DuelMember1.Member;
+                loser = duel.DuelMember2.Member;
             }
-            else if (player2HP > 0 && player1HP <= 0)
+            else if (duel.DuelMember2.HP > 0 && duel.DuelMember1.HP <= 0)
             {
-                resultMessage = $"{member2.DisplayName} побеждает! 🏆";
-                winner = member2;
-                loser = member1;
+                resultMessage = $"{duel.DuelMember2.Name} побеждает! 🏆";
+                winner = duel.DuelMember2.Member;
+                loser = duel.DuelMember1.Member;
             }
             else
             {
@@ -302,16 +296,25 @@ namespace MCOP.Services
                 .ClearFields()
                 .WithTitle($"⚔️ Дуэль закончилась ⚔️")
                 .AddField("Результат", resultMessage)
-                .AddField("Здоровье", $"{member1.DisplayName}: {player1HP} ❤️\n{member2.DisplayName}: {player2HP} ❤️")
+                .AddField("Здоровье", $"{duel.DuelMember1.Name}: {duel.DuelMember1.HP} ❤️\n{duel.DuelMember2.Name}: {duel.DuelMember2.HP} ❤️")
                 .WithColor(DiscordColor.Green);
 
-            await duelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
+            if (duel.ActiveAnomaly is not null)
+                embed.AddField("Аномалия", $"{duel.ActiveAnomaly.Name}: {duel.ActiveAnomaly.Description}");
+
+            if (!string.IsNullOrWhiteSpace(actionString))
+                embed.AddField("Последнее действие", actionString);
+
+            if (duel.DuelMessage is not null)
+                await duel.DuelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
 
             GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+
             if (winner is not null)
             {
                 await statsService.AddDuelWinAsync(ctx.Guild.Id, winner.Id);
             }
+
             if (loser is not null)
             {
                 await statsService.AddDuelLoseAsync(ctx.Guild.Id, loser.Id);
@@ -324,14 +327,15 @@ namespace MCOP.Services
                     Log.Information("Не удалось назначить таймаут пользователю.");
                 }
             }
+
             if (loser is null && winner is null)
             {
-                await statsService.AddDuelLoseAsync(ctx.Guild.Id, member1.Id);
-                await statsService.AddDuelLoseAsync(ctx.Guild.Id, member2.Id);
+                await statsService.AddDuelLoseAsync(ctx.Guild.Id, duel.DuelMember1.Member.Id);
+                await statsService.AddDuelLoseAsync(ctx.Guild.Id, duel.DuelMember2.Member.Id);
                 try
                 {
-                    await member1.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), "Ничья в дуели");
-                    await member2.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), "Ничья в дуели");
+                    await duel.DuelMember1.Member.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), "Ничья в дуели");
+                    await duel.DuelMember2.Member.TimeoutAsync(DateTime.Now.AddMinutes(timeoutMinutes), "Ничья в дуели");
                 }
                 catch (Exception)
                 {
