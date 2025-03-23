@@ -1,11 +1,12 @@
 ﻿using MCOP.Core.Common;
 using MCOP.Core.Exceptions;
+using MCOP.Core.Services.Singletone;
 using MCOP.Core.ViewModels;
 using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Polly;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Serilog;
 
 namespace MCOP.Core.Services.Scoped
@@ -15,10 +16,11 @@ namespace MCOP.Core.Services.Scoped
         public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
 
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
-
-        public GuildUserStatsService(IDbContextFactory<McopDbContext> contextFactory)
+        private readonly ILockingService _lockingService;
+        public GuildUserStatsService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService)
         {
             _contextFactory = contextFactory;
+            _lockingService = lockingService;
         }
 
         public async Task<ServerTopVM> GetServerTopAsync(ulong guildId)
@@ -126,26 +128,31 @@ namespace MCOP.Core.Services.Scoped
 
         private async Task ModifyUserStatsAsync(ulong guildId, ulong userId, Action<GuildUserStats> modifyAction)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            var key = ("ModifyUserStatsAsync", guildId, userId);
 
-            try
+            using (await _lockingService.AcquireLockAsync(key))
             {
-                var userStats = await GetOrCreateUserStatsInternalAsync(context, guildId, userId);
+                await using var context = _contextFactory.CreateDbContext();
 
-                var originalValues = GetPropertyValues(userStats);
+                try
+                {
+                    var userStats = await GetOrCreateUserStatsInternalAsync(context, guildId, userId);
 
-                modifyAction(userStats);
+                    var originalValues = GetPropertyValues(userStats);
 
-                var updatedValues = GetPropertyValues(userStats);
+                    modifyAction(userStats);
 
-                LogChanges(originalValues, updatedValues, guildId, userId);
+                    var updatedValues = GetPropertyValues(userStats);
 
-                await context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error in ModifyUserStatAsync for guildId: {guildId}, userId: {userId}", guildId, userId);
-                throw new McopException(ex, ex.Message);
+                    LogChanges(originalValues, updatedValues, guildId, userId);
+
+                    await context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error in ModifyUserStatAsync for guildId: {guildId}, userId: {userId}", guildId, userId);
+                    throw new McopException(ex, ex.Message);
+                }
             }
         }
 
@@ -290,8 +297,8 @@ namespace MCOP.Core.Services.Scoped
             if (changes.Count != 0)
             {
                 Log.Information(
-                    "ModifyUserStatsAsync: Changes detected for guildId: {guildId}, userId: {userId}. Changes: {changes}",
-                    guildId, userId, string.Join(", ", changes));
+                    "ModifyUserStatsAsync: Changes detected for guildId: {guildId}, userId: {userId}. Changes:\n{changes}",
+                    guildId, userId, string.Join(Environment.NewLine, changes));
             }
             else
             {

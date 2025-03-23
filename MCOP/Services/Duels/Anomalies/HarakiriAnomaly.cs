@@ -20,7 +20,10 @@ namespace MCOP.Services.Duels.Anomalies
                     attacker.ApplyDamage(attacker.HP);
 
                     duel.LastActionString = $"💀 {attacker.Name}: блядь, я себя захуярил...";
+                    return;
                 }
+
+                defender.ApplyDamage(attacker.HP);
             };
         }
     }

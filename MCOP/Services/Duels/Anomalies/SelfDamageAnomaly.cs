@@ -19,7 +19,7 @@ namespace MCOP.Services.Duels.Anomalies
 
                 if (isSelfDamaged)
                 {
-                    int selfDamage = new SafeRandom().Next(0, 25);
+                    int selfDamage = new SafeRandom().Next(5, 25);
                     
                     duel.LastActionString = $"{attacker.Name} бьет вилкой, но попадает себе в палец нанося {selfDamage} урона! ⚔️";
                     attacker.ApplyDamage(selfDamage);

@@ -2,8 +2,10 @@
 using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Entities;
+using MCOP.Common.ChoiceProvider;
 using MCOP.Core.Common;
 using MCOP.Extensions;
 using MCOP.Services;
@@ -50,7 +52,8 @@ namespace MCOP.Modules.Basic
         [Description("Дуель за таймач")]
         public async Task Duel(CommandContext ctx,
             [Description("Кому кидаем дуель")] DiscordUser? user = null,
-            [MinMaxValue(20, 120)][Description("20 - 120 минут, по умолчанию рандомит")] int? timeout = null)
+            [MinMaxValue(20, 120)][Description("20 - 120 минут, по умолчанию рандомит")] int? timeout = null,
+            [Description("Аномалии (по умолчанию включены)")][SlashChoiceProvider<AnomalyProvider>] string anomaly = AnomalyProvider.Random)
         {
             if (ctx.Member is null || ctx.Guild is null)
             {
@@ -82,18 +85,15 @@ namespace MCOP.Modules.Basic
             {
                 int timeoutMinutes = _duelService.GetTimeoutMinutes(timeout);
                 string timeoutString = _duelService.GetTimeoutString(timeoutMinutes);
+                string? anomalyName = AnomalyProvider.AnomalyChoices.FirstOrDefault(x => x.Value as string == anomaly)?.Name;
 
-                var embed = _duelService.CreateDuelEmbed(ctx, timeoutString, cooldownDurationMinutes);
+                var embed = _duelService.CreateDuelEmbed(ctx, timeoutString, cooldownDurationMinutes, anomalyName);
                 var duelButton = _duelService.CreateDuelButton();
 
                 if (user is not null)
-                {
-                    await _duelService.HandleSpecificUserDuelAsync(ctx, user, timeoutMinutes, embed, duelButton);
-                }
+                    await _duelService.HandleSpecificUserDuelAsync(ctx, user, timeoutMinutes, embed, duelButton, anomaly);
                 else
-                {
-                    await _duelService.HandleOpenDuelAsync(ctx, timeoutMinutes, embed, duelButton);
-                }
+                    await _duelService.HandleOpenDuelAsync(ctx, timeoutMinutes, embed, duelButton, anomaly);
             }
             catch (Exception ex)
             {

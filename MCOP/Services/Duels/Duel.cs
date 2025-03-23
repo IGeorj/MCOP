@@ -1,8 +1,7 @@
 ﻿using DSharpPlus.Entities;
+using MCOP.Common.ChoiceProvider;
 using MCOP.Core.Common;
 using MCOP.Services.Duels.Anomalies;
-using Serilog;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MCOP.Services.Duels
 {
@@ -20,19 +19,17 @@ namespace MCOP.Services.Duels
 
         public event DamageCalculator? OnDamageCalculated;
         public event TurnEndedHandler? OnTurnEnded;
-        public Duel(DiscordMember player1, DiscordMember player2, DiscordMessage duelMessage, bool activateAnomaly = true)
+        public Duel(DiscordMember player1, DiscordMember player2, DiscordMessage duelMessage, string anomaly = AnomalyProvider.Random)
         {
             DuelMember1 = new DuelMember(player1);
             DuelMember2 = new DuelMember(player2);
             DuelMessage = duelMessage;
 
-            if (activateAnomaly)
-            {
-                ActivateRandomAnomaly();
-            }
+            ActiveAnomaly = GetAnomalyFromChoice(anomaly);
+            ActiveAnomaly?.ApplyEffect(this);
         }
 
-        private void ActivateRandomAnomaly()
+        private DuelAnomaly GetRandomAnomaly()
         {
             var anomalies = new List<DuelAnomaly>
             {
@@ -48,15 +45,29 @@ namespace MCOP.Services.Duels
             };
 
             if (new SafeRandom().Next(100) < 3)
-            {
-                Log.Information("GlitchHorrorAnomaly activated");
-                ActiveAnomaly = new GlitchHorrorAnomaly();
-                ActiveAnomaly.ApplyEffect(this);
-                return;
-            }
+                return new GlitchHorrorAnomaly();
 
-            ActiveAnomaly = new SafeRandom().ChooseRandomElement(anomalies);
-            ActiveAnomaly.ApplyEffect(this);
+            return new SafeRandom().ChooseRandomElement(anomalies);
+        }
+
+        private DuelAnomaly? GetAnomalyFromChoice(string choiceValue)
+        {
+            return choiceValue switch
+            {
+                AnomalyProvider.Random => GetRandomAnomaly(),
+                AnomalyProvider.NoAnomaly => null,
+                nameof(DoubleDamageAnomaly) => new DoubleDamageAnomaly(),
+                nameof(InstantWinAnomaly) => new InstantWinAnomaly(),
+                nameof(PoisonAnomaly) => new PoisonAnomaly(),
+                nameof(DodgeAnomaly) => new DodgeAnomaly(),
+                nameof(HarakiriAnomaly) => new HarakiriAnomaly(),
+                nameof(ElementalAnomaly) => new ElementalAnomaly(),
+                nameof(CounterAttackAnomaly) => new CounterAttackAnomaly(),
+                nameof(SelfDamageAnomaly) => new SelfDamageAnomaly(),
+                nameof(SecondChanceAnomaly) => new SecondChanceAnomaly(),
+                nameof(GlitchHorrorAnomaly) => new GlitchHorrorAnomaly(),
+                _ => throw new ArgumentException("Invalid anomaly choice", nameof(choiceValue))
+            };
         }
 
         public (int Player1HP, int Player2HPб, string ActionString) ProcessTurn(DuelMember attacker, DuelMember defender)
@@ -68,7 +79,10 @@ namespace MCOP.Services.Duels
             int damage = new SafeRandom().Next(10, 25);
             string actionString = "";
 
-            OnDamageCalculated?.Invoke(attacker, defender, damage);
+            if (OnDamageCalculated is not null)
+                OnDamageCalculated.Invoke(attacker, defender, damage);
+            else
+                defender.ApplyDamage(damage);
 
             if (!string.IsNullOrEmpty(LastActionString))
                 actionString = $"{LastActionString}";
@@ -81,13 +95,9 @@ namespace MCOP.Services.Duels
                 DuelMember2.HP = 0;
 
                 if (ActiveAnomaly is HarakiriAnomaly)
-                {
                     actionString = $"Блядь, мы себя захуярили!";
-                }
                 else
-                {
                     actionString = $"Вы оба умерли от кринжа!";
-                }
             }
 
             LastActionString = "";
@@ -95,9 +105,7 @@ namespace MCOP.Services.Duels
             OnTurnEnded?.Invoke(attacker, defender);
 
             if (!string.IsNullOrEmpty(LastActionString))
-            {
                 actionString += $"\n{LastActionString}";
-            }
 
             return (DuelMember1.HP, DuelMember2.HP, actionString);
         }

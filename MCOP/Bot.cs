@@ -7,6 +7,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using MCOP.Core.Common.Booru;
+using MCOP.Core.Services.Singletone;
 using MCOP.Data;
 using MCOP.Exceptions;
 using MCOP.Extensions;
@@ -82,6 +83,7 @@ public sealed class Bot
             .AddSingleton(Config)
             .AddSingleton<CooldownService>()
             .AddSingleton<DuelService>()
+            .AddSingleton<ILockingService, LockingService>()
             .AddMemoryCache()
             .AddDbContextFactory<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
             .AddSharedServices()

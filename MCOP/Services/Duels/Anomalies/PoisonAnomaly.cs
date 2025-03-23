@@ -13,6 +13,11 @@ namespace MCOP.Services.Duels.Anomalies
 
         public override void ApplyEffect(Duel duel)
         {
+            duel.OnDamageCalculated += (attacker, defender, damage) =>
+            {
+                defender.ApplyDamage(damage);
+            };
+
             duel.OnTurnEnded += (attacker, defender) =>
             {
                 if (attacker.TurnCounter % 3 == 0 && defender.TurnCounter % 3 == 0)
