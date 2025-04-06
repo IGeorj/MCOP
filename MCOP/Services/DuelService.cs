@@ -6,6 +6,7 @@ using Humanizer;
 using MCOP.Common.ChoiceProvider;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Scoped;
+using MCOP.Extensions;
 using MCOP.Services.Duels;
 using MCOP.Services.Duels.Anomalies;
 using Microsoft.Extensions.DependencyInjection;
@@ -118,7 +119,7 @@ namespace MCOP.Services
             var interactivityResult = await duelMessage.WaitForButtonAsync(member2, TimeSpan.FromMinutes(5));
             if (interactivityResult.TimedOut)
             {
-                await DeleteDuelMessageAsync(duelMessage);
+                await duelMessage.DeleteSilentAsync();
                 return;
             }
 
@@ -164,7 +165,7 @@ namespace MCOP.Services
 
             if (interactivityResult.TimedOut)
             {
-                await DeleteDuelMessageAsync(duelMessage);
+                await duelMessage.DeleteSilentAsync();
                 return;
             }
 
@@ -172,18 +173,6 @@ namespace MCOP.Services
             embed.WithThumbnail(member2.AvatarUrl);
 
             await StartDuelAnimationAsync(ctx, ctx.Member, member2, duelMessage, timeoutMinutes, anomaly);
-        }
-
-        private async Task DeleteDuelMessageAsync(DiscordMessage duelMessage)
-        {
-            try
-            {
-                await duelMessage.DeleteAsync();
-            }
-            catch (Exception)
-            {
-                Log.Information("Failed to delete duel message: {messageId}", duelMessage.Id);
-            }
         }
 
         public async Task StartDuelAnimationAsync(CommandContext ctx, DiscordMember member1, DiscordMember member2, DiscordMessage duelMessage, int timeoutMinutes, string anomaly = AnomalyProvider.Random)
@@ -198,7 +187,7 @@ namespace MCOP.Services
             if (duel.DuelMessage is null)
                 return;
 
-            await Task.Delay(1500);
+            await Task.Delay(duel.DelayBetweenTurn);
 
             bool isPlayer1First = new SafeRandom().Next(2) == 0;
             string actionString = "";
@@ -223,7 +212,7 @@ namespace MCOP.Services
                     break;
 
                 isPlayer1First = !isPlayer1First;
-                await Task.Delay(1500);
+                await Task.Delay(duel.DelayBetweenTurn);
             }
 
             await FinishDuel(ctx, embed, timeoutMinutes, duel, actionString);
@@ -281,7 +270,7 @@ namespace MCOP.Services
 
             if (duel.IsDuelEndedPrematurely && duel.DuelMessage is not null)
             {
-                await DeleteDuelMessageAsync(duel.DuelMessage);
+                await duel.DuelMessage.DeleteSilentAsync();
                 return;
             }
 

@@ -5,6 +5,7 @@ using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Diagnostics;
 
 namespace MCOP.Core.Services.Scoped
@@ -41,9 +42,9 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                throw new McopException(ex, ex.Message);
+                Log.Error(ex, "Error in GetRandomStatusAsync");
+                throw;
             }
-
         }
     }
 }

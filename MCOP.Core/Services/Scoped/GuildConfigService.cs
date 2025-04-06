@@ -37,7 +37,8 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                throw new McopException(ex, ex.Message);
+                Log.Error(ex, "Error in GetOrAddGuildConfigAsync guildId: {guildId}", guildId);
+                throw;
             }
         }
 
@@ -53,7 +54,8 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                throw new McopException(ex, ex.Message);
+                Log.Error(ex, "Error in GetGuildConfigsWithLewdChannelAsync");
+                throw;
             }
         }
 
@@ -75,7 +77,8 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                throw new McopException(ex, ex.Message);
+                Log.Error(ex, "Error in SetLewdChannelAsync for guildId: {guildId}, channelId: {channelId}", guildId, channelId);
+                throw;
             }
         }
 
@@ -97,7 +100,8 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                throw new McopException(ex, ex.Message);
+                Log.Error(ex, "Error in SetLoggingChannelAsync for guildId: {guildId}, channelId: {channelId}", guildId, channelId);
+                throw;
             }
         }
     }

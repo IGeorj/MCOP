@@ -170,6 +170,7 @@ namespace MCOP.Core.Common.Booru
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
+                Log.Information(HttpClient.BaseAddress + url);
 
                 var response = await HttpClient.SendAsync(request);
 
@@ -188,7 +189,6 @@ namespace MCOP.Core.Common.Booru
                     throw new Exception(error);
                 }
 
-                Log.Information(HttpClient.BaseAddress + url);
 
                 string strJson = await response.Content.ReadAsStringAsync();
 

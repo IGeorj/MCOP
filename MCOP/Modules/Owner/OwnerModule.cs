@@ -109,13 +109,13 @@ public sealed class OwnerModule
     #region sendmessage
     [Command("sendmessage")]
     public async Task SendAsync(CommandContext ctx,
-                               [Description("ChannelID")] ulong cid,
-                               [RemainingText, Description("Message")] string message)
+                               [RemainingText, Description("Message")] string message,
+                               [Description("ChannelID")] ulong? cid = null)
     {
         if (string.IsNullOrWhiteSpace(message))
             throw new InvalidCommandUsageException("Message missing");
 
-        DiscordChannel channel = await ctx.Client.GetChannelAsync(cid);
+        DiscordChannel channel = await ctx.Client.GetChannelAsync(cid ?? ctx.Channel.Id);
         await channel.SendMessageAsync(message);
     }
     #endregion

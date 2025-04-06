@@ -17,7 +17,7 @@ namespace MCOP.Common.Helpers
                 var member = await e.Guild.GetMemberAsync(e.Author.Id);
                 if (member is not null && (!member.IsAdmin() || !member.Permissions.HasPermission(DiscordPermission.MentionEveryone)))
                 {
-                    await e.Message.DeleteAsync();
+                    await e.Message.DeleteSilentAsync();
 
                     DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
                         .WithAuthor(member.Username, null, member.AvatarUrl)

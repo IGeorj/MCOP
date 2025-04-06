@@ -101,7 +101,7 @@ namespace MCOP.Modules.Nsfw
                         try
                         {
                             searchResult.DeleteAllFiles();
-                            await repeatMessage.DeleteAsync();
+                            await repeatMessage.DeleteSilentAsync();
                             return;
                         }
                         catch (Exception)
@@ -110,7 +110,7 @@ namespace MCOP.Modules.Nsfw
 
                     }
 
-                    await repeatMessage.DeleteAsync();
+                    await repeatMessage.DeleteSilentAsync();
                 }
 
                 searchResult.DeleteAllFiles();
@@ -283,7 +283,7 @@ namespace MCOP.Modules.Nsfw
 
             if (res.Result.Emoji == removeEmoji)
             {
-                await message.DeleteAsync();
+                await message.DeleteSilentAsync();
             }
         }
 

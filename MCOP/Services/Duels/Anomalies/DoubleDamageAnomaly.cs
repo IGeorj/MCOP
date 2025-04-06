@@ -16,6 +16,7 @@
                 {
                     duel.LastActionString = $"⚡ {defender.Name} жестко лупанул на {damage * 2} урона!";
                     defender.ApplyDamage(damage * 2);
+                    return;
                 }
 
                 defender.ApplyDamage(damage);

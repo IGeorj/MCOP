@@ -56,7 +56,8 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                throw new McopException(ex, ex.Message);
+                Log.Error(ex, "Error in GetServerTopAsync for guildId: {guildId}", guildId);
+                throw;
             }
         }
 
@@ -151,7 +152,7 @@ namespace MCOP.Core.Services.Scoped
                 catch (Exception ex)
                 {
                     Log.Error(ex, "Error in ModifyUserStatAsync for guildId: {guildId}, userId: {userId}", guildId, userId);
-                    throw new McopException(ex, ex.Message);
+                    throw;
                 }
             }
         }
@@ -231,7 +232,7 @@ namespace MCOP.Core.Services.Scoped
             catch (Exception ex)
             {
                 Log.Error(ex, "Error in SetUsersExperienceAsync for guildId: {guildId}", guildId);
-                throw new McopException(ex, ex.Message);
+                throw;
             }
         }
 
@@ -267,7 +268,7 @@ namespace MCOP.Core.Services.Scoped
             catch (Exception ex)
             {
                 Log.Error(ex, "Error in GetGuildUserStatAsync for guildId: {guildId}, userId: {userId}", guildId, userId);
-                throw new McopException(ex, ex.Message);
+                throw;
             }
         }
 
@@ -297,7 +298,7 @@ namespace MCOP.Core.Services.Scoped
             if (changes.Count != 0)
             {
                 Log.Information(
-                    "ModifyUserStatsAsync: Changes detected for guildId: {guildId}, userId: {userId}. Changes:\n{changes}",
+                    "ModifyUserStatsAsync: Changes detected for guildId: {guildId}, userId: {userId}. \n{changes}",
                     guildId, userId, string.Join(Environment.NewLine, changes));
             }
             else

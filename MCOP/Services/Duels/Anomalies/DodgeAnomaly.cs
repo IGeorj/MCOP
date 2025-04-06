@@ -20,6 +20,7 @@ namespace MCOP.Services.Duels.Anomalies
                 if (isDodged)
                 {
                     duel.LastActionString = $"{attacker.Name} бьет вилкой, но {defender.Name} уворачивается! 🛡️";
+                    return;
                 }
 
                 defender.ApplyDamage(damage);

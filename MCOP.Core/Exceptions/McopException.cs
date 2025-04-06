@@ -14,7 +14,6 @@ namespace MCOP.Core.Exceptions
 
         public McopException(Exception inner, string msg) : base(msg, inner)
         {
-
             Log.Error(inner, inner.TargetSite?.ReflectedType?.FullName ?? "");
         }
     }

@@ -2,6 +2,7 @@
 using DSharpPlus.Commands.Trees;
 using DSharpPlus.Entities;
 using MCOP.Services.Duels.Anomalies;
+using MCOP.Services.Duels.Anomalies.PokerAnomaly;
 
 namespace MCOP.Common.ChoiceProvider
 {
@@ -23,6 +24,7 @@ namespace MCOP.Common.ChoiceProvider
             new DiscordApplicationCommandOptionChoice("Контратака", nameof(CounterAttackAnomaly)),
             new DiscordApplicationCommandOptionChoice("Перенаправление", nameof(SelfDamageAnomaly)),
             new DiscordApplicationCommandOptionChoice("Второй шанс", nameof(SecondChanceAnomaly)),
+            new DiscordApplicationCommandOptionChoice("Покер", nameof(PokerAnomaly)),
         ];
 
         public async ValueTask<IEnumerable<DiscordApplicationCommandOptionChoice>> ProvideAsync(CommandParameter parameter) =>

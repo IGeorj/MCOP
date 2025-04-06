@@ -91,7 +91,7 @@ namespace MCOP.Core.Services.Scoped
             catch (Exception ex)
             {
                 Log.Error(ex, "Error in GetTopEmojisForUserAsync for guildId: {guildId}, userId: {userId}", guildId, userId);
-                throw new McopException(ex, ex.Message);
+                throw;
             }
         }
 
@@ -133,7 +133,7 @@ namespace MCOP.Core.Services.Scoped
                     ex,
                     "Error in SetGuildUserEmojiCountAsync for guildId: {guildId}, userId: {userId}, emoji: {emoji}",
                     guildId, userId, discordEmoji.GetDiscordName());
-                throw new McopException(ex, ex.Message);
+                throw;
             }
         }
     }

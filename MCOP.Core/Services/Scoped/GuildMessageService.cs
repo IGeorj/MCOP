@@ -94,7 +94,8 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex)
             {
-                throw new McopException(ex, ex.Message);
+                Log.Error(ex, "Error in RemoveMessageAsync for guildId: {guildId}, messageId: {messageId}", guildId, messageId);
+                throw;
             }
         }
     }

@@ -2,11 +2,13 @@
 using MCOP.Common.ChoiceProvider;
 using MCOP.Core.Common;
 using MCOP.Services.Duels.Anomalies;
+using MCOP.Services.Duels.Anomalies.PokerAnomaly;
 
 namespace MCOP.Services.Duels
 {
     public class Duel
     {
+        public int DelayBetweenTurn { get; set; } = 1500;
         public DuelMember DuelMember1 { get; }
         public DuelMember DuelMember2 { get; }
         public DiscordMessage? DuelMessage { get; set; }
@@ -41,7 +43,8 @@ namespace MCOP.Services.Duels
                 new ElementalAnomaly(),
                 new CounterAttackAnomaly(),
                 new SelfDamageAnomaly(),
-                new SecondChanceAnomaly()
+                new SecondChanceAnomaly(),
+                new PokerAnomaly()
             };
 
             if (new SafeRandom().Next(100) < 3)
@@ -66,6 +69,7 @@ namespace MCOP.Services.Duels
                 nameof(SelfDamageAnomaly) => new SelfDamageAnomaly(),
                 nameof(SecondChanceAnomaly) => new SecondChanceAnomaly(),
                 nameof(GlitchHorrorAnomaly) => new GlitchHorrorAnomaly(),
+                nameof(PokerAnomaly) => new PokerAnomaly(),
                 _ => throw new ArgumentException("Invalid anomaly choice", nameof(choiceValue))
             };
         }
