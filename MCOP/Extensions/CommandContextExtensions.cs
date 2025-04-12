@@ -1,9 +1,8 @@
 ﻿using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
-using DSharpPlus.Interactivity.Extensions;
 using MCOP.Common;
-using MCOP.Core.Services.Scoped;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MCOP.Extensions;
@@ -17,6 +16,18 @@ internal static class CommandContextExtensions
             Description = $"{Emojis.X} {msg}",
             Color = DiscordColor.IndianRed
         });
+    }
+
+    public static async Task DeferEphemeralAsync(this CommandContext ctx)
+    {
+        if (ctx is SlashCommandContext slashContext)
+        {
+            await slashContext.DeferResponseAsync(ephemeral: true);
+        }
+        else
+        {
+            await ctx.DeferResponseAsync();
+        }
     }
 
     public static Task PaginateAsync<T>(this CommandContext ctx, string title, IEnumerable<T> collection,

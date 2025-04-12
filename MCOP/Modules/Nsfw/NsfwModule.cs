@@ -143,9 +143,8 @@ namespace MCOP.Modules.Nsfw
                     _ = CreateDeleteReactionAsync(ctx, item);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(e.Message));
                 return;
             }
 

@@ -3,6 +3,7 @@ using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using MCOP.Core.Services.Scoped;
+using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 
@@ -17,16 +18,9 @@ namespace MCOP.Modules.Basic
         public async Task Hash(CommandContext ctx,
             DiscordMessage targetMessage)
         {
-            if (ctx is SlashCommandContext slashContext)
-            {
-                await slashContext.DeferResponseAsync(ephemeral: true);
-            }
-            else
-            {
-                await ctx.DeferResponseAsync();
-            }
-            ulong ulongMessageId = targetMessage.Id;
+            await ctx.DeferEphemeralAsync();
 
+            ulong ulongMessageId = targetMessage.Id;
 
             int count = 0;
             DiscordMessage message;

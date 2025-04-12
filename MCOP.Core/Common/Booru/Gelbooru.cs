@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using MCOP.Core.Exceptions;
+using Newtonsoft.Json.Linq;
 using Serilog;
 
 namespace MCOP.Core.Common.Booru
@@ -32,8 +33,7 @@ namespace MCOP.Core.Common.Booru
         {
             if (strJson == "[]")
             {
-                // TODO: Tags prediction
-                throw new Exception("Gelbooru. Ничего не найдено");
+                throw new McopException("Gelbooru. Ничего не найдено");
             }
 
             JObject json = JObject.Parse(strJson);
@@ -44,24 +44,24 @@ namespace MCOP.Core.Common.Booru
 
             if (jsonPosts is null)
             {
-                throw new Exception("Gelbooru. Ничего не найдено");
+                throw new McopException("Gelbooru. Ничего не найдено");
             }
 
             Parallel.ForEach(jsonPosts.Children(), (post) =>
             {
                 try
                 {
-                    var id = post["id"]?.Value<string>() ?? throw new Exception("Id token not found");
-                    var filetype = post["image"]?.Value<string>() ?? throw new Exception("Image token not found");
+                    var id = post["id"]?.Value<string>() ?? throw new McopException("Id token not found");
+                    var filetype = post["image"]?.Value<string>() ?? throw new McopException("Image token not found");
                     filetype = filetype[(filetype.LastIndexOf('.') + 1)..];
 
                     searchResult.AddPost(new BooruPost
                     {
                         FileType = filetype,
                         ID = id,
-                        MD5 = post["md5"]?.Value<string>() ?? throw new Exception("Md5 token not found"),
-                        ImageUrl = post["file_url"]?.Value<string>() ?? throw new Exception("File url token not found"),
-                        PreviewUrl = post["preview_url"]?.Value<string>() ?? throw new Exception("Preview url token not found"),
+                        MD5 = post["md5"]?.Value<string>() ?? throw new McopException("Md5 token not found"),
+                        ImageUrl = post["file_url"]?.Value<string>() ?? throw new McopException("File url token not found"),
+                        PreviewUrl = post["preview_url"]?.Value<string>() ?? throw new McopException("Preview url token not found"),
                         PostUrl = $"https://gelbooru.com/index.php?page=post&s=view&id={id}",
                         Artist = "Автор не найден",
                     });
@@ -86,9 +86,9 @@ namespace MCOP.Core.Common.Booru
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string error = "Gelbooru. Can't get posts";
+                    string error = "Gelbooru. Запрос не удался";
                     Log.Warning(error);
-                    throw new Exception(error);
+                    throw new McopException(error);
                 }
 
                 Log.Information(url);

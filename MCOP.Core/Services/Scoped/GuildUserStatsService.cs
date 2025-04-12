@@ -1,5 +1,7 @@
-﻿using MCOP.Core.Common;
+﻿using DSharpPlus;
+using MCOP.Core.Common;
 using MCOP.Core.Exceptions;
+using MCOP.Core.Helpers;
 using MCOP.Core.Services.Singletone;
 using MCOP.Core.ViewModels;
 using MCOP.Data;
@@ -17,10 +19,40 @@ namespace MCOP.Core.Services.Scoped
 
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly ILockingService _lockingService;
-        public GuildUserStatsService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService)
+        private readonly GuildRoleService _guildRoleService;
+
+        private const int ExpCooldownMinutes = 1;
+        private const int MinRandomExp = 15;
+        private const int MaxRandomExp = 26;
+
+        public GuildUserStatsService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService, GuildRoleService guildRoleService)
         {
             _contextFactory = contextFactory;
             _lockingService = lockingService;
+            _guildRoleService = guildRoleService;
+        }
+
+        public async Task<int> GetUserExpRankAsync(ulong guildId, ulong userId)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                var rank = await context.GuildUserStats
+                    .AsNoTracking()
+                    .Where(x => x.GuildId == guildId)
+                    .CountAsync(x => x.Exp > context.GuildUserStats
+                        .Where(y => y.GuildId == guildId && y.UserId == userId)
+                        .Select(y => y.Exp)
+                        .FirstOrDefault()) + 1;
+
+                return rank;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in GetUserExpRankAsync for guildId: {guildId}, userId:{userId}", guildId, userId);
+                throw;
+            }
         }
 
         public async Task<ServerTopVM> GetServerTopAsync(ulong guildId)
@@ -77,44 +109,48 @@ namespace MCOP.Core.Services.Scoped
             });
         }
 
-        public async Task AddMessageExpAsync(ulong guildId, ulong userId)
+        public async Task AddMessageExpAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId)
         {
             await using var context = _contextFactory.CreateDbContext();
 
-            var userStats = await context.GuildUserStats.SingleOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
-            if (userStats is not null)
-            {
-                TimeSpan timeSinceLastExp = DateTime.UtcNow - userStats.LastExpAwardedAt;
+            var userStats = await context.GuildUserStats
+                .SingleOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
 
-                if (timeSinceLastExp.TotalMinutes < 1)
-                {
-                    return;
-                }
-            }
+            if (userStats != null && userStats.IsWithinExpCooldown(userStats.LastExpAwardedAt, ExpCooldownMinutes))
+                return;
 
-            SafeRandom rng = new();
-            var gainedExp = rng.Next(15, 26);
-
-            await ModifyUserStatsAsync(guildId, userId, userStats => {
-                userStats.Exp += gainedExp;
-                userStats.LastExpAwardedAt = DateTime.UtcNow;
-            });
+            var gainedExp = new SafeRandom().Next(MinRandomExp, MaxRandomExp);
+            await ProcessExpChangeAsync(client, guildId, channelId, userId, gainedExp, updateLastAwarded: true);
         }
 
-        public async Task AddExpAsync(ulong guildId, ulong userId, int exp)
+        public async Task AddExpAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId, int exp)
         {
-            await ModifyUserStatsAsync(guildId, userId, userStats => userStats.Exp += exp);
+            await ProcessExpChangeAsync(client, guildId, channelId, userId, exp);
         }
 
-        public async Task RemoveExpAsync(ulong guildId, ulong userId, int exp)
+        public async Task RemoveExpAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId, int exp)
         {
+            await ProcessExpChangeAsync(client, guildId, channelId, userId, -exp);
+        }
+
+        private async Task ProcessExpChangeAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId, int expChange, bool updateLastAwarded = false)
+        {
+            int oldLevel = 0;
+            int newLevel = 0;
+
             await ModifyUserStatsAsync(guildId, userId, userStats =>
             {
-                if (userStats.Exp >= exp)
-                {
-                    userStats.Exp -= exp;
-                }
+                oldLevel = LevelingHelper.GetLevelFromTotalExp(userStats.Exp);
+                userStats.Exp = Math.Max(0, userStats.Exp + expChange);
+
+                if (updateLastAwarded)
+                    userStats.LastExpAwardedAt = DateTime.UtcNow;
+
+                newLevel = LevelingHelper.GetLevelFromTotalExp(userStats.Exp);
             });
+
+            if (oldLevel != newLevel)
+                await _guildRoleService.UpdateLevelRolesAsync(client, guildId, channelId, userId, oldLevel, newLevel);
         }
 
         public async Task AddDuelWinAsync(ulong guildId, ulong userId)
@@ -179,7 +215,6 @@ namespace MCOP.Core.Services.Scoped
 
             return userStats;
         }
-
         public async Task SetUsersExperienceAsync(ulong guildId, Dictionary<ulong, int> userIdExp)
         {
             await using var context = _contextFactory.CreateDbContext();

@@ -1,4 +1,5 @@
 ﻿using DSharpPlus.Entities;
+using MCOP.Core.Exceptions;
 using Newtonsoft.Json.Linq;
 using Serilog;
 using System.Net.Http.Headers;
@@ -101,8 +102,7 @@ namespace MCOP.Core.Common.Booru
         {
             if (strJson == "[]")
             {
-                // TODO: Tags prediction
-                throw new Exception("Sankaku. Полная пизда, запрос вернул вообще нихуя, возможно сайт сдох");
+                throw new McopException("Sankaku. Ахтунг, вообще ничего, сайт умер?");
             }
 
             JObject json = JObject.Parse(strJson);
@@ -119,7 +119,7 @@ namespace MCOP.Core.Common.Booru
 
             if (posts is null || !posts.Any())
             {
-                throw new Exception("Sankaku. Ничего не найдено");
+                throw new McopException("Sankaku. Ничего не найдено");
             }
 
             Parallel.ForEach(posts.Children(), (post) =>
@@ -127,28 +127,28 @@ namespace MCOP.Core.Common.Booru
                 try
                 {
                     List<Tag> tags = new List<Tag>();
-                    foreach (var tag in post["tags"] ?? throw new Exception("Tags token not found"))
+                    foreach (var tag in post["tags"] ?? throw new McopException("Sankaku. Tags не найден, нужен фикс"))
                     {
                         tags.Add(new Tag
                         {
-                            Id = tag["id"]?.Value<string>() ?? throw new Exception("Tag id token not found"),
-                            Name = tag["tagName"]?.Value<string>() ?? throw new Exception("Tag Name token not found"),
-                            Type = tag["type"]?.Value<int>() ?? throw new Exception("Tag type token not found")
+                            Id = tag["id"]?.Value<string>() ?? throw new McopException("Sankaku. Tag Id не найден, нужен фикс"),
+                            Name = tag["tagName"]?.Value<string>() ?? throw new McopException("Sankaku. Tag Name не найден, нужен фикс"),
+                            Type = tag["type"]?.Value<int>() ?? throw new McopException("Sankaku. Tag Type не найден, нужен фикс")
                         });
                     }
 
-                    string id = post["id"]?.Value<string>() ?? throw new Exception("Id token not found");
+                    string id = post["id"]?.Value<string>() ?? throw new McopException("Sankaku. Post Id не найден, нужен фикс");
                     string artist = tags.FirstOrDefault(x => x.Type == 1)?.Name ?? "Автор не найден";
-                    string filetype = post["file_type"]?.Value<string>() ?? throw new Exception("File type token not found");
+                    string filetype = post["file_type"]?.Value<string>() ?? throw new McopException("Sankaku. File Type не найден, нужен фикс");
                     filetype = filetype[(filetype.LastIndexOf('/') + 1)..];
 
                     searchResult.AddPost(new BooruPost
                     {
                         FileType = filetype,
                         ID = id,
-                        MD5 = post["md5"]?.Value<string>() ?? throw new Exception("Md5 token not found"),
-                        PreviewUrl = post["preview_url"]?.Value<string>() ?? throw new Exception("Preview url token not found"),
-                        ImageUrl = post["file_url"]?.Value<string>() ?? throw new Exception("File url token not found"),
+                        MD5 = post["md5"]?.Value<string>() ?? throw new McopException("Sankaku. MD5 не найден, нужен фикс"),
+                        PreviewUrl = post["preview_url"]?.Value<string>() ?? throw new McopException("Sankaku. Preview URL не найден, нужен фикс"),
+                        ImageUrl = post["file_url"]?.Value<string>() ?? throw new McopException("Sankaku. File URL не найден, нужен фикс"),
                         PostUrl = $"https://beta.sankakucomplex.com/post/show/{id}",
                         Artist = artist,
                         ParentId = (string?)post["parent_id"],
@@ -184,9 +184,9 @@ namespace MCOP.Core.Common.Booru
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string error = "Sankaku. Can't get posts";
+                    string error = "Sankaku. Запрос не удался несколько раз";
                     Log.Warning(error);
-                    throw new Exception(error);
+                    throw new McopException(error);
                 }
 
 

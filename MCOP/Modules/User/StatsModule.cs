@@ -51,11 +51,12 @@ namespace MCOP.Modules.User
             }
 
             int userLevel = LevelingHelper.GetLevelFromTotalExp(stats.Exp);
+            int userRank = await statsService.GetUserExpRankAsync(ctx.Guild.Id, member.Id);
 
             var embed = new DiscordEmbedBuilder()
             .WithTitle(member.Username)
             .WithThumbnail(member.AvatarUrl)
-            .WithDescription(LevelingHelper.GenerateLevelString(userLevel, stats.Exp))
+            .WithDescription(LevelingHelper.GenerateLevelString(userLevel, stats.Exp, userRank))
             .AddField("Лайки", $":heart: {stats.Likes}", true)
             .AddField("Дуели", $":crossed_swords: {stats.DuelWin} - {stats.DuelLose}", true)
             .AddField("Медали за отвагу", recievedEmojies.Count > 0 ? topEmoji.ToString() : DiscordEmoji.FromName(ctx.Client, ":jokerge:").ToString());
@@ -147,14 +148,7 @@ namespace MCOP.Modules.User
         [Description("Устанавливает кол-во емодзи для юзера (пользователь сначала должен получить этот емодзи хоть раз)")]
         public async Task SetEmojiCount(CommandContext ctx, DiscordUser user, string emojiName, int count)
         {
-            if (ctx is SlashCommandContext slashContext)
-            {
-                await slashContext.DeferResponseAsync(ephemeral: true);
-            }
-            else
-            {
-                await ctx.DeferResponseAsync();
-            }
+            await ctx.DeferEphemeralAsync();
 
             if (ctx.Guild is null)
             {
@@ -191,14 +185,7 @@ namespace MCOP.Modules.User
         [Description("Устаналивает лвла, такие же как в mee6")]
         public async Task SyncMee6Stats(CommandContext ctx)
         {
-            if (ctx is SlashCommandContext slashContext)
-            {
-                await slashContext.DeferResponseAsync(ephemeral: true);
-            }
-            else
-            {
-                await ctx.DeferResponseAsync();
-            }
+            await ctx.DeferEphemeralAsync();
 
             var httpClientFactory = ctx.ServiceProvider.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient("mee6Parser");

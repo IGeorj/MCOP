@@ -9,7 +9,6 @@ using MCOP.Common.ChoiceProvider;
 using MCOP.Core.Common;
 using MCOP.Extensions;
 using MCOP.Services;
-using Polly;
 using Serilog;
 using System.ComponentModel;
 

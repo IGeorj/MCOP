@@ -26,11 +26,10 @@ internal static partial class Listeners
 
         var levelingService = Services.GetRequiredService<GuildUserStatsService>();
 
-        await levelingService.AddMessageExpAsync(e.Guild.Id, e.Author.Id);
+        await levelingService.AddMessageExpAsync(client, e.Guild.Id, e.Channel.Id, e.Author.Id);
 
         // TODO: remove hardcoded channels
         var mcopLewdChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 586295440358506496;
-        var mcopNsfwChannel = e.Guild.Id == GlobalVariables.McopServerId && e.Channel.Id == 539145624868749327;
         var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
 
         if ((e.Guild.Id == GlobalVariables.McopServerId || gaysAdminChannel) && (e.Message.Attachments.Count > 0 || e.Message.IsContainsImageLink()))

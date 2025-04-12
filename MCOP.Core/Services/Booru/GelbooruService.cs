@@ -67,9 +67,9 @@ namespace MCOP.Core.Services.Booru
 
                 return searchResult;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw new McopException(ex, ex.Message);
+                throw;
             }
         }
 

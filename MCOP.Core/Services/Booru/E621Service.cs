@@ -1,6 +1,5 @@
 ﻿using DSharpPlus.Entities;
 using MCOP.Core.Common.Booru;
-using MCOP.Core.Exceptions;
 using MCOP.Core.Services.Shared;
 using MCOP.Utils.Interfaces;
 using Serilog;
@@ -67,9 +66,9 @@ namespace MCOP.Core.Services.Booru
 
                 return searchResult;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw new McopException(ex, ex.Message);
+                throw;
             }
         }
 
@@ -124,10 +123,8 @@ namespace MCOP.Core.Services.Booru
 
                 return (messages, searchResult.GetNext());
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Log.Error(e, "E621. SendRandomImages error");
-                await channel.SendMessageAsync("E621. SendRandomImages error");
                 return (new List<DiscordMessage>(), null);
             }
         }

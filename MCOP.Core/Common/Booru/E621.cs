@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using MCOP.Core.Exceptions;
+using Newtonsoft.Json.Linq;
 using Serilog;
 
 namespace MCOP.Core.Common.Booru
@@ -34,8 +35,7 @@ namespace MCOP.Core.Common.Booru
         {
             if (strJson == "[]")
             {
-                // TODO: Tags prediction
-                throw new Exception("E621. Nothing found");
+                throw new McopException("E621. Ничего не найдено");
             }
 
             JObject json = JObject.Parse(strJson);
@@ -46,27 +46,27 @@ namespace MCOP.Core.Common.Booru
 
             if (posts is null)
             {
-                throw new Exception("E621. Nothing found");
+                throw new McopException("E621. Ничего не найдено");
             }
 
             Parallel.ForEach(posts.Children(), (post) =>
             {
                 try
                 {
-                    var fileToken = post["file"] ?? throw new Exception("File token not found");
-                    var url = fileToken["url"]?.Value<string>() ?? throw new Exception("Url token not found");
+                    var fileToken = post["file"] ?? throw new McopException("E621. File не найден, нужен фикс");
+                    var url = fileToken["url"]?.Value<string>() ?? throw new McopException("E621. Url не найден, нужен фикс");
                     var filetype = url[(url.LastIndexOf('.') + 1)..];
-                    var tagsToken = post["tags"] ?? throw new Exception("Tags token not found");
-                    var artistToken = tagsToken["artist"] ?? throw new Exception("Artist token not found");
-                    var id = post["id"]?.Value<string>() ?? throw new Exception("Id token not found");
+                    var tagsToken = post["tags"] ?? throw new McopException("E621. Tags не найден, нужен фикс");
+                    var artistToken = tagsToken["artist"] ?? throw new McopException("E621. Artist не найден, нужен фикс");
+                    var id = post["id"]?.Value<string>() ?? throw new McopException("E621. Post Id не найден, нужен фикс");
 
                     searchResult.AddPost(new BooruPost
                     {
                         FileType = filetype,
                         ID = id,
-                        MD5 = fileToken["md5"]?.Value<string>() ?? throw new Exception("Md5 token not found"),
+                        MD5 = fileToken["md5"]?.Value<string>() ?? throw new McopException("E621. MD5 не найден, нужен фикс"),
                         ImageUrl = url,
-                        PreviewUrl = post["preview"]?.SelectToken("url")?.Value<string>() ?? throw new Exception("Preview url token not found"),
+                        PreviewUrl = post["preview"]?.SelectToken("url")?.Value<string>() ?? throw new McopException("E621. Preview URL не найден, нужен фикс"),
                         PostUrl = $"https://e621.net/posts{id}",
                         Artist = artistToken?.Children().FirstOrDefault()?.Value<string>() ?? "Автор не найден",
                     });
@@ -92,9 +92,9 @@ namespace MCOP.Core.Common.Booru
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string error = "E621. Can't get posts";
+                    string error = "E621. Запрос не удался";
                     Log.Warning(error);
-                    throw new Exception(error);
+                    throw new McopException(error);
                 }
 
                 Log.Information(url);

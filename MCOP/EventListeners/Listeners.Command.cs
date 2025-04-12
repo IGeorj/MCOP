@@ -1,7 +1,9 @@
 ﻿using DSharpPlus.Commands;
 using DSharpPlus.Commands.EventArgs;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
+using MCOP.Core.Exceptions;
 using MCOP.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -56,8 +58,12 @@ internal static partial class Listeners
                 return;
             case CommandCancelledException:
                 break;
+            case McopException:
+                emb.WithDescription(((McopException)ex).UserMessage);
+                Log.Error(ex, "McopException");
+                break;
             default:
-                emb.WithDescription(ex.Message);
+                emb.WithDescription("Ахтунг, не понятно");
                 Log.Error(ex, "Unhandled error");
                 break;
         }

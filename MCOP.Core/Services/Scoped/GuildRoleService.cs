@@ -1,0 +1,205 @@
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using MCOP.Core.Services.Singletone;
+using MCOP.Data;
+using MCOP.Data.Models;
+using MCOP.Utils.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+using System.Data;
+
+namespace MCOP.Core.Services.Scoped
+{
+    public class GuildRoleService : IScoped
+    {
+        public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
+
+        private readonly IDbContextFactory<McopDbContext> _contextFactory;
+
+        public GuildRoleService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService)
+        {
+            _contextFactory = contextFactory;
+        }
+
+        public async Task<List<GuildRole>> GetGuildRolesAsync(ulong guildId)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+                return await context.GuildRoles
+                    .AsNoTracking()
+                    .Where(us => us.GuildId == guildId)
+                    .OrderBy(us => us.LevelToGetRole)
+                    .ToListAsync();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log.Error(ex, "Error in GetGuildRoles for guildId: {guildId}, roleId: {roleId}", guildId);
+                throw;
+            }
+        }
+
+        public async Task SetRoleLevelAsync(ulong guildId, ulong roleId, int? level)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                var guildRole = await GetOrCreateGuildRoleAsync(context, guildId, roleId);
+                guildRole.LevelToGetRole = level;
+
+                await context.SaveChangesAsync();
+
+                Log.Information("SetRoleLevel: {guildId}, roleId: {roleId}, level: {level}", guildId, roleId, level);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log.Error(ex, "Error in SetRoleLevel for guildId: {guildId}, roleId: {roleId}", guildId, roleId);
+                throw;
+            }
+        }
+
+        private async Task<GuildRole> GetOrCreateGuildRoleAsync(McopDbContext context, ulong guildId, ulong roleId)
+        {
+            var guildRole = await context.GuildRoles
+                .SingleOrDefaultAsync(us => us.GuildId == guildId && us.Id == roleId);
+
+            if (guildRole == null)
+            {
+                guildRole = new GuildRole
+                {
+                    GuildId = guildId,
+                    Id = roleId,
+                };
+                context.GuildRoles.Add(guildRole);
+            }
+
+            return guildRole;
+        }
+
+        public async Task UpdateLevelRolesAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel)
+        {
+            if (oldLevel == newLevel) return;
+
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                var guildRoles = await context.GuildRoles
+                    .Where(g => g.GuildId == guildId && g.LevelToGetRole != null)
+                    .ToListAsync();
+
+                if (guildRoles == null || guildRoles.Count == 0)
+                {
+                    Log.Debug("Guild roles not found for {GuildId}", guildId);
+                    return;
+                }
+
+                var rolesToProcess = GetRolesToProcess(guildRoles, oldLevel, newLevel);
+                if (rolesToProcess.Count == 0)
+                {
+                    Log.Debug("No role changes needed for user {UserId} in guild {GuildId}", userId, guildId);
+                    return;
+                }
+
+                await ApplyRoleChangesAsync(client, guildId, channelId, userId, rolesToProcess, newLevel);
+
+                foreach (var role in rolesToProcess)
+                {
+                    Log.Information("Updated roles for user {UserId} in guild {GuildId} (Level {OldLevel} → {NewLevel}), roleId: {RoleId}",
+                        userId, guildId, oldLevel, newLevel, role.Id);
+                }
+
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log.Error(ex, "Failed to update roles for user {UserId} in guild {GuildId}", userId, guildId);
+                throw;
+            }
+        }
+
+        private List<GuildRole> GetRolesToProcess(List<GuildRole> levelRoles, int oldLevel, int newLevel)
+        {
+            var rolesToProcess = new List<GuildRole>();
+
+            // Moving up in levels
+            if (newLevel > oldLevel)
+            {
+                rolesToProcess.AddRange(levelRoles
+                    .Where(r => r.LevelToGetRole > oldLevel && r.LevelToGetRole <= newLevel));
+            }
+            else
+            {
+                rolesToProcess.AddRange(levelRoles
+                    .Where(r => r.LevelToGetRole > newLevel && r.LevelToGetRole <= oldLevel));
+            }
+
+            return rolesToProcess.Distinct().ToList();
+        }
+
+        private async Task ApplyRoleChangesAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId, List<GuildRole> rolesToProcess, int newLevel)
+        {
+            if (rolesToProcess.Count == 0)
+                return;
+
+            var guild = await client.GetGuildAsync(guildId);
+            if (guild is null)
+            {
+                Log.Warning("Guild {GuildId} not found", guildId);
+                return;
+            }
+
+            var user = await guild.GetMemberAsync(userId);
+            if (user is null)
+            {
+                Log.Warning("User {UserId} not found in guild {GuildId}", userId, guildId);
+                return;
+            }
+
+            var channel = await guild.GetChannelAsync(channelId);
+
+            foreach (var role in rolesToProcess)
+            {
+                var discordRole = await guild.GetRoleAsync(role.Id);
+                if (discordRole is null)
+                {
+                    Log.Warning("Role {RoleId} not found in guild {GuildId}", role.Id, guildId);
+                    continue;
+                }
+
+                try
+                {
+                    if (role.LevelToGetRole <= newLevel)
+                    {
+                        if (channel is not null)
+                        {
+                            DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder();
+                            messageBuilder.AddMention(new UserMention(user));
+                            messageBuilder.WithContent($"<@{user.Id}> Ого ты жёсткий, повышаем до <@&{role.Id}>");
+                            await messageBuilder.SendAsync(channel);
+                        }
+
+                        await user.GrantRoleAsync(discordRole, "LvlUp");
+                        Log.Information("Added role {RoleName} to user {UserId}", discordRole.Name, userId);
+                    }
+                    else
+                    {
+                        if (channel is not null)
+                        {
+                            DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder();
+                            messageBuilder.WithContent($"<@{user.Id}> Заскамили на роль, убираем <@&{role.Id}>");
+                            await messageBuilder.SendAsync(channel);
+                        }
+
+                        await user.RevokeRoleAsync(discordRole);
+                        Log.Information("Removed role {RoleName} from user {UserId}", discordRole.Name, userId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to modify role {RoleId} for user {UserId}", role.Id, userId);
+                }
+            }
+        }
+    }
+}

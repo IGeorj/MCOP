@@ -9,7 +9,7 @@ namespace MCOP.Core.Helpers
         private static readonly double b = 22.5;
         private static readonly double c = 75.8335;
 
-        public static string GenerateLevelString(int currentLevel, int totalExp)
+        public static string GenerateLevelString(int currentLevel, int totalExp, int rank)
         {
             double currentLevelXP = GetTotalXPForLevel(currentLevel);
 
@@ -25,7 +25,7 @@ namespace MCOP.Core.Helpers
             string progressBar = GenerateProgressBar(progressPercentage);
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"**Уровень:** {currentLevel}");
+            sb.AppendLine($"**Уровень:** {currentLevel} (#{rank})");
             sb.AppendLine($"**Опыт:** {xpEarnedInCurrentLevel.ToMetric()} / {xpRequiredForNextLevel.ToMetric()}");
             sb.AppendLine(progressBar);
 
