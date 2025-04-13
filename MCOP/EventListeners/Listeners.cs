@@ -12,8 +12,6 @@ internal static partial class Listeners
         {
             x.HandleGuildAvailable(GuildAvailableEventHandler);
             x.HandleGuildUnavailable(GuildUnvailableEventHandler);
-            x.HandleGuildAvailable(GuildAvailableEventHandler);
-            x.HandleGuildUnavailable(GuildUnvailableEventHandler);
             x.HandleGuildDownloadCompleted(GuildDownloadCompletedEventHandler);
             x.HandleGuildCreated(GuildCreateEventHandler);
             x.HandleSocketOpened(SocketOpenedEventHandler);

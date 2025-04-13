@@ -8,16 +8,6 @@ namespace MCOP.EventListeners;
 
 internal static partial class Listeners
 {
-    public static Task ClientErrorEventHandler(DiscordClient client, ClientErrorEventArgs e)
-    {
-        Exception ex = e.Exception;
-        while (ex is AggregateException)
-            ex = ex.InnerException ?? ex;
-
-        Log.Error(ex, "Client errored: {EventName}", e.EventName);
-        return Task.CompletedTask;
-    }
-
     public static Task GuildAvailableEventHandler(DiscordClient client, GuildCreatedEventArgs e)
     {
         Log.Information("Available: {AvailableGuild}", e.Guild);

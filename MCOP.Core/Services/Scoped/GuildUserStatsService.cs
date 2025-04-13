@@ -62,12 +62,14 @@ namespace MCOP.Core.Services.Scoped
                 await using var context = _contextFactory.CreateDbContext();
 
                 var topByLikes = await context.GuildUserStats
+                    .Where(x => x.GuildId == guildId)
                     .OrderByDescending(x => x.Likes)
                     .Take(20)
                     .ToListAsync();
 
-                var topDuels = await context.GuildUserStats.
-                    OrderByDescending(x => x.DuelWin)
+                var topDuels = await context.GuildUserStats
+                    .Where(x => x.GuildId == guildId)
+                    .OrderByDescending(x => x.DuelWin)
                     .Take(20)
                     .ToListAsync();
 
@@ -103,9 +105,7 @@ namespace MCOP.Core.Services.Scoped
             await ModifyUserStatsAsync(guildId, userId, userStats =>
             {
                 if (userStats.Likes > 0)
-                {
                     userStats.Likes--;
-                }
             });
         }
 
@@ -175,13 +175,13 @@ namespace MCOP.Core.Services.Scoped
                 {
                     var userStats = await GetOrCreateUserStatsInternalAsync(context, guildId, userId);
 
-                    var originalValues = GetPropertyValues(userStats);
+                    var originalValues = LogHelper.GetClassProperties(userStats);
 
                     modifyAction(userStats);
 
-                    var updatedValues = GetPropertyValues(userStats);
+                    var updatedValues = LogHelper.GetClassProperties(userStats);
 
-                    LogChanges(originalValues, updatedValues, guildId, userId);
+                    LogHelper.LogChangedProperties(originalValues, updatedValues, guildId, userId);
 
                     await context.SaveChangesAsync();
                 }
@@ -215,6 +215,7 @@ namespace MCOP.Core.Services.Scoped
 
             return userStats;
         }
+
         public async Task SetUsersExperienceAsync(ulong guildId, Dictionary<ulong, int> userIdExp)
         {
             await using var context = _contextFactory.CreateDbContext();
@@ -307,41 +308,5 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        private Dictionary<string, object?> GetPropertyValues(GuildUserStats userStats)
-        {
-            return typeof(GuildUserStats)
-                .GetProperties()
-                .Where(p => p.CanRead)
-                .ToDictionary(p => p.Name, p => p.GetValue(userStats));
-        }
-
-        private void LogChanges(Dictionary<string, object?> originalValues, Dictionary<string, object?> updatedValues, ulong guildId, ulong userId)
-        {
-            var changes = new List<string>();
-
-            foreach (var key in originalValues.Keys)
-            {
-                var originalValue = originalValues[key];
-                var updatedValue = updatedValues[key];
-
-                if (!Equals(originalValue, updatedValue))
-                {
-                    changes.Add($"{key}: {originalValue} -> {updatedValue}");
-                }
-            }
-
-            if (changes.Count != 0)
-            {
-                Log.Information(
-                    "ModifyUserStatsAsync: Changes detected for guildId: {guildId}, userId: {userId}. \n{changes}",
-                    guildId, userId, string.Join(Environment.NewLine, changes));
-            }
-            else
-            {
-                Log.Information(
-                    "ModifyUserStatsAsync: No changes detected for guildId: {guildId}, userId: {userId}",
-                    guildId, userId);
-            }
-        }
     }
 }
