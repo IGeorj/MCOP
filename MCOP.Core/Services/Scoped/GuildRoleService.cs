@@ -34,7 +34,44 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Log.Error(ex, "Error in GetGuildRoles for guildId: {guildId}, roleId: {roleId}", guildId);
+                Log.Error(ex, "Error in GetGuildRoles for guildId: {guildId}", guildId);
+                throw;
+            }
+        }
+
+        public async Task<List<GuildRole>> GetBlockedExpGuildRolesAsync(ulong guildId)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+                return await context.GuildRoles
+                    .AsNoTracking()
+                    .Where(us => us.GuildId == guildId && us.IsGainExpBlocked)
+                    .ToListAsync();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log.Error(ex, "Error in GetBlockedExpGuildRolesAsync for guildId: {guildId}", guildId);
+                throw;
+            }
+        }
+
+        public async Task SetBlockedRoleAsync(ulong guildId, ulong roleId, bool isBlocked)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                var guildRole = await GetOrCreateGuildRoleAsync(context, guildId, roleId);
+                guildRole.IsGainExpBlocked = isBlocked;
+
+                await context.SaveChangesAsync();
+
+                Log.Information("SetBlockedRoleAsync: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId, isBlocked);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log.Error(ex, "Error in SetBlockedRoleAsync for guildId: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId, isBlocked);
                 throw;
             }
         }
@@ -54,7 +91,7 @@ namespace MCOP.Core.Services.Scoped
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Log.Error(ex, "Error in SetRoleLevel for guildId: {guildId}, roleId: {roleId}", guildId, roleId);
+                Log.Error(ex, "Error in SetRoleLevel for guildId: {guildId}, roleId: {roleId}, level: {level}", guildId, roleId, level);
                 throw;
             }
         }

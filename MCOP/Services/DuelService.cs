@@ -58,7 +58,6 @@ namespace MCOP.Services
                 .WithTitle($"{randomNoun.Key}")
                 .AddField("Время бана", $"{timeoutString}", true)
                 .AddField("Кулдаун", $"{cooldownDurationMinutes} минут", true)
-                .AddField("Кулдаун", $"{cooldownDurationMinutes} минут", true)
                 .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);
 
             if (!string.IsNullOrEmpty(anomaly))

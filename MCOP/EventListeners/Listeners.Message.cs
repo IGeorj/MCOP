@@ -17,9 +17,7 @@ internal static partial class Listeners
     public static async Task MessageCreateEventHandler(DiscordClient client, MessageCreatedEventArgs e)
     {
         if (e.Author.IsBot || e.Guild is null)
-        {
             return;
-        }
 
         await MessageHelper.CheckEveryoneAsync(client, e);
         await MessageHelper.CheckDulyaAsync(client, e);
@@ -33,9 +31,7 @@ internal static partial class Listeners
         var gaysAdminChannel = e.Guild.Id == GlobalVariables.MyServerId && e.Channel.Id == 549313253541543951;
 
         if ((e.Guild.Id == GlobalVariables.McopServerId || gaysAdminChannel) && (e.Message.Attachments.Count > 0 || e.Message.IsContainsImageLink()))
-        {
             await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
-        }
 
         if (mcopLewdChannel || gaysAdminChannel)
         {
@@ -73,9 +69,7 @@ internal static partial class Listeners
                 }
 
                 if (added > 0)
-                {
                     Log.Information("Added {Amount} hashes ({Total} total)", added, await hashService.GetTotalCountAsync());
-                }
             }
 
         }
@@ -117,16 +111,13 @@ internal static partial class Listeners
                 {
                     var resultMessageId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
                     if (resultMessageId is not null)
-                    {
                         continue;
-                    }
+
                     updated += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
                 }
 
                 if (updated > 0)
-                {
                     Log.Information("Updated {Amount} hashes ({Total} total)", updated, await hashService.GetTotalCountAsync());
-                }
             }
         }
     }
@@ -139,23 +130,17 @@ internal static partial class Listeners
         {
             ulong userId = ulong.Parse(e.Id[(e.Id.LastIndexOf(':') + 1)..]);
             if (userId == e.User.Id)
-            {
                 await e.Message.DeleteSilentAsync();
-            }
         }
     }
 
     private static bool IsAttachmentsChanged(DiscordMessage message, DiscordMessage? messageBefore)
     {
         if (messageBefore is null)
-        {
             return true;
-        }
 
         if (message.Attachments.Count < messageBefore.Attachments.Count)
-        {
             return true;
-        }
 
         var attahcmentsNow = message.Attachments.ToList();
         var attahcmentsBefore = messageBefore.Attachments.ToList();
@@ -163,9 +148,7 @@ internal static partial class Listeners
         foreach (var attachment in attahcmentsBefore)
         {
             if (!attahcmentsNow.Any(x => x.Id == attachment.Id))
-            {
                 return true;
-            }
         }
 
         return false;
@@ -195,9 +178,7 @@ internal static partial class Listeners
     private static async Task SendCopyFoundMessageAsync(DiscordClient client, MessageCreatedEventArgs e, HashSearchResultVM hashResult, DiscordMessage messageFromHash)
     {
         if (hashResult.HashFound is null && hashResult.HashFoundNormalized is null)
-        {
             return;
-        }
 
         var matchIndex = await GetAttachmentsHashIndex(messageFromHash, hashResult.HashFound ?? hashResult.HashFoundNormalized ?? []);
         var attachemnt = messageFromHash.Attachments[matchIndex];

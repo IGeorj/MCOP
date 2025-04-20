@@ -12,6 +12,8 @@ namespace MCOP.Data.Models
         public ulong Id { get; set; }
 
         public int? LevelToGetRole { get; set; } = null;
+
+        public bool IsGainExpBlocked { get; set; } = false;
     }
 }
 

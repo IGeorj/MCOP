@@ -119,6 +119,16 @@ namespace MCOP.Core.Services.Scoped
             if (userStats != null && userStats.IsWithinExpCooldown(userStats.LastExpAwardedAt, ExpCooldownMinutes))
                 return;
 
+            var blockedRoles = await _guildRoleService.GetBlockedExpGuildRolesAsync(guildId);
+            if (blockedRoles.Count > 0)
+            {
+                var guild = await client.GetGuildAsync(guildId);
+                var user = await guild.GetMemberAsync(userId);
+
+                if (user.Roles.Any(userRole => blockedRoles.Select(x => x.Id).Contains(userRole.Id)))
+                    return;
+            }
+
             var gainedExp = new SafeRandom().Next(MinRandomExp, MaxRandomExp);
             await ProcessExpChangeAsync(client, guildId, channelId, userId, gainedExp, updateLastAwarded: true);
         }

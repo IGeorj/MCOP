@@ -184,8 +184,8 @@ namespace MCOP.Core.Common.Booru
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string error = "Sankaku. Запрос не удался несколько раз";
-                    Log.Warning(error);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    string error = $"Sankaku. Запрос не удался несколько раз, {response.StatusCode} \n {responseContent}";
                     throw new McopException(error);
                 }
 

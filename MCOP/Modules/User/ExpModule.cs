@@ -104,5 +104,38 @@ namespace MCOP.Modules.User
 
             await ctx.EditResponseAsync(embedBuilder.Build());
         }
+
+        [Command("set_blocked_role")]
+        [Description("Устанавливает блок опыта для роли")]
+        [RequirePermissions(DiscordPermission.Administrator)]
+        public async Task SetRole(CommandContext ctx,
+            [Description("Роль")] DiscordRole role,
+            [Description("Заблокировать да/нет")] bool isBlocked)
+        {
+            await ctx.DeferEphemeralAsync();
+
+            if (ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
+                return;
+            }
+
+            GuildRoleService guildRoleService = ctx.ServiceProvider.GetRequiredService<GuildRoleService>();
+
+            await guildRoleService.SetBlockedRoleAsync(ctx.Guild.Id, role.Id, isBlocked);
+
+            List<GuildRole> guildRoles = await guildRoleService.GetBlockedExpGuildRolesAsync(ctx.Guild.Id);
+
+            var embedBuilder = new DiscordEmbedBuilder();
+            var stringBuilder = new StringBuilder();
+            embedBuilder.WithTitle("Заблокированые роли");
+
+            foreach (GuildRole guildRole in guildRoles)
+                stringBuilder.AppendLine($"<@&{guildRole.Id}>");
+
+            embedBuilder.WithDescription(stringBuilder.ToString());
+
+            await ctx.EditResponseAsync(embedBuilder.Build());
+        }
     }
 }
