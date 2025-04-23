@@ -6,6 +6,7 @@ using MCOP.Common.Helpers;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
+using MCOP.Core.Services.Scoped.AI;
 using MCOP.Core.ViewModels;
 using MCOP.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,8 +23,10 @@ internal static partial class Listeners
         await MessageHelper.CheckEveryoneAsync(client, e);
         await MessageHelper.CheckDulyaAsync(client, e);
 
-        var levelingService = Services.GetRequiredService<GuildUserStatsService>();
+        var aiService = Services.GetRequiredService<AIService>();
+        await aiService.GenerateAIResponseOnMentionAsync(client, e);
 
+        var levelingService = Services.GetRequiredService<GuildUserStatsService>();
         await levelingService.AddMessageExpAsync(client, e.Guild.Id, e.Channel.Id, e.Author.Id);
 
         // TODO: remove hardcoded channels

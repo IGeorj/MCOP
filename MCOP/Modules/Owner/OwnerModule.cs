@@ -10,7 +10,6 @@ using MCOP.Exceptions;
 using MCOP.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Net;
@@ -22,19 +21,6 @@ namespace MCOP.Modules.Owner;
 [RequireApplicationOwner]
 public sealed class OwnerModule
 {
-    [Command("guildinfo")]
-    public async Task GuildInfo(CommandContext ctx, string? guildId)
-    {
-        var id = guildId is null ? ctx.Guild.Id : ulong.Parse(guildId);
-        var guild = await ctx.Client.GetGuildAsync(id);
-        var members = guild.GetAllMembersAsync();
-        var jsonG = JsonConvert.SerializeObject(guild, Formatting.Indented);
-        var jsonM = JsonConvert.SerializeObject(members, Formatting.Indented);
-
-        File.WriteAllText(@"test/gi.json", jsonG);
-        File.WriteAllText(@"test/mi.json", jsonM);
-    }
-
     #region avatar
     [Command("avatar")]
     public async Task SetBotAvatarAsync(CommandContext ctx,

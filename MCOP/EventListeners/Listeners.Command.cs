@@ -1,6 +1,5 @@
 ﻿using DSharpPlus.Commands;
 using DSharpPlus.Commands.EventArgs;
-using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
 using MCOP.Core.Exceptions;

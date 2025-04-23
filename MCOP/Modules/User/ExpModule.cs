@@ -12,11 +12,11 @@ namespace MCOP.Modules.User
 {
     [Command("lvl")]
     [Description("Команды Лвла/Опыта")]
+    [RequirePermissions(DiscordPermission.Administrator)]
     public sealed class ExpModule
     {
         [Command("add_exp")]
         [Description("Добавляет опыт")]
-        [RequirePermissions(DiscordPermission.Administrator)]
         public async Task AddExp(CommandContext ctx,
             [Description("Кол-во опыта")] int exp,
             [Description("Пользователь")] DiscordUser? user = null)
@@ -45,7 +45,6 @@ namespace MCOP.Modules.User
 
         [Command("remove_exp")]
         [Description("Отнимает опыт")]
-        [RequirePermissions(DiscordPermission.Administrator)]
         public async Task RemoveExp(CommandContext ctx,
             [Description("Кол-во опыта")] int exp,
             [Description("Пользователь")] DiscordUser? user = null)
@@ -74,7 +73,6 @@ namespace MCOP.Modules.User
 
         [Command("set_role")]
         [Description("Устанавливает уровень для роли")]
-        [RequirePermissions(DiscordPermission.Administrator)]
         public async Task SetRole(CommandContext ctx,
             [Description("Роль")] DiscordRole role,
             [Description("Уровень, если пусто - > убирает уровень с роли")] int? level)
@@ -107,7 +105,6 @@ namespace MCOP.Modules.User
 
         [Command("set_blocked_role")]
         [Description("Устанавливает блок опыта для роли")]
-        [RequirePermissions(DiscordPermission.Administrator)]
         public async Task SetRole(CommandContext ctx,
             [Description("Роль")] DiscordRole role,
             [Description("Заблокировать да/нет")] bool isBlocked)

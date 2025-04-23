@@ -25,28 +25,6 @@ namespace MCOP.Modules.Basic
             _cooldownService = cooldownService;
         }
 
-        [RequirePermissions(DiscordPermission.Administrator)]
-        [Command("test")]
-        [Description("Проверка бота на ответ")]
-        public async Task Test(CommandContext ctx)
-        {
-            await ctx.DeferResponseAsync();
-            SafeRandom rng = new SafeRandom();
-            Dictionary<int, int> keyValues = new Dictionary<int, int>();
-
-            keyValues[0] = 0;
-            keyValues[1] = 0;
-            keyValues[2] = 0;
-
-            for (int i = 0; i < 1000; i++)
-            {
-                int randomNumber = rng.Next(2);
-                keyValues[randomNumber]++;
-            }
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"{keyValues[0]} {keyValues[1]} {keyValues[2]}"));
-        }
-
         [Command("duel")]
         [Description("Дуель за таймач")]
         public async Task Duel(CommandContext ctx,

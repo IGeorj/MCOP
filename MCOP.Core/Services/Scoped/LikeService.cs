@@ -1,6 +1,4 @@
-﻿using MCOP.Data;
-using MCOP.Utils.Interfaces;
-using Microsoft.EntityFrameworkCore;
+﻿using MCOP.Utils.Interfaces;
 using Serilog;
 
 namespace MCOP.Core.Services.Scoped

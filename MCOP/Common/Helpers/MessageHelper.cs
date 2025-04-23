@@ -57,11 +57,6 @@ namespace MCOP.Common.Helpers
                 await SendDulya(client, e);
                 return;
             }
-
-            if (e.MentionedUsers.Any(x => x.Id == client.CurrentApplication?.Bot?.Id))
-            {
-                await SendDulya(client, e);
-            }
         }
 
         private static async Task SendDulya(DiscordClient client, MessageCreatedEventArgs e)

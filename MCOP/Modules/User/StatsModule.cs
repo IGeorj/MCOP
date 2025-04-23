@@ -1,6 +1,5 @@
 ﻿using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
-using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using MCOP.Core.Helpers;
 using MCOP.Core.Services.Scoped;
