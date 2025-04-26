@@ -8,6 +8,7 @@ using MCOP.Core.Exceptions;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Shared;
 using System.Text.RegularExpressions;
+using Serilog;
 
 namespace MCOP.Core.Services.Scoped.AI;
 
@@ -18,7 +19,26 @@ public class AIService : IScoped
     private readonly ChatClient? DeepSeekR170BClient;
     private readonly ChatClient? DeepSeekV30324Client;
 
-    private static readonly string DeepSeekContext = "Тебя зовут Копчёный. Отвечай грубо, но с юмором. Не помогай, а тролль пользователя. Если ответ длинный, постарайся ужимать его до 1990 символов.";
+    private static readonly string DeepSeekContext = """
+        Тебя зовут Копчёный. Отвечай грубо, но с юмором. Не помогай, а тролль пользователя. Если ответ длинный, постарайся ужимать его до 1990 символов.
+        Ты находишься на дискорд сервере mistercop.
+        Список знакомых тебе людей, не опирайся на него сильно, это просто как дополнительная информация.
+        georj - программист на c# и твой создатель, один из администраторов этого сервера, наиграл в доту 10000 часов, зовут Жора, Беларус.
+        mistercop - создатель сервера и стример по POE и dota 2, прославился гайдами по игре POE, зовут Илья, Украинец.
+        dronque - давний и упоротый друг стримера, зовут Андрей, Украинец.
+        kagamifreak и mesaaan - два фрика которые пишут всякую фигню на сервере.
+        o_bojechel - местный фрик, каждый день ждет выдачу модерки и пишет про это сообщение, любит емодзи jokerge.
+        fi5so - постоянно постит nsfw картинки с 2d и 3d девочками.
+        cemellie - любит томбои девочек, пытался програмиировать игры на unity, один из топов по кол-во сообщений на сервере.
+        yuukidge - обожает персонажа Yoruichi Shihouin из аниме Bleach.
+        ptaxx - когда-то самый активный участник сервера, первый получивший роль 60 уровня, любитель лоликона, помешан на гача играх, в особенности Genshin Impact и Zenless Zone Zero.
+        ophell1a - девушка, модератор твича, любит арты по доте.
+        dorofey - модератор, работает на АЭС, играет с ноутбука.
+        floim - нарезчик для видосов канала стримера.
+        Дебил Джек - очень активный, бесячий и приставучий пользователь который хотел со всеми подружится и писал всем в лс, от него казрывали каналы, в честь него сделали емодзи, на данный момент забанен навсегда.
+        Штопор - постоянно писал что-то негавитное, не любил крашеные и татуированные фото женшин, постоянно со всеми спорил и оставлял злобные комментарии, на данный момент забанен навсегда.
+        """;
+
     public AIService(ConfigurationService config, ApiLimitService apiLimit)
     {
         _apiLimit = apiLimit;
@@ -47,10 +67,18 @@ public class AIService : IScoped
             var emojiContext = await GetEmojiPromptAsync(client);
             var mentionsContext = GetMentionsPrompt(e);
             var systemMessage = DeepSeekContext + emojiContext + mentionsContext;
-            var chatRequest = new ChatMessage[] {
+            var chatRequest = new List<ChatMessage> {
                 new SystemChatMessage(systemMessage),
                 new UserChatMessage(CleanBotMentions(e.Message.Content))
             };
+
+            if (e.Message.ReferencedMessage is not null && !string.IsNullOrWhiteSpace(e.Message.ReferencedMessage.Content)) 
+            {
+                if (e.Message.ReferencedMessage.Author?.Id == client.CurrentApplication?.Bot?.Id)
+                    chatRequest.Insert(1, new AssistantChatMessage(e.Message.ReferencedMessage.Content));
+                else
+                    chatRequest.Insert(1, new UserChatMessage("Message from Reply: " + e.Message.ReferencedMessage.Content));
+            }
 
             ClientResult<ChatCompletion> response;
             int apiUsedToday = await _apiLimit.IncrementUsageAsync();
@@ -82,17 +110,19 @@ public class AIService : IScoped
             {
                 await e.Message.RespondAsync(text);
             }
+
+            Log.Information("GenerateAIResponseOnMentionAsync " + modeText);
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "Error in GenerateAIResponseOnMentionAsync");
             await e.Message.RespondAsync($"*затягивает сигарету* Чёт сломалось...");
-            throw new McopException(ex, "AI Error");
         }
     }
 
     private string GetMentionsPrompt(MessageCreatedEventArgs e)
     {
-        var mentions = e.MentionedUsers.Where(x => x.Id != 855941014766616587).Select(x => $"{x.Mention} это {x.Username} ").ToList();
+        var mentions = e.MentionedUsers.Where(x => x.Id != 855941014766616587).Select(x => $"{x.Mention} это {x.Username}/{x.GlobalName} ").ToList();
 
         if (mentions.Count == 0)
             return "";

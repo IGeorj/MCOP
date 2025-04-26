@@ -112,7 +112,7 @@ public sealed class PeriodicTasksService : IDisposable
     #endregion
 
 
-    public PeriodicTasksService(Bot bot, BotConfiguration cfg)
+    public PeriodicTasksService(Bot bot)
     {
         DateTime now = DateTime.Now;
         DateTime postTime = new DateTime(now.Year, now.Month, now.Day, 20, 00, 00);

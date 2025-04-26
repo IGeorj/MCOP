@@ -4,27 +4,22 @@ using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using MCOP.Core.Services.Booru;
 using MCOP.Core.Services.Scoped;
-using Serilog;
 using System.ComponentModel;
 
 namespace MCOP.Modules.Nsfw
 {
-    [Command("nsfw-daily")]
+    [Command("nsfw-admin")]
     [Description("18+ комманды")]
     [RequireNsfw]
     [RequirePermissions(DiscordPermission.Administrator)]
-    public sealed class NsfwAdminModule
+    public sealed class NsfwModuleAdmin
     {
         public SankakuService Sankaku { get; set; }
-        public E621Service E621 { get; set; }
-        public GelbooruService Gelbooru { get; set; }
         public GuildConfigService GuildService { get; set; }
 
-        public NsfwAdminModule(SankakuService sankaku, E621Service e621, GelbooruService gelbooru, GuildConfigService guildService)
+        public NsfwModuleAdmin(SankakuService sankaku, GuildConfigService guildService)
         {
             Sankaku = sankaku;
-            E621 = e621;
-            Gelbooru = gelbooru;
             GuildService = guildService;
         }
 
@@ -50,7 +45,7 @@ namespace MCOP.Modules.Nsfw
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Держи свои картиночки"));
         }
 
-        [Command("set-channel")]
+        [Command("channel")]
         [Description("Устанавливает канал для ежедневного топа")]
         public async Task SetLewdChannel(CommandContext ctx)
         {
@@ -65,35 +60,5 @@ namespace MCOP.Modules.Nsfw
             await GuildService.SetLewdChannelAsync(ctx.Guild.Id, ctx.Channel.Id);
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Успешно! Дневной топ будет высылаться сюда в <t:1672592400:t>"));
         }
-
-        [Command("resend-all")]
-        [Description("Скидывает ежедневный топ картинок на все сервера")]
-        public async Task SendDaily(CommandContext ctx)
-        {
-            await ctx.DeferResponseAsync();
-
-            var guildConfigs = await GuildService.GetGuildConfigsWithLewdChannelAsync();
-            List<DiscordChannel> channels = new List<DiscordChannel>();
-
-            foreach (var config in guildConfigs)
-            {
-                if (ctx.Client.Guilds.ContainsKey(config.GuildId) && config.LewdChannelId is not null)
-                {
-                    try
-                    {
-                        channels.Add(await ctx.Client.GetChannelAsync(config.LewdChannelId.Value));
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error(e, $"Cannot send daily Guild: {config.GuildId}, Channel: {config.LewdChannelId.Value}");
-                        continue;
-                    }
-                }
-            }
-            await Sankaku.SendDailyTopToChannelsAsync(channels);
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(string.Join(",", channels)));
-        }
-
     }
 }

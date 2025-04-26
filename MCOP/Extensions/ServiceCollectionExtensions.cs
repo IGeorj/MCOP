@@ -21,7 +21,7 @@ public static class ServiceCollectionExtensions
         return serviceCollection;
     }
 
-    public static IServiceCollection AddScopedClasses(this IServiceCollection serviceCollection, Assembly? assembly = null)
+    public static IServiceCollection AddScopedServices(this IServiceCollection serviceCollection, Assembly? assembly = null)
     {
         IEnumerable<Type> services = GetClassesByType(typeof(IScoped), assembly)
             .Except(serviceCollection.Select(s => s.ServiceType));

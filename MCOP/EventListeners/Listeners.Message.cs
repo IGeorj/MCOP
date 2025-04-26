@@ -48,33 +48,17 @@ internal static partial class Listeners
 
                 foreach (var hashResult in searchHashResult)
                 {
-                    var resultMessageId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
-                    if (resultMessageId is not null)
-                    {
-                        DiscordMessage messageFromHash;
-                        try
-                        {
-                            messageFromHash = await e.Channel.GetMessageAsync(resultMessageId.Value);
-                        }
-                        catch (Exception)
-                        {
-                            Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", resultMessageId, e.Channel.Id, e.Guild.Id);
-                            await hashService.RemoveHashesByMessageId(e.Guild.Id, resultMessageId.Value);
-                            continue;
-                        }
+                    var messageFoundId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
 
-                        await SendCopyFoundMessageAsync(client, e, hashResult, messageFromHash);
-                    }
+                    if (messageFoundId is not null)
+                        await TrySendCopyFoundMessageAsync(client, e, hashResult, messageFoundId.Value);
                     else
-                    {
                         added += await hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
-                    }
                 }
 
                 if (added > 0)
                     Log.Information("Added {Amount} hashes ({Total} total)", added, await hashService.GetTotalCountAsync());
             }
-
         }
     }
 
@@ -178,8 +162,22 @@ internal static partial class Listeners
         return indexMatch;
     }
 
-    private static async Task SendCopyFoundMessageAsync(DiscordClient client, MessageCreatedEventArgs e, HashSearchResultVM hashResult, DiscordMessage messageFromHash)
+    private static async Task TrySendCopyFoundMessageAsync(DiscordClient client, MessageCreatedEventArgs e, HashSearchResultVM hashResult, ulong messageFoundId)
     {
+        DiscordMessage messageFromHash;
+        try
+        {
+            messageFromHash = await e.Channel.GetMessageAsync(messageFoundId);
+        }
+        catch (Exception)
+        {
+            Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", messageFoundId, e.Channel.Id, e.Guild.Id);
+            var hashService = Services.GetRequiredService<ImageHashService>();
+            await hashService.RemoveHashesByMessageId(e.Guild.Id, messageFoundId);
+            return;
+        }
+
+
         if (hashResult.HashFound is null && hashResult.HashFoundNormalized is null)
             return;
 

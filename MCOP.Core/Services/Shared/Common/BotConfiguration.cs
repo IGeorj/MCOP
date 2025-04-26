@@ -15,7 +15,7 @@ namespace MCOP.Core.Services.Shared.Common
         public DBConfig DatabaseConfig { get; set; } = new DBConfig();
 
         [JsonProperty("token")]
-        public string? Token { get; set; }
+        public string Token { get; set; }
 
         [JsonProperty("prefix")]
         public string Prefix { get; set; } = DefaultPrefix;

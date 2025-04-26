@@ -1,12 +1,10 @@
 ﻿using DSharpPlus.Commands;
 using DSharpPlus.Commands.ArgumentModifiers;
-using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Commands.Processors.TextCommands;
 using DSharpPlus.Entities;
 using MCOP.Common.ChoiceProvider;
-using MCOP.Core.Common;
 using MCOP.Extensions;
 using MCOP.Services;
 using Serilog;

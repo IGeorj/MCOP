@@ -36,9 +36,9 @@ internal static class Program
             Log.Logger = LogExt.CreateLogger(cfg.CurrentConfiguration);
             Log.Information("Logger created.");
 
-            await InitializeDatabaseAsync(cfg);
-
+            await InitializeDatabaseAsync();
             await StartAsync(cfg);
+
             Log.Information("Booting complete!");
 
             await Task.Delay(Timeout.Infinite);
@@ -89,23 +89,19 @@ internal static class Program
         return cfg;
     }
 
-    private static async Task InitializeDatabaseAsync(ConfigurationService cfg)
+    private static async Task InitializeDatabaseAsync()
     {
         Log.Information("Testing database context creation");
-        using (McopDbContext db = new McopDbContext())
-        {
-            IEnumerable<string> pendingMigrations = await db.Database.GetPendingMigrationsAsync();
-            if (pendingMigrations.Any())
-            {
-                await db.Database.MigrateAsync();
-            }
-        }
+        using McopDbContext db = new McopDbContext();
+        IEnumerable<string> pendingMigrations = await db.Database.GetPendingMigrationsAsync();
+        if (pendingMigrations.Any())
+            await db.Database.MigrateAsync();
     }
 
     private static Task StartAsync(ConfigurationService cfg)
     {
         Bot = new Bot(cfg);
-        PeriodicService = new PeriodicTasksService(Bot, cfg.CurrentConfiguration);
+        PeriodicService = new PeriodicTasksService(Bot);
         return Bot.StartAsync();
     }
 
@@ -114,7 +110,8 @@ internal static class Program
         Log.Information("Cleaning up ...");
 
         PeriodicService?.Dispose();
-        if (Bot is { })
+
+        if (Bot is not null)
             await Bot.DisposeAsync();
 
         Log.Information("Cleanup complete");

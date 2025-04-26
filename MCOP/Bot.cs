@@ -9,7 +9,6 @@ using DSharpPlus.Interactivity.Extensions;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Singletone;
 using MCOP.Data;
-using MCOP.Exceptions;
 using MCOP.Extensions;
 using MCOP.Services;
 using Microsoft.EntityFrameworkCore;
@@ -22,22 +21,17 @@ namespace MCOP;
 
 public sealed class Bot
 {
-    public IServiceProvider Services => services ?? throw new BotUninitializedException();
-    public Core.Services.Shared.ConfigurationService Config => config ?? throw new BotUninitializedException();
-    public DiscordClient Client => client ?? throw new BotUninitializedException();
-    public InteractivityExtension Interactivity => interactivity ?? throw new BotUninitializedException();
-    public CommandsExtension CommandsEx => cnext ?? throw new BotUninitializedException();
-
-    private readonly Core.Services.Shared.ConfigurationService? config;
-    private DiscordClient? client;
-    private IServiceProvider? services;
-    private InteractivityExtension? interactivity;
-    private CommandsExtension? cnext;
-
+    public IServiceProvider Services { get; private set; } = null!;
+    public Core.Services.Shared.ConfigurationService Config { get; private set; } = null!;
+    public DiscordClient Client { get; private set; } = null!;
 
     public Bot(Core.Services.Shared.ConfigurationService cfg)
     {
-        config = cfg;
+        Config = cfg;
+
+        Log.Information("Initializing the bot...");
+
+        SetupClient();
     }
 
     public async Task DisposeAsync()
@@ -46,17 +40,12 @@ public sealed class Bot
         Client.Dispose();
     }
 
-
     public async Task StartAsync()
     {
-        Log.Information("Initializing the bot...");
-
-        SetupClient();
-
         await Client.ConnectAsync();
     }
 
-    private DiscordClient SetupClient()
+    private void SetupClient()
     {
         var intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents 
             | TextCommandProcessor.RequiredIntents | SlashCommandProcessor.RequiredIntents;
@@ -72,7 +61,7 @@ public sealed class Bot
 
         clientBuilder.ConfigureEventHandlers(x =>
         {
-            x.HandleSessionCreated(async (s, e) => { Log.Information("SessionCreated!"); });
+            x.HandleSessionCreated((s, e) => { Log.Information("SessionCreated!"); return Task.CompletedTask; });
         });
 
         clientBuilder.ConfigureServices(serviceConfig =>
@@ -87,7 +76,7 @@ public sealed class Bot
             .AddMemoryCache()
             .AddDbContextFactory<McopDbContext>(options => options.UseSqlite($"Data Source={Config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
             .AddSharedServices()
-            .AddScopedClasses();
+            .AddScopedServices();
 
             var retryPolicy = HttpPolicyExtensions
                 .HandleTransientHttpError()
@@ -132,15 +121,14 @@ public sealed class Bot
             });
 
             var serviceProvider = serviceConfig.BuildServiceProvider();
-            services = serviceProvider;
+            Services = serviceProvider;
             EventListeners.Listeners.RegisterServiceProvider(serviceProvider);
         });
 
         SetupCommands(clientBuilder);
         SetupInteractivity(clientBuilder);
-        var discordClient = clientBuilder.Build();
-        client = discordClient;
-        return discordClient;
+
+        Client = clientBuilder.Build();
     }
 
     private void SetupCommands(DiscordClientBuilder clientBuilder)
@@ -152,10 +140,7 @@ public sealed class Bot
             PrefixResolver = new DefaultPrefixResolver(false, Config.CurrentConfiguration.Prefix).ResolvePrefixAsync
         });
 
-        SlashCommandProcessor slashCommandProcessor = new SlashCommandProcessor
-        {
-
-        };
+        SlashCommandProcessor slashCommandProcessor = new() { };
 
         textCommandProcessor.RegisterConverters();
         slashCommandProcessor.RegisterConverters();

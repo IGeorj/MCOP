@@ -10,6 +10,5 @@ namespace MCOP.Extensions
 
             return member.Permissions.HasAnyPermission([DiscordPermission.Administrator]);
         }
-
     }
 }

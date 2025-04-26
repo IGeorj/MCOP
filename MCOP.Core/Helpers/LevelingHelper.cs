@@ -25,8 +25,8 @@ namespace MCOP.Core.Helpers
             string progressBar = GenerateProgressBar(progressPercentage);
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"**Уровень:** {currentLevel} (#{rank})");
-            sb.AppendLine($"**Опыт:** {xpEarnedInCurrentLevel.ToMetric()} / {xpRequiredForNextLevel.ToMetric()}");
+            sb.AppendLine($"-# **Уровень:** {currentLevel} (#{rank})");
+            sb.AppendLine($"-# **Опыт:** {xpEarnedInCurrentLevel.ToMetric()} / {xpRequiredForNextLevel.ToMetric()}");
             sb.AppendLine(progressBar);
 
             return sb.ToString();
@@ -38,7 +38,7 @@ namespace MCOP.Core.Helpers
             int filledLength = (int)(barLength * (progressPercentage / 100.0));
 
             string progressBar = new string('█', filledLength).PadRight(barLength, '░');
-            return $"{progressBar} {progressPercentage}%";
+            return $"-# {progressBar} {progressPercentage}%";
         }
 
         public static int GetLevelFromTotalExp(int totalExp)

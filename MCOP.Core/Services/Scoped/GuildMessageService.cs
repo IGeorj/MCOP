@@ -1,5 +1,4 @@
-﻿using MCOP.Core.Exceptions;
-using MCOP.Data;
+﻿using MCOP.Data;
 using MCOP.Data.Models;
 using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;

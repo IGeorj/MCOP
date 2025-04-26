@@ -109,7 +109,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                 cards = straightCards;
                 return true;
             }
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
 
@@ -123,7 +123,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                 cards.Add(hand.Where(c => c.Rank != fourOfAKind.Key).OrderByDescending(c => c.Rank).First());
                 return true;
             }
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
 
@@ -138,7 +138,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                 cards = hand.Where(c => c.Rank == threeOfAKind.Key || c.Rank == pair.Key).ToList();
                 return true;
             }
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
 
@@ -151,7 +151,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                 cards = flushGroup.OrderByDescending(c => c.Rank).Take(5).ToList();
                 return true;
             }
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
 
@@ -185,7 +185,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                 }
             }
 
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
 
@@ -201,7 +201,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                                   .Take(2));
                 return true;
             }
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
 
@@ -216,7 +216,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                              .First());
                 return true;
             }
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
 
@@ -232,7 +232,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
                                   .Take(3));
                 return true;
             }
-            cards = null;
+            cards = new List<Card>();
             return false;
         }
     }

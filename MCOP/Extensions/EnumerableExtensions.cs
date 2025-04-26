@@ -20,7 +20,6 @@ internal static class EnumerableExtensions
         return source.ShuffleIterator(rng);
     }
 
-
     private static IEnumerable<T> ShuffleIterator<T>(this IEnumerable<T> source, SafeRandom rng)
     {
         var buffer = source.ToList();

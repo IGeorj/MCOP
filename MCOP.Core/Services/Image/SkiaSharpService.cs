@@ -94,10 +94,10 @@ namespace MCOP.Core.Services.Image
             return (correlation / denominator) * 100;
         }
 
-        public static byte[] GetBitmapHash(SKBitmap bitmap, int arraySize = 16)
+        public static byte[] GetBitmapHash(SKBitmap bitmap, int arraySize = 32)
         {
             bitmap = GrayScaleBitmap(bitmap);
-            bitmap = ResizeBitmap(bitmap, 16, 16);
+            bitmap = ResizeBitmap(bitmap, arraySize, arraySize);
 
             byte[] grayScale = new byte[arraySize * arraySize];
 

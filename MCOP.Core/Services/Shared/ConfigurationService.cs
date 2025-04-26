@@ -41,6 +41,10 @@ public sealed class ConfigurationService : ISharedService
             json = await sr.ReadToEndAsync();
 
         CurrentConfiguration = JsonConvert.DeserializeObject<BotConfiguration>(json) ?? throw new JsonSerializationException();
+
+        if (string.IsNullOrEmpty(CurrentConfiguration.Token))
+            throw new Exception("Token is null or empty!");
+
         return CurrentConfiguration;
     }
 }

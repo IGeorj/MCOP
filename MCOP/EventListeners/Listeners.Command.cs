@@ -55,8 +55,6 @@ internal static partial class Listeners
             case DbUpdateException or DbUpdateConcurrencyException:
                 Log.Error(ex, "Database error");
                 return;
-            case CommandCancelledException:
-                break;
             case McopException:
                 emb.WithDescription(((McopException)ex).UserMessage);
                 Log.Error(ex, "McopException");
