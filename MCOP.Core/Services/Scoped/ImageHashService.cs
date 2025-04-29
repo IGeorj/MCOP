@@ -124,9 +124,16 @@ namespace MCOP.Core.Services.Scoped
 
                 if (link is not null && (link.Contains(".png") || link.Contains(".jpg") || link.Contains(".jpeg") || link.Contains(".webp")))
                 {
-                    byte[] imgBytes = await HttpService.GetByteArrayAsync(link);
-                    using var bitmap = SkiaSharp.SKBitmap.Decode(imgBytes);
-                    hashes.Add(SkiaSharpService.GetBitmapHash(bitmap));
+                    try
+                    {
+                        byte[] imgBytes = await HttpService.GetByteArrayAsync(link);
+                        using var bitmap = SkiaSharp.SKBitmap.Decode(imgBytes);
+                        hashes.Add(SkiaSharpService.GetBitmapHash(bitmap));
+                    }
+                    catch (Exception)
+                    {
+                        Log.Information("GetHashesFromMessageAsync link image not working: {link}", link);
+                    }
                 }
 
                 foreach (var item in message.Attachments.ToList())
@@ -193,7 +200,7 @@ namespace MCOP.Core.Services.Scoped
                 {
                     foreach (var res in results)
                     {
-                        Log.Information("FindBestMatches result: {bestMatch}", res.Difference);
+                        Log.Information("FindBestMatches messageId:{res.MessageId} {bestMatch}%", res.MessageId, res.Difference);
                     }
                     return results;
                 }
@@ -220,7 +227,7 @@ namespace MCOP.Core.Services.Scoped
                 {
                     foreach (var res in results)
                     {
-                        Log.Information("FindBestMatches normalized result: {bestMatch}", res.DifferenceNormalized);
+                        Log.Information("FindBestMatches normalized messageId:{res.MessageId} {bestMatch}%", res.MessageId, res.DifferenceNormalized);
                     }
                     return results;
                 }
