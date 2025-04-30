@@ -4,7 +4,6 @@ using MCOP.Utils.Interfaces;
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
-using MCOP.Core.Exceptions;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Shared;
 using System.Text.RegularExpressions;
@@ -26,14 +25,15 @@ public class AIService : IScoped
         georj - программист на c# и твой создатель, один из администраторов этого сервера, наиграл в доту 10000 часов, зовут Жора, Беларус.
         mistercop - создатель сервера и стример по POE и dota 2, прославился гайдами по игре POE, зовут Илья, Украинец.
         dronque - давний и упоротый друг стримера, зовут Андрей, Украинец.
-        kagamifreak и mesaaan - два фрика которые пишут всякую фигню на сервере.
+        kagamifreak - фанат touhou и гача игр в последнее время играет в Honkai Star Rail, играл в пое и доту.
+        mesaaan - фрик который тебе часто пишет, больной анимешник, постил голых трапов и гей мужиков в канале "гачи-подвал".
         o_bojechel - местный фрик, каждый день ждет выдачу модерки и пишет про это сообщение, любит емодзи jokerge.
         fi5so - постоянно постит nsfw картинки с 2d и 3d девочками.
         cemellie - любит томбои девочек, пытался програмиировать игры на unity, один из топов по кол-во сообщений на сервере.
         yuukidge - обожает персонажа Yoruichi Shihouin из аниме Bleach.
         ptaxx - когда-то самый активный участник сервера, первый получивший роль 60 уровня, любитель лоликона, помешан на гача играх, в особенности Genshin Impact и Zenless Zone Zero.
         ophell1a - девушка, модератор твича, любит арты по доте.
-        dorofey - модератор, работает на АЭС, играет с ноутбука.
+        dorofey - модератор, работает на АЭС, любит World Of Thanks.
         floim - нарезчик для видосов канала стримера.
         Дебил Джек - очень активный, бесячий и приставучий пользователь который хотел со всеми подружится и писал всем в лс, от него казрывали каналы, в честь него сделали емодзи, на данный момент забанен навсегда.
         Штопор - постоянно писал что-то негавитное, не любил крашеные и татуированные фото женшин, постоянно со всеми спорил и оставлял злобные комментарии, на данный момент забанен навсегда.
@@ -97,14 +97,21 @@ public class AIService : IScoped
 
             string aiResponse = response.Value.Content[0].Text;
             string text = modeText + CleanMessage(RemoveThinkTags(aiResponse));
+            Log.Information(text);
+            text = await ReplaceEmojiNamesWithActualEmojisAsync(client, text);
 
             if (string.IsNullOrWhiteSpace(text))
                 await e.Message.RespondAsync($"Заебали абузить, текст пустой");
 
             if (text.Length > 2000)
             {
+                int count = 0;
                 foreach (var chunk in SplitMessage(text, 2000))
+                {
+                    if (count == 2) break;
                     await e.Message.RespondAsync(chunk);
+                    count++;
+                }
             }
             else
             {
@@ -142,21 +149,18 @@ public class AIService : IScoped
         var guild = await client.GetGuildAsync(GlobalVariables.McopServerId);
         var serverEmojis = guild.Emojis.Values.Where(x => !x.IsManaged);
 
-        var emojiList = string.Join(", ", serverEmojis.Select(emoji => $"{emoji}"));
+        var emojiList = string.Join(", ", serverEmojis.Select(emoji => $"{emoji.Name}"));
+        Log.Information(emojiList);
         string emojiPrompt = $"""
-        1. You will be penalized & fined $1000 if you use words from the ban list. If you use one word from the ban list, I will stop the generation right away
-        ### ban list ###
-        everyone
-        ### ban list ###
-        2. Можешь использовать эмодзи из emoji list, где уместно, они отделены запятой
-        ### emoji list ###
+        1. Можешь вставлять слова из funny list, они потом сконвертируются в емодзи, отделяй их слева и справа пробелом от других слов
+        ### funny list ###
         {emojiList}
-        ### emoji list ###
+        ### funny list ###
         
-        Примеры использования emoji list:
-        - "Увы <:jokerge:1363419830702706758>"
-        - "вот это кино <a:pepeCorn:908257282066903060>"
-        - "Cool Story, Bro - <:mcopStory:473225146124206081>"
+        Примеры использования funny list:
+        - "Увы jokerge"
+        - "вот это кино pepeCorn"
+        - "Cool Story, Bro - mcopStory"
         """;
 
         return emojiPrompt;
@@ -193,5 +197,31 @@ public class AIService : IScoped
             result[i] = message.Substring(start, length);
         }
         return result;
+    }
+
+    private async Task<string> ReplaceEmojiNamesWithActualEmojisAsync(DiscordClient client, string message)
+    {
+        var guild = await client.GetGuildAsync(GlobalVariables.McopServerId);
+        var emojis = guild.Emojis;
+
+        var emojiNames = emojis.Select(e => e.Value.Name).ToList();
+
+        // Регулярное выражение для поиска:
+        // 1. Текстовых упоминаний (\banimeMimeHmm\b)
+        // 2. Уже сгенерированных конструкций (<:animeMimeHmm:825082229662154753> или <a:name:id>)
+        var regex = new Regex(@"(?:\b(" + string.Join("|", emojiNames.Select(Regex.Escape)) + @")\b)|(?:<a?:(" + string.Join("|", emojiNames.Select(Regex.Escape)) + @"):\d+>)");
+
+        return regex.Replace(message, match =>
+        {
+            var emojiName = !string.IsNullOrEmpty(match.Groups[1].Value)
+                ? match.Groups[1].Value
+                : match.Groups[2].Value;
+
+            var emoji = emojis.Select(x => x.Value).FirstOrDefault(e => e.Name == emojiName);
+
+            return emoji is not null
+                ? (emoji.IsAnimated ? $"<a:{emoji.Name}:{emoji.Id}>" : $"<:{emoji.Name}:{emoji.Id}>")
+                : match.Value;
+        });
     }
 }
