@@ -15,9 +15,9 @@ namespace MCOP.Modules.Nsfw
     public sealed class NsfwModuleAdmin
     {
         public SankakuService Sankaku { get; set; }
-        public GuildConfigService GuildService { get; set; }
+        public IGuildConfigService GuildService { get; set; }
 
-        public NsfwModuleAdmin(SankakuService sankaku, GuildConfigService guildService)
+        public NsfwModuleAdmin(SankakuService sankaku, IGuildConfigService guildService)
         {
             Sankaku = sankaku;
             GuildService = guildService;

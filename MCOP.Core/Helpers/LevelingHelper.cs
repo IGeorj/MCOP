@@ -73,7 +73,7 @@ namespace MCOP.Core.Helpers
             return Math.Max(remainingXP, 0);
         }
 
-        private static double GetTotalXPForLevel(int level)
+        public static double GetTotalXPForLevel(int level)
         {
             return a * Math.Pow(level, 3) + b * Math.Pow(level, 2) + c * level;
         }

@@ -6,47 +6,59 @@ namespace MCOP.Utils;
 
 public sealed class ConfigurationService : ISharedService
 {
-    public BotConfiguration CurrentConfiguration { get; private set; } = new BotConfiguration();
-    private bool isLoaded = false;
+    private const string ConfigFilePath = "resources/config.json";
 
+    public BotConfiguration CurrentConfiguration { get; private set; } = new();
 
-    public async Task<BotConfiguration> LoadConfigAsync(string path = "resources/config.json")
+    public ConfigurationService()
     {
-        string json = "{}";
-        var utf8 = new UTF8Encoding(false);
-        var fi = new FileInfo(path);
-        if (!fi.Exists)
+    }
+
+    public async Task<BotConfiguration> LoadConfigAsync()
+    {
+        if (string.IsNullOrEmpty(CurrentConfiguration.Token))
         {
-            Console.WriteLine("Loading configuration failed!");
-
-            Directory.CreateDirectory("resources");
-
-            json = JsonConvert.SerializeObject(new BotConfiguration(), Formatting.Indented);
-            using (FileStream fs = fi.Create())
-            using (var sw = new StreamWriter(stream: fs, utf8))
-            {
-                await sw.WriteAsync(json);
-                await sw.FlushAsync();
-            }
-
-            Console.WriteLine("New default configuration file has been created at:");
-            Console.WriteLine(fi.FullName);
-            Console.WriteLine("Please fill it with appropriate values and re-run the bot.");
-
-            throw new IOException("Configuration file not found!");
+            CurrentConfiguration = await LoadFromJsonFileAsync();
         }
 
-        using (FileStream fs = fi.OpenRead())
-        using (var sr = new StreamReader(fs, utf8))
-            json = await sr.ReadToEndAsync();
+        if (string.IsNullOrEmpty(CurrentConfiguration.Token))
+            throw new Exception("Discord bot token is not configured!");
 
-        CurrentConfiguration = JsonConvert.DeserializeObject<BotConfiguration>(json) ?? throw new JsonSerializationException();
-        isLoaded = true;
         return CurrentConfiguration;
     }
 
-    public async Task<BotConfiguration> GetCurrentConfigAsync()
+    private async Task<BotConfiguration> LoadFromJsonFileAsync()
     {
-        return isLoaded ? CurrentConfiguration : await LoadConfigAsync();
+        var utf8 = new UTF8Encoding(false);
+        var fi = new FileInfo(ConfigFilePath);
+
+        if (!fi.Exists)
+        {
+            await CreateDefaultConfigFileAsync(fi, utf8);
+        }
+
+        string json;
+        using (var fs = fi.OpenRead())
+        using (var sr = new StreamReader(fs, utf8))
+        {
+            json = await sr.ReadToEndAsync();
+        }
+
+        var config = JsonConvert.DeserializeObject<BotConfiguration>(json) ?? throw new JsonSerializationException();
+        return config;
+    }
+
+    private async Task CreateDefaultConfigFileAsync(FileInfo fi, Encoding encoding)
+    {
+        Directory.CreateDirectory("resources");
+
+        var defaultConfig = new BotConfiguration();
+
+        var json = JsonConvert.SerializeObject(defaultConfig, Formatting.Indented);
+
+        await using var fs = fi.Create();
+        await using var sw = new StreamWriter(fs, encoding);
+        await sw.WriteAsync(json);
+        await sw.FlushAsync();
     }
 }

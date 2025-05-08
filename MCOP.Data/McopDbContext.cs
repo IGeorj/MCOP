@@ -14,6 +14,7 @@ namespace MCOP.Data
         public virtual DbSet<GuildUserEmoji> GuildUserEmojies { get; protected set; }
         public virtual DbSet<GuildRole> GuildRoles { get; protected set; }
         public virtual DbSet<ApiUsage> ApiUsages { get; protected set; }
+        public virtual DbSet<AppUser> AppUsers { get; protected set; }
 
         public McopDbContext() { }
         public McopDbContext(DbContextOptions<McopDbContext> options) : base(options) { }
@@ -23,7 +24,7 @@ namespace MCOP.Data
         {
             ConfigurationService configurationService = new ConfigurationService();
             AsyncExecutionService asyncExecution = new AsyncExecutionService();
-            BotConfiguration config = asyncExecution.Execute(configurationService.GetCurrentConfigAsync());
+            BotConfiguration config = asyncExecution.Execute(configurationService.LoadConfigAsync());
             optionsBuilder.UseSqlite($"Data Source={config.DatabaseConfig.DatabaseName}.db;");
         }
     }

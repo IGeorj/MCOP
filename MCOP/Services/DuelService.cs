@@ -9,7 +9,6 @@ using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
 using MCOP.Services.Duels;
 using MCOP.Services.Duels.Anomalies;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.Globalization;
 
@@ -312,7 +311,7 @@ namespace MCOP.Services
             if (duel.DuelMessage is not null)
                 await duel.DuelMessage.ModifyAsync(new DiscordMessageBuilder().AddEmbed(embed));
 
-            GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+            var statsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
 
             if (winner is not null)
             {

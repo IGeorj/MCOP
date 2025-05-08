@@ -36,10 +36,10 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+            var statsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
             GuildUserStats stats = await statsService.GetGuildUserStatAsync(ctx.Guild.Id, member.Id);
 
-            GuildUserEmojiService guildEmojiService = ctx.ServiceProvider.GetRequiredService<GuildUserEmojiService>();
+            IGuildUserEmojiService guildEmojiService = ctx.ServiceProvider.GetRequiredService<IGuildUserEmojiService>();
             List<GuildUserEmoji> recievedEmojies = await guildEmojiService.GetTopEmojisForUserAsync(ctx.Guild.Id, member.Id);
             StringBuilder topEmoji = new();
 
@@ -65,7 +65,7 @@ namespace MCOP.Modules.User
 
 
         [Command("top")]
-        [Description("Топ 5 сервера")]
+        [Description("Топ сервера")]
         public async Task StatsTop(CommandContext ctx)
         {
             await ctx.DeferResponseAsync();
@@ -75,71 +75,8 @@ namespace MCOP.Modules.User
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
                 return;
             }
-
-            GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
-            ServerTopVM serverTop = await statsService.GetServerTopAsync(ctx.Guild.Id);
-
-            StringBuilder topLikes = new();
-            StringBuilder topDuels = new();
-            string kek = "5 дуелей минимум";
-
-            int topCounter = 0;
-            int maxTopCount = 5;
-            foreach (var item in serverTop.TopLikedUser)
-            {
-                if (topCounter >= maxTopCount)
-                {
-                    break;
-                }
-
-                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
-                if (member is not null)
-                {
-                    topCounter++;
-                    topLikes.Append($"{member.DisplayName}\n:heart: {item.Likes}\n");
-                }
-            }
-
-            topCounter = 0;
-            foreach (var item in serverTop.TopDuelUser)
-            {
-                if (topCounter >= maxTopCount)
-                {
-                    break;
-                }
-
-                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
-                if (member is not null) 
-                {
-                    topCounter++;
-                    topDuels.Append($"{member.DisplayName}\n:crossed_swords: {item.DuelWin} - {item.DuelLose}\n");
-                }
-            }
-
-            topCounter = 0;
-            foreach (var item in serverTop.HonorableMention)
-            {
-                if (topCounter >= 1)
-                {
-                    break;
-                }
-
-                DiscordMember? member = await ctx.Guild.GetMemberSilentAsync(item.UserId);
-                if (member is not null)
-                {
-                    topCounter++;
-                    kek = $"{member.DisplayName}\n:crossed_swords: {item.DuelWin} - {item.DuelLose}";
-                    break;
-                }
-            }
-
-            var embed = new DiscordEmbedBuilder()
-            .WithTitle("Топ пользователей")
-            .AddField("Топ лайков", topLikes.Length == 0 ? "Пусто" : topLikes.ToString(), true)
-            .AddField("Топ дуелей", topDuels.Length == 0 ? "Пусто" : topDuels.ToString(), true)
-            .AddField("Невезучий", kek, true);
-
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));
+            string url = "https://mistercop.top/leaderboard/" + ctx.Guild.Id;
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(url));
         }
 
         [Command("set-emoji-count")]
@@ -165,7 +102,7 @@ namespace MCOP.Modules.User
 
             try
             {
-                var guildEmojiService = ctx.ServiceProvider.GetRequiredService<GuildUserEmojiService>();
+                var guildEmojiService = ctx.ServiceProvider.GetRequiredService<IGuildUserEmojiService>();
                 await guildEmojiService.SetGuildUserEmojiCountAsync(ctx.Guild.Id, user.Id, discordEmoji, count);
 
             }
@@ -229,7 +166,7 @@ namespace MCOP.Modules.User
 
             if (isAllParsed && userIdExp.Any() && ctx.Guild is not null)
             {
-                var levelingService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+                var levelingService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
                 await levelingService.SetUsersExperienceAsync(ctx.Guild.Id, userIdExp);
             }
 

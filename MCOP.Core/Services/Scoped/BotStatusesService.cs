@@ -1,16 +1,20 @@
 ﻿using MCOP.Core.Common;
-using MCOP.Core.Exceptions;
 using MCOP.Core.Services.Shared.Common;
 using MCOP.Data;
 using MCOP.Data.Models;
-using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Diagnostics;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class BotStatusesService : IScoped
+    public interface IBotStatusesService
+    {
+        public Task<BotStatus> GetRandomStatusAsync();
+        public UptimeInformation GetUptimeInfo();
+    }
+
+    public class BotStatusesService : IBotStatusesService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
@@ -46,5 +50,19 @@ namespace MCOP.Core.Services.Scoped
                 throw;
             }
         }
+
+        public UptimeInformation GetUptimeInfo()
+        {
+            try
+            {
+                return UptimeInformation;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in GetUptimeInfo");
+                throw;
+            }
+        }
+
     }
 }

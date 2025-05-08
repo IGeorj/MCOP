@@ -5,13 +5,28 @@ using MCOP.Core.Services.Shared;
 using MCOP.Core.ViewModels;
 using MCOP.Data;
 using MCOP.Data.Models;
-using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class ImageHashService : IScoped
+    public interface IImageHashService
+    {
+        private const double _defaultNormalizedThreshold = 99.5;
+        private const double _defaultDiffThreshold = 95;
+
+        public Task<List<ImageHash>> GetAllHashesAsync();
+        public Task<List<ImageHash>> GetHashesByGuildAsync(ulong guildId);
+        public Task<int> SaveHashAsync(ulong guildId, ulong messageId, ulong userId, byte[] hash);
+        public Task<List<HashSearchResultVM>> SearchHashesAsync(List<byte[]> hashes, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold);
+        public Task<List<HashSearchResultVM>> SearchHashesByGuildAsync(ulong guildId, List<byte[]> hashes, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold);
+        public Task<List<byte[]>> GetHashesFromMessageAsync(DiscordMessage message);
+        public Task RemoveHashesByMessageId(ulong guildId, ulong messageId);
+        public Task<int> GetTotalCountAsync();
+        public List<HashSearchResultVM> FindBestMatches(List<ImageHash> imageHashes, List<byte[]> hashesToCheck, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold);
+    }
+
+    public class ImageHashService : IImageHashService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
@@ -29,7 +44,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                return (await context.ImageHashes.ToListAsync()).OrderByDescending(x => x.Id).ToList();
+                return await context.ImageHashes.OrderByDescending(x => x.Id).ToListAsync();
             }
             catch (Exception ex)
             {

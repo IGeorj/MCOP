@@ -1,0 +1,82 @@
+.side,
+.cubeContainer {
+  width: 10em;
+  height: 10em;
+}
+
+.cubeContainer {
+  transform-style: preserve-3d;
+  animation: rotate 10s infinite linear;
+}
+
+.cubeContainer:before,
+.cubeContainer:after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 10em;
+  height: 10em;
+}
+
+.cubeContainer:before {
+  transform: rotateX(90deg);
+}
+
+.cubeContainer:after {
+  transform: rotatey(90deg);
+}
+
+.side {
+  position: absolute;
+  width: 10em;
+  height: 10em;
+  opacity: 1;
+}
+
+.back {
+  transform: translateZ(-5em);
+  background: url('/public/copImage.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.left {
+  transform: translateX(-5em) rotateY(90deg);
+  background: url('/public/copImage.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.right {
+  transform: translateX(5em) rotateY(90deg);
+  background: url('/public/copImage.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.top {
+  transform: translateY(-5em) rotateX(90deg);
+  background: url('/public/copImage.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.bottom {
+  transform: translateY(5em) rotateX(90deg);
+  background: url('/public/copImage.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.front {
+  transform: translateZ(5em);
+  background: url('/public/copImage.png');
+  background-size: cover;
+  background-position: center;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotatex(360deg) rotateY(360deg) rotateZ(360deg);
+  }
+}

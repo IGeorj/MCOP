@@ -1,24 +1,33 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
-using MCOP.Core.Services.Singletone;
 using MCOP.Data;
 using MCOP.Data.Models;
-using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Data;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class GuildRoleService : IScoped
+    public interface IGuildRoleService
+    {
+        public Task<List<GuildRole>> GetGuildRolesAsync(ulong guildId);
+        public Task<List<GuildRole>> GetBlockedExpGuildRolesAsync(ulong guildId);
+        public Task SetBlockedRoleAsync(ulong guildId, ulong roleId, bool isBlocked);
+        public Task SetRoleLevelAsync(ulong guildId, ulong roleId, int? level);
+        public Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel);
+    }
+
+    public class GuildRoleService : IGuildRoleService
     {
         public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
 
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
+        private readonly DiscordClient _discordClient;
 
-        public GuildRoleService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService)
+        public GuildRoleService(IDbContextFactory<McopDbContext> contextFactory, DiscordClient discordClient)
         {
             _contextFactory = contextFactory;
+            _discordClient = discordClient;
         }
 
         public async Task<List<GuildRole>> GetGuildRolesAsync(ulong guildId)
@@ -62,7 +71,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                var guildRole = await GetOrCreateGuildRoleAsync(context, guildId, roleId);
+                var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
                 guildRole.IsGainExpBlocked = isBlocked;
 
                 await context.SaveChangesAsync();
@@ -82,7 +91,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                var guildRole = await GetOrCreateGuildRoleAsync(context, guildId, roleId);
+                var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
                 guildRole.LevelToGetRole = level;
 
                 await context.SaveChangesAsync();
@@ -96,25 +105,7 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        private async Task<GuildRole> GetOrCreateGuildRoleAsync(McopDbContext context, ulong guildId, ulong roleId)
-        {
-            var guildRole = await context.GuildRoles
-                .SingleOrDefaultAsync(us => us.GuildId == guildId && us.Id == roleId);
-
-            if (guildRole == null)
-            {
-                guildRole = new GuildRole
-                {
-                    GuildId = guildId,
-                    Id = roleId,
-                };
-                context.GuildRoles.Add(guildRole);
-            }
-
-            return guildRole;
-        }
-
-        public async Task UpdateLevelRolesAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel)
+        public async Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel)
         {
             if (oldLevel == newLevel) return;
 
@@ -139,7 +130,7 @@ namespace MCOP.Core.Services.Scoped
                     return;
                 }
 
-                await ApplyRoleChangesAsync(client, guildId, channelId, userId, rolesToProcess, newLevel);
+                await ApplyRoleChangesAsync(guildId, channelId, userId, rolesToProcess, newLevel);
 
                 foreach (var role in rolesToProcess)
                 {
@@ -155,11 +146,28 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
+        private async Task<GuildRole> GetOrCreateGuildRoleInternalAsync(McopDbContext context, ulong guildId, ulong roleId)
+        {
+            var guildRole = await context.GuildRoles
+                .SingleOrDefaultAsync(us => us.GuildId == guildId && us.Id == roleId);
+
+            if (guildRole == null)
+            {
+                guildRole = new GuildRole
+                {
+                    GuildId = guildId,
+                    Id = roleId,
+                };
+                context.GuildRoles.Add(guildRole);
+            }
+
+            return guildRole;
+        }
+
         private List<GuildRole> GetRolesToProcess(List<GuildRole> levelRoles, int oldLevel, int newLevel)
         {
             var rolesToProcess = new List<GuildRole>();
 
-            // Moving up in levels
             if (newLevel > oldLevel)
             {
                 rolesToProcess.AddRange(levelRoles
@@ -174,12 +182,12 @@ namespace MCOP.Core.Services.Scoped
             return rolesToProcess.Distinct().ToList();
         }
 
-        private async Task ApplyRoleChangesAsync(DiscordClient client, ulong guildId, ulong channelId, ulong userId, List<GuildRole> rolesToProcess, int newLevel)
+        private async Task ApplyRoleChangesAsync(ulong guildId, ulong channelId, ulong userId, List<GuildRole> rolesToProcess, int newLevel)
         {
             if (rolesToProcess.Count == 0)
                 return;
 
-            var guild = await client.GetGuildAsync(guildId);
+            var guild = await _discordClient.GetGuildAsync(guildId);
             if (guild is null)
             {
                 Log.Warning("Guild {GuildId} not found", guildId);

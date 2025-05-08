@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MCOP.Utils;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace MCOP.Data.Models
 {
@@ -9,6 +10,9 @@ namespace MCOP.Data.Models
     {
         public ulong GuildId { get; set; }
         public ulong UserId { get; set; }
+
+        public string? Username { get; set; }
+        public string? AvatarHash { get; set; }
 
 
         [ConcurrencyCheck]

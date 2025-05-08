@@ -4,12 +4,12 @@ using DSharpPlus.Commands.ArgumentModifiers;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using MCOP.Core.Common;
+using MCOP.Core.Services.Background;
 using MCOP.Core.Services.Scoped;
 using MCOP.Core.Services.Shared;
 using MCOP.Exceptions;
 using MCOP.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Net;
@@ -108,10 +108,10 @@ public sealed class OwnerModule
 
     #region shutdown
     [Command("shutdown")]
-    public Task ExitAsync(CommandContext _,
+    public async Task ExitAsync(CommandContext ctx,
                          [Description("Time until exit")] TimeSpan timespan,
                          [Description("Exit code")] int exitCode = 0)
-        => Program.Stop(exitCode, timespan);
+        => await ctx.Client.ServiceProvider.GetRequiredService<BotBackgroundService>().StopBotAsync();
     #endregion
 
     #region restart
@@ -130,14 +130,13 @@ public sealed class OwnerModule
     [Command("uptime")]
     public async Task UptimeAsync(CommandContext ctx)
     {
-        BotStatusesService bas = ctx.ServiceProvider.GetRequiredService<BotStatusesService>();
-        TimeSpan processUptime = bas.UptimeInformation.ProgramUptime;
-        TimeSpan socketUptime = bas.UptimeInformation.SocketUptime;
+        IBotStatusesService bas = ctx.ServiceProvider.GetRequiredService<IBotStatusesService>();
+        TimeSpan processUptime = bas.GetUptimeInfo().ProgramUptime;
+        TimeSpan socketUptime = bas.GetUptimeInfo().SocketUptime;
 
         var emb = new DiscordEmbedBuilder
         {
             Title = "Uptime information",
-            Description = $"{Program.ApplicationName} {Program.ApplicationVersion}",
             Color = DiscordColor.Gold,
         };
         emb.AddField("Bot uptime", processUptime.ToString(@"dd\.hh\:mm\:ss"), inline: true);

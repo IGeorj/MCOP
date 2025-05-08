@@ -362,5 +362,14 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+.env
+.env.*
+
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/MCOP/mcop_db_test.db
+/MCOP/mcop_db_test.db-shm
+/MCOP/mcop_db_test.db-wal
+/MCOP/resources/config.json
+/MCOP/mcop_frontend/build
+/MCOP/mcop_frontend/dist

@@ -1,12 +1,18 @@
 ﻿using MCOP.Data;
 using MCOP.Data.Models;
-using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class GuildMessageService : IScoped
+    public interface IGuildMessageService
+    {
+        public Task AddLikeAsync(ulong guildId, ulong messageId, ulong userId);
+        public Task RemoveLikeAsync(ulong guildId, ulong messageId, ulong userId);
+        public Task RemoveMessageAsync(ulong guildId, ulong messageId);
+    }
+
+    public class GuildMessageService : IGuildMessageService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
@@ -21,7 +27,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                var message = await GetOrCreateMessageAsync(guildId, messageId, userId);
+                var message = await GetOrCreateMessageInternalAsync(guildId, messageId, userId);
                 message.Likes++;
                 await context.SaveChangesAsync();
 
@@ -40,11 +46,10 @@ namespace MCOP.Core.Services.Scoped
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                var message = await GetOrCreateMessageAsync(guildId, messageId, userId);
+                var message = await GetOrCreateMessageInternalAsync(guildId, messageId, userId);
                 if (message.Likes > 0)
-                {
                     message.Likes--;
-                }
+
                 await context.SaveChangesAsync();
 
                 Log.Information("RemoveLikeAsync guildId: {guildId}, messageId: {messageId}, userId: {userId}", guildId, messageId, userId);
@@ -55,7 +60,7 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        private async Task<GuildMessage> GetOrCreateMessageAsync(ulong guildId, ulong messageId, ulong userId)
+        private async Task<GuildMessage> GetOrCreateMessageInternalAsync(ulong guildId, ulong messageId, ulong userId)
         {
             await using var context = _contextFactory.CreateDbContext();
 

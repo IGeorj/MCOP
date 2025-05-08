@@ -1,7 +1,7 @@
 ﻿using DSharpPlus.Entities;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Exceptions;
-using MCOP.Core.Services.Shared;
+using MCOP.Utils;
 using MCOP.Utils.Interfaces;
 using Serilog;
 

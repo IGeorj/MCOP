@@ -1,15 +1,18 @@
-﻿using MCOP.Core.Exceptions;
-using MCOP.Data;
+﻿using MCOP.Data;
 using MCOP.Data.Models;
-using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Polly;
 using Serilog;
-using System.Threading.Channels;
-
 namespace MCOP.Core.Services.Scoped
 {
-    public class GuildConfigService : IScoped
+    public interface IGuildConfigService
+    {
+        public Task<GuildConfig> GetOrAddGuildConfigAsync(ulong guildId);
+        public Task<List<GuildConfig>> GetGuildConfigsWithLewdChannelAsync();
+        public Task SetLewdChannelAsync(ulong guildId, ulong channelId);
+        public Task SetLoggingChannelAsync(ulong guildId, ulong channelId);
+    }
+
+    public class GuildConfigService : IGuildConfigService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 

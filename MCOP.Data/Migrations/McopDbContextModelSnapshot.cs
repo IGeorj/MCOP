@@ -35,6 +35,27 @@ namespace MCOP.Data.Migrations
                     b.ToTable("ApiUsages");
                 });
 
+            modelBuilder.Entity("MCOP.Data.Models.AppUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DiscordAccessToken")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DiscordRefreshToken")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DiscordTokenExpiresAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppUsers");
+                });
+
             modelBuilder.Entity("MCOP.Data.Models.BotStatus", b =>
                 {
                     b.Property<int>("Id")
@@ -141,6 +162,9 @@ namespace MCOP.Data.Migrations
                     b.Property<ulong>("UserId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AvatarHash")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("DuelLose")
                         .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
@@ -159,6 +183,9 @@ namespace MCOP.Data.Migrations
                     b.Property<int>("Likes")
                         .IsConcurrencyToken()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("GuildId", "UserId");
 

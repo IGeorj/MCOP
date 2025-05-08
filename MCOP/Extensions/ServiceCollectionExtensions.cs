@@ -1,5 +1,4 @@
 ﻿using MCOP.Utils.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.Reflection;
 
@@ -19,21 +18,6 @@ public static class ServiceCollectionExtensions
         }
 
         return serviceCollection;
-    }
-
-    public static IServiceCollection AddScopedServices(this IServiceCollection serviceCollection, Assembly? assembly = null)
-    {
-        IEnumerable<Type> services = GetClassesByType(typeof(IScoped), assembly)
-            .Except(serviceCollection.Select(s => s.ServiceType));
-
-        foreach (Type service in services)
-        {
-            serviceCollection.AddScoped(service);
-            Log.Debug("Added service: {Service}", service.FullName);
-        }
-
-        return serviceCollection;
-
     }
 
     private static IEnumerable<Type> GetClassesByType(Type type, Assembly? assembly = null)

@@ -1,18 +1,24 @@
 ﻿using DSharpPlus.Entities;
-using MCOP.Core.Exceptions;
 using MCOP.Data;
 using MCOP.Data.Models;
-using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class GuildUserEmojiService : IScoped
+    public interface IGuildUserEmojiService
+    {
+        public Task AddRecievedAmountAsync(ulong guildId, ulong userId, ulong emojiId, int amount);
+        public Task RemoveRecievedAmountAsync(ulong guildId, ulong userId, ulong emojiId, int amount);
+        public Task<List<GuildUserEmoji>> GetTopEmojisForUserAsync(ulong guildId, ulong userId, int topAmount = 5);
+        public Task SetGuildUserEmojiCountAsync(ulong guildId, ulong userId, DiscordEmoji discordEmoji, int count);
+    }
+
+    public class GuildUserEmojiService : IGuildUserEmojiService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
-        public GuildUserEmojiService(IDbContextFactory<McopDbContext> contextFactory, GuildConfigService guildService)
+        public GuildUserEmojiService(IDbContextFactory<McopDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
         }

@@ -1,16 +1,21 @@
-﻿using MCOP.Utils.Interfaces;
-using Serilog;
+﻿using Serilog;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class LikeService : IScoped
+    public interface ILikeService
     {
-        private readonly GuildMessageService _guildMessageService;
-        private readonly GuildUserStatsService _guildUserStatService;
+        public Task AddLikeAsync(ulong guildId, ulong userId, ulong messageId);
+        public Task RemoveLikeAsync(ulong guildId, ulong userId, ulong messageId);
+    }
+
+    public class LikeService : ILikeService
+    {
+        private readonly IGuildMessageService _guildMessageService;
+        private readonly IGuildUserStatsService _guildUserStatService;
 
         public LikeService(
-            GuildMessageService guildMessageService,
-            GuildUserStatsService guildUserStatService)
+            IGuildMessageService guildMessageService,
+            IGuildUserStatsService guildUserStatService)
         {
             _guildMessageService = guildMessageService;
             _guildUserStatService = guildUserStatService;

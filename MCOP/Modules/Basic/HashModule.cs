@@ -28,7 +28,7 @@ namespace MCOP.Modules.Basic
 
             try
             {
-                var hashService = ctx.ServiceProvider.GetRequiredService<ImageHashService>();
+                var hashService = ctx.ServiceProvider.GetRequiredService<IImageHashService>();
                 message = await ctx.Channel.GetMessageAsync(ulongMessageId);
                 hashes = await hashService.GetHashesFromMessageAsync(message);
 

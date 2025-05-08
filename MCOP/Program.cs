@@ -1,120 +1,182 @@
-﻿using MCOP.Core.Services.Shared;
+﻿using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus;
+using MCOP.Utils;
+using Serilog;
+using MCOP.Core.Common.Booru;
+using MCOP.Core.Services.Singletone;
 using MCOP.Data;
-using MCOP.Extensions;
 using MCOP.Services;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
-using System.Diagnostics;
-using System.Reflection;
+using Polly.Extensions.Http;
+using Polly;
+using MCOP.Extensions;
+using DSharpPlus.Commands.Processors.TextCommands.Parsing;
+using DSharpPlus.Commands;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.Interactivity;
+using MCOP.Core.Services.Background;
+using DSharpPlus.Extensions;
+using MCOP.EventListeners;
+using MCOP.Core.Services.Scoped.AI;
+using MCOP.Core.Services.Scoped;
+using MCOP.Core.Services.Scoped.OAuth;
 
-namespace MCOP;
+var builder = WebApplication.CreateBuilder(args);
 
-internal static class Program
+ConfigurationService config = new ConfigurationService();
+await config.LoadConfigAsync();
+
+Log.Logger = LogExt.CreateLogger(config.CurrentConfiguration);
+
+var intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers
+    | DiscordIntents.MessageContents | TextCommandProcessor.RequiredIntents
+    | SlashCommandProcessor.RequiredIntents;
+
+InteractivityConfiguration interactivityConfiguration = new InteractivityConfiguration
 {
-    public static string ApplicationName { get; }
-    public static string ApplicationVersion { get; }
+    PaginationBehaviour = PaginationBehaviour.WrapAround,
+    PaginationDeletion = PaginationDeletion.KeepEmojis,
+    PaginationEmojis = new PaginationEmojis(),
+    PollBehaviour = PollBehaviour.KeepEmojis,
+    Timeout = TimeSpan.FromMinutes(1),
+};
 
-    internal static Bot? Bot { get; set; }
-    private static PeriodicTasksService? PeriodicService { get; set; }
+TextCommandProcessor textCommandProcessor = new(new()
+{
+    PrefixResolver = new DefaultPrefixResolver(false, config.CurrentConfiguration.Prefix).ResolvePrefixAsync
+});
 
+SlashCommandProcessor slashCommandProcessor = new() { };
 
-    static Program()
+textCommandProcessor.RegisterConverters();
+slashCommandProcessor.RegisterConverters();
+
+Log.Information("Initializing services...");
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(Log.Logger, dispose: true);
+builder.Services
+    .AddSingleton(config)
+    .AddSingleton(Log.Logger)
+    .AddDbContextFactory<McopDbContext>(options => options.UseSqlite($"Data Source={config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
+    .AddScoped<MessageListeners>()
+    .AddScoped<ClientListeners>()
+    .AddScoped<CommandListeners>()
+    .AddScoped<ReactionsListeners>()
+    .AddSingleton<CooldownService>()
+    .AddSingleton<DuelService>()
+    .AddSingleton<ILockingService, LockingService>()
+    .AddDiscordClient(config.CurrentConfiguration.Token, intents)
+    .AddScoped<IDiscordOAuthService, DiscordOAuthService>()
+    .AddScoped<IAIService, AIService>()
+    .AddScoped<IApiLimitService, ApiLimitService>()
+    .AddScoped<IBotStatusesService, BotStatusesService>()
+    .AddScoped<IGuildConfigService, GuildConfigService>()
+    .AddScoped<IGuildMessageService, GuildMessageService>()
+    .AddScoped<IGuildRoleService, GuildRoleService>()
+    .AddScoped<IGuildUserEmojiService, GuildUserEmojiService>()
+    .AddScoped<IGuildUserStatsService, GuildUserStatsService>()
+    .AddScoped<IImageHashService, ImageHashService>()
+    .AddScoped<ILikeService, LikeService>()
+    .AddScoped<IAppUserService, AppUserService>()
+    .AddDiscordEvents()
+    .AddInteractivityExtension(interactivityConfiguration)
+    .AddCommandsExtension((serviceProvider, extension) =>
     {
-        AssemblyName info = Assembly.GetExecutingAssembly().GetName();
-        ApplicationName = info.Name ?? typeof(Program).Name;
-        ApplicationVersion = $"v{info.Version?.ToString() ?? "<unknown>"}";
-    }
+        extension.AddProcessor(textCommandProcessor);
+        extension.AddProcessor(slashCommandProcessor);
+        extension.AddCommands(typeof(Program).Assembly);
+        Listeners.RegisterCommandsEvent(extension);
+    })
+    .AddMemoryCache()
+    .AddSharedServices()
+    .AddControllers();
 
+var retryPolicy = HttpPolicyExtensions
+    .HandleTransientHttpError()
+    .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+    .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-    internal static async Task Main(string[] _)
-    {
-        PrintBuildInformation();
+builder.Services.AddHttpClient("sankaku", client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(3);
+    client.BaseAddress = new Uri("https://sankakuapi.com");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
+}).AddPolicyHandler(retryPolicy);
 
-        try
+builder.Services.AddHttpClient("e621", client =>
+{
+    client.BaseAddress = new Uri("https://e621.net");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
+}).AddPolicyHandler(retryPolicy);
+
+builder.Services.AddHttpClient("gelbooru", client =>
+{
+    client.BaseAddress = new Uri("https://gelbooru.com");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
+}).AddPolicyHandler(retryPolicy);
+
+builder.Services.AddSingleton(provider =>
+{
+    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+    Sankaku sankaku = new Sankaku(httpClientFactory.CreateClient("sankaku"));
+    sankaku.AuthorizeAsync("georj", config.CurrentConfiguration.SankakuPassword ?? string.Empty).GetAwaiter().GetResult();
+    return sankaku;
+});
+
+builder.Services.AddSingleton(provider =>
+{
+    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+    E621 e621 = new E621(config.CurrentConfiguration.E621HashPassword ?? string.Empty, httpClientFactory.CreateClient("e621"));
+    return e621;
+});
+
+builder.Services.AddSingleton(provider =>
+{
+    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+    Gelbooru gelbooru = new Gelbooru(httpClientFactory.CreateClient("gelbooru"));
+    return gelbooru;
+});
+
+builder.Services.AddHostedService<BotBackgroundService>();
+builder.Services.AddHostedService<PeriodicTasksBackgroundService>();
+
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options => {
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
-            ConfigurationService cfg = await LoadBotConfigAsync();
-            Log.Logger = LogExt.CreateLogger(cfg.CurrentConfiguration);
-            Log.Information("Logger created.");
+            ValidIssuer = config.CurrentConfiguration.JwtConfig.Issuer,
+            ValidAudience = config.CurrentConfiguration.JwtConfig.Audience,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(config.CurrentConfiguration.JwtConfig.Key!)
+            )
+        };
+    });
 
-            await InitializeDatabaseAsync();
-            await StartAsync(cfg);
+builder.WebHost.ConfigureKestrel(serverOptions => {
+    if (builder.Environment.IsDevelopment())
+        serverOptions.ListenLocalhost(5000);
+    else
+        serverOptions.ListenLocalhost(5001);
+});
 
-            Log.Information("Booting complete!");
+var app = builder.Build();
 
-            await Task.Delay(Timeout.Infinite);
-        }
-        catch (TaskCanceledException)
-        {
-            Log.Information("Shutdown signal received!");
-        }
-        catch (Exception e)
-        {
-            Log.Fatal(e, "Critical exception occurred");
-            Environment.ExitCode = 1;
-        }
-        finally
-        {
-            await DisposeAsync();
-        }
+app.UseCors(builder =>
+    builder.WithOrigins("http://localhost:5173", "https://mistercop.top")
+           .AllowAnyHeader()
+           .AllowAnyMethod()
+           .AllowCredentials());
 
-        Log.Information("Powering off");
-        Log.CloseAndFlush();
-        Environment.Exit(Environment.ExitCode);
-    }
-
-    public static Task Stop(int exitCode = 0, TimeSpan? after = null)
-    {
-        Environment.ExitCode = exitCode;
-        return Task.CompletedTask;
-    }
-
-
-    #region Setup
-    private static void PrintBuildInformation()
-    {
-        var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-        Console.WriteLine($"{ApplicationName} {ApplicationVersion} ({fileVersionInfo.FileVersion})");
-        Console.WriteLine(".NET, version {0}", Environment.Version.ToString());
-        Console.WriteLine();
-    }
-
-    private static async Task<ConfigurationService> LoadBotConfigAsync()
-    {
-        Console.Write("Loading configuration... ");
-
-        var cfg = new ConfigurationService();
-        await cfg.LoadConfigAsync();
-
-        Console.Write("\r");
-        return cfg;
-    }
-
-    private static async Task InitializeDatabaseAsync()
-    {
-        Log.Information("Testing database context creation");
-        using McopDbContext db = new McopDbContext();
-        IEnumerable<string> pendingMigrations = await db.Database.GetPendingMigrationsAsync();
-        if (pendingMigrations.Any())
-            await db.Database.MigrateAsync();
-    }
-
-    private static Task StartAsync(ConfigurationService cfg)
-    {
-        Bot = new Bot(cfg);
-        PeriodicService = new PeriodicTasksService(Bot);
-        return Bot.StartAsync();
-    }
-
-    private static async Task DisposeAsync()
-    {
-        Log.Information("Cleaning up ...");
-
-        PeriodicService?.Dispose();
-
-        if (Bot is not null)
-            await Bot.DisposeAsync();
-
-        Log.Information("Cleanup complete");
-    }
-    #endregion
+// Миграции базы данных
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<McopDbContext>>();
+    await db.CreateDbContext().Database.MigrateAsync();
 }
+
+app.MapControllers();
+app.MapGet("/", () => "MCOP Bot is running!");
+app.Run();

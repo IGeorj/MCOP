@@ -39,9 +39,7 @@ namespace MCOP.Common.Helpers
                     DiscordRole? role = await e.Guild.GetRoleAsync(622772942761361428);
 
                     if (role is not null)
-                    {
                         await member.GrantRoleAsync(role);
-                    }
                 }
             }
         }

@@ -1,11 +1,16 @@
 ﻿using MCOP.Data;
 using MCOP.Data.Models;
-using MCOP.Utils.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace MCOP.Core.Services.Scoped
 {
-    public class ApiLimitService : IScoped
+    public interface IApiLimitService
+    {
+        public Task<int> IncrementUsageAsync();
+        public Task<int> GetTodayUsageAsync();
+    }
+
+    public class ApiLimitService : IApiLimitService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly SemaphoreSlim _lock = new(1, 1);

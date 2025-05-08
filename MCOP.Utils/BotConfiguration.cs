@@ -6,12 +6,17 @@ namespace MCOP.Utils;
 
 public sealed class BotConfiguration
 {
-    public const string DefaultLocale = "en-GB";
     public const string DefaultPrefix = "!m";
 
 
     [JsonProperty("db-config")]
     public DBConfig DatabaseConfig { get; set; } = new DBConfig();
+
+    [JsonProperty("discord-oauth")]
+    public DiscordOAuthConfig DiscordOAuthConfig { get; set; } = new DiscordOAuthConfig();
+
+    [JsonProperty("jwt-config")]
+    public JwtConfig JwtConfig { get; set; } = new JwtConfig();
 
     [JsonProperty("token")]
     public string? Token { get; set; }
@@ -54,4 +59,11 @@ public sealed class BotConfiguration
 
     [JsonProperty("gelbooru-restricted-tags")]
     public string? GelbooruRestrictegTags { get; set; }
+
+    [JsonProperty("ai-api-key")]
+    public string? AIApiKey { get; set; }
+
+    [JsonProperty("openrounter-api-key")]
+    public string? OpenRounterApiKey { get; set; }
+
 }

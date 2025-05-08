@@ -1,4 +1,4 @@
-﻿using MCOP.Core.Services.Shared.Common;
+﻿using MCOP.Utils;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -50,6 +50,6 @@ internal sealed class Enrichers
     public sealed class ApplicationNameEnricher : ILogEventEnricher
     {
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
-            => logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("Application", Program.ApplicationName));
+            => logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("Application", "MCOP"));
     }
 }

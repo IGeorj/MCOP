@@ -1,0 +1,25 @@
+{
+  "leaderboard": {
+    "error": "Failed to load data. Please try again later.",
+    "retry": "Retry"
+  },
+  "theEnd": "The End",
+  "likes": "Likes",
+  "level": "Level",
+  "duelWin": "Duel Win",
+  "duelLose": "Duel Lose",
+  "loading": "Loading...",
+  "login": "Login",
+  "logout": "Logout",
+  "welcome": {
+    "title": "Welcome to MCOP site",
+    "subtitle": "User statistics, server economy and games - all in one place.",
+    "login": "Add to Discord"
+  },
+  "guilds": {
+    "title": "Your Servers",
+    "settings": "Settings",
+    "addBot": "Add",
+    "error": "Failed to load guilds"
+  }
+}

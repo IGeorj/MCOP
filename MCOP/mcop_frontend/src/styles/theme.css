@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-primary: #f03252;
+  --color-secondary: #E5E7EB;
+  --color-bg: #f6f7fa;
+  --color-navbar: #fff;
+  --color-text: #333;
+  --color-hover: #D1D5DB;
+  --color-selected: #3dc3ff;
+}
+.dark {
+  --color-primary: #f03252;
+  --color-secondary: #2a2a30;
+  --color-bg: #1a1a1d;
+  --color-navbar: #131316;
+  --color-text: #faf9fa;
+  --color-hover: #51515a;
+  --color-selected: #0EA5E9;
+}
+
+body, html {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background 0.3s, color 0.3s;
+}
+
+.card, .section {
+  box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
+  border-radius: 0.75rem;
+  background-color: #fff;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.dark .card, .dark .section {
+  background-color: #23232a;
+  box-shadow: 0 2px 8px rgba(20, 20, 36, 0.13);
+}
+
+.navbar { border-radius: 1rem; }
+.btn { border-radius: 0.5rem; transition: background 0.2s; }
+h1, h2, h3, h4 {
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+.bg-primary { background-color: var(--color-primary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-navbar { background-color: var(--color-navbar); }
+.text-primary { color: var(--color-primary); }
+.text-secondary { color: var(--color-secondary); }
+.selected { background-color: var(--color-selected); }
+.bg-hover:hover { background-color: var(--color-hover); }
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  color: var(--color-text);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
+  margin-bottom: 1.5rem;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+th {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr.group:hover td {
+  background-color: var(--color-hover);
+}

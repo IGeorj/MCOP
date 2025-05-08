@@ -15,9 +15,9 @@ namespace MCOP.Modules.Nsfw
     public sealed class NsfwModuleOwner
     {
         public SankakuService Sankaku { get; set; }
-        public GuildConfigService GuildService { get; set; }
+        public IGuildConfigService GuildService { get; set; }
 
-        public NsfwModuleOwner(SankakuService sankaku, GuildConfigService guildService)
+        public NsfwModuleOwner(SankakuService sankaku, IGuildConfigService guildService)
         {
             Sankaku = sankaku;
             GuildService = guildService;

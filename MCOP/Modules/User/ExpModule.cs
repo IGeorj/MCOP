@@ -4,7 +4,6 @@ using DSharpPlus.Entities;
 using MCOP.Core.Services.Scoped;
 using MCOP.Data.Models;
 using MCOP.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 using System.Text;
 
@@ -36,9 +35,9 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+            var statsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
 
-            await statsService.AddExpAsync(ctx.Client, ctx.Guild.Id, ctx.Channel.Id, member.Id, exp);
+            await statsService.AddExpAsync(ctx.Guild.Id, ctx.Channel.Id, member.Id, exp);
 
             await ctx.EditResponseAsync("👌");
         }
@@ -64,9 +63,9 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            GuildUserStatsService statsService = ctx.ServiceProvider.GetRequiredService<GuildUserStatsService>();
+            var statsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
 
-            await statsService.RemoveExpAsync(ctx.Client, ctx.Guild.Id, ctx.Channel.Id, member.Id, exp);
+            await statsService.RemoveExpAsync(ctx.Guild.Id, ctx.Channel.Id, member.Id, exp);
 
             await ctx.EditResponseAsync("👌");
         }
@@ -85,7 +84,7 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            GuildRoleService guildRoleService = ctx.ServiceProvider.GetRequiredService<GuildRoleService>();
+            IGuildRoleService guildRoleService = ctx.ServiceProvider.GetRequiredService<IGuildRoleService>();
 
             await guildRoleService.SetRoleLevelAsync(ctx.Guild.Id, role.Id, level);
 
@@ -117,7 +116,7 @@ namespace MCOP.Modules.User
                 return;
             }
 
-            GuildRoleService guildRoleService = ctx.ServiceProvider.GetRequiredService<GuildRoleService>();
+            IGuildRoleService guildRoleService = ctx.ServiceProvider.GetRequiredService<IGuildRoleService>();
 
             await guildRoleService.SetBlockedRoleAsync(ctx.Guild.Id, role.Id, isBlocked);
 
