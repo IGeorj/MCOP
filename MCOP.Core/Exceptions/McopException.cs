@@ -6,8 +6,10 @@ namespace MCOP.Core.Exceptions
     {
         public string UserMessage { get; set; }
 
-        public McopException()
-            : base("Unknown exception") { }
+        public McopException() : base("Unknown exception")
+        {
+            UserMessage = "Unknown exception";
+        }
 
         public McopException(string msg) : base(msg)
         {

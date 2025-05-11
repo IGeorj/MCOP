@@ -316,14 +316,14 @@ namespace MCOP.Core.Services.Scoped
                         var discordUser = await _discordClient.GetUserAsync(ulong.Parse(user.UserId));
                         if (discordUser is not null)
                         {
-                            user.Username = discordUser.GlobalName ?? user.Username;
-                            user.AvatarHash = discordUser.AvatarHash ?? user.AvatarHash;
+                            user.Username = discordUser.GlobalName ?? user.Username ?? discordUser.Username ?? "Unknown";
+                            user.AvatarHash = discordUser.AvatarHash ?? user.AvatarHash ?? "default";
                         }
 
                     }
                     catch (Exception)
                     {
-                        user.Username = $"Unknown";
+                        user.Username = "Unknown";
                         user.AvatarHash = "default";
                     }
                 }

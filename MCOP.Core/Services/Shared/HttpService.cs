@@ -51,7 +51,7 @@ public static class HttpService
     public static Task<MemoryStream> GetMemoryStreamAsync(Uri requestUri)
         => GetMemoryStreamAsync(requestUri);
 
-    public static Task<byte[]> GetByteArrayAsync(string requestUri)
+    public static Task<byte[]> GetByteArrayAsync(string? requestUri)
         => _client.GetByteArrayAsync(requestUri);
 
     public static Task<byte[]> GetByteArrayAsync(Uri requestUri)

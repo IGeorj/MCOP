@@ -17,11 +17,12 @@ public class GuildsController : ControllerBase
     private readonly IAppUserService _appUserService;
     private readonly ILogger _logger;
 
-    public GuildsController(DiscordClient discordClient, IHttpClientFactory httpClientFactory, IAppUserService appUserService)
+    public GuildsController(DiscordClient discordClient, IHttpClientFactory httpClientFactory, IAppUserService appUserService, ILogger logger)
     {
         _discordClient = discordClient;
         _httpClientFactory = httpClientFactory;
         _appUserService = appUserService;
+        _logger = logger;
     }
 
     [Authorize]

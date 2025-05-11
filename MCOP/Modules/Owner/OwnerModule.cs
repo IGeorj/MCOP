@@ -64,6 +64,7 @@ public sealed class OwnerModule
     {
         if (gids is null || !gids.Any())
         {
+            if (ctx.Guild is null) return;
             await ctx.Guild.LeaveAsync();
             return;
         }

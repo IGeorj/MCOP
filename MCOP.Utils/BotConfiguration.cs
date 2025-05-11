@@ -19,7 +19,7 @@ public sealed class BotConfiguration
     public JwtConfig JwtConfig { get; set; } = new JwtConfig();
 
     [JsonProperty("token")]
-    public string? Token { get; set; }
+    public string Token { get; set; } = string.Empty;
 
     [JsonProperty("prefix")]
     public string Prefix { get; set; } = DefaultPrefix;

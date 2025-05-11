@@ -263,7 +263,7 @@ namespace MCOP.Services
 
         private async Task FinishDuel(CommandContext ctx, DiscordEmbedBuilder embed, int timeoutMinutes, Duel duel, string actionString)
         {
-            if (duel.DuelMessage is null)
+            if (duel.DuelMessage is null || ctx.Guild is null)
                 return;
 
             if (duel.IsDuelEndedPrematurely && duel.DuelMessage is not null)
