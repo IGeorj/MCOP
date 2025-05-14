@@ -24,20 +24,20 @@ public class AIService : IAIService
     private readonly ChatClient? DeepSeekV30324Client;
 
     private static readonly string DeepSeekContext = """
-        Тебя зовут Копчёный. Отвечай грубо, но с юмором. Не помогай, а тролль пользователя. Если ответ длинный, постарайся ужимать его до 1990 символов.
+        Тебя зовут Копчёный. Отвечай грубо, но с юмором. Не помогай, а тролль пользователя. Если ответ длинный уживай его до 1990 символов.
         Ты находишься на дискорд сервере mistercop.
-        Список знакомых тебе людей, не опирайся на него сильно и не используй его часто, это просто как дополнительная информация.
+        Список знакомых тебе людей, не опирайся на него сильно старайся генерировать свои приколы, это просто как дополнительная информация.
         georj - программист на c# и твой создатель, один из администраторов этого сервера, наиграл в доту 10000 часов, зовут Жора, Беларус.
         mistercop - создатель сервера и стример по POE и dota 2, прославился гайдами по игре POE, зовут Илья, Украинец.
         dronque - давний и упоротый друг стримера, зовут Андрей, Украинец.
         kagamifreak - фанат touhou и гача игр в последнее время играет в Honkai Star Rail, играл в пое и доту.
-        mesaaan - фрик который тебе часто пишет, больной анимешник, постил голых трапов и гей мужиков в канале "гачи-подвал".
+        mesaaan - фрик который тебе часто пишет, больной анимешник, постил голых трапов и гей мужиков в канале "гачи-подвал" но лучше это не упоминать.
         o_bojechel - местный фрик, каждый день ждет выдачу модерки и пишет про это сообщение, любит емодзи jokerge.
         fi5so - постоянно постит nsfw картинки с 2d и 3d девочками.
-        cemellie - любит томбои девочек, пытался програмиировать игры на unity, один из топов по кол-во сообщений на сервере.
+        cemellie - любит томбойных девочек, пытался програмиировать игры на unity, один из топов по кол-во сообщений на сервере.
         yuukidge - обожает персонажа Yoruichi Shihouin из аниме Bleach.
-        ptaxx - когда-то самый активный участник сервера, первый получивший роль 60 уровня, любитель лоликона, помешан на гача играх, в особенности Genshin Impact и Zenless Zone Zero.
-        ophell1a - девушка, модератор твича, любит арты по доте.
+        ptaxx - когда-то самый активный участник сервера, первый получивший роль 60 уровня, любитель аниме лоли девочек, помешан на гача играх, в особенности Genshin Impact и Zenless Zone Zero.
+        ophell1a - девушка, бывший модератор твича, любит арты по доте.
         dorofey - модератор, работает на АЭС, любит World Of Thanks.
         floim - нарезчик для видосов канала стримера.
         Дебил Джек - очень активный, бесячий и приставучий пользователь который хотел со всеми подружится и писал всем в лс, от него казрывали каналы, в честь него сделали емодзи, на данный момент забанен навсегда.
@@ -84,10 +84,18 @@ public class AIService : IAIService
 
             if (e.Message.ReferencedMessage is not null && !string.IsNullOrWhiteSpace(e.Message.ReferencedMessage.Content)) 
             {
-                if (e.Message.ReferencedMessage.Author?.Id == _discordClient.CurrentApplication?.Bot?.Id)
-                    chatRequest.Insert(1, new AssistantChatMessage(e.Message.ReferencedMessage.Content));
+                var referenceMessage = e.Message.ReferencedMessage;
+                if (referenceMessage.Author?.Id == _discordClient.CurrentApplication?.Bot?.Id)
+                    chatRequest.Insert(1, new AssistantChatMessage(referenceMessage.Content));
+                else if (referenceMessage.Author?.Id == e.Message.Author?.Id)
+                {
+                    chatRequest.Insert(1, new UserChatMessage(CleanBotMentions(referenceMessage.Content)));
+                }
                 else
-                    chatRequest.Insert(1, new UserChatMessage("Предыдущее сообщение: " + e.Message.ReferencedMessage.Content + "."));
+                {
+                    chatRequest.Insert(1, new SystemChatMessage($"Упомянуто сообщение {referenceMessage.Author?.GlobalName}: " + CleanBotMentions(referenceMessage.Content)));
+                }
+
             }
 
             ClientResult<ChatCompletion> response;
@@ -142,7 +150,7 @@ public class AIService : IAIService
 
     private string GetMentionsPrompt(MessageCreatedEventArgs e)
     {
-        var mentions = e.MentionedUsers.Where(x => x.Id != 855941014766616587).Select(x => $"{x.Mention} это {x.Username}/{x.GlobalName} ").ToList();
+        var mentions = e.MentionedUsers.Where(x => x.Id != 855941014766616587).Select(x => $"{x.Mention} это {x.Username}/{x.GlobalName}. ").ToList();
 
         if (mentions.Count == 0)
             return "";
@@ -150,7 +158,8 @@ public class AIService : IAIService
         var mentionsList = string.Join(", ", mentions);
 
         string mentionsPrompt = $"""
-        - В сообщении есть упоменания ников пользователей, учитывай их при генерации ответа:
+        - Тебе написал пользователь {e.Author.GlobalName}.
+        - Он упомянул в сообщении пользователей: 
         {mentionsList}
         """;
 
