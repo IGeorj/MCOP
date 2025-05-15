@@ -15,9 +15,9 @@ public class GuildsController : ControllerBase
     private readonly DiscordClient _discordClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IAppUserService _appUserService;
-    private readonly ILogger _logger;
+    private readonly Serilog.ILogger _logger;
 
-    public GuildsController(DiscordClient discordClient, IHttpClientFactory httpClientFactory, IAppUserService appUserService, ILogger logger)
+    public GuildsController(DiscordClient discordClient, IHttpClientFactory httpClientFactory, IAppUserService appUserService, Serilog.ILogger logger)
     {
         _discordClient = discordClient;
         _httpClientFactory = httpClientFactory;
@@ -71,7 +71,7 @@ public class GuildsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching guilds");
+            _logger.Error(ex, "Error fetching guilds");
             return StatusCode(500, "Internal server error");
         }
     }
