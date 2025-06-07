@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { config } from "../config";
 import { getDiscordAuthUrl } from "../utils/discordApi";
 
@@ -8,66 +8,76 @@ export interface IUser {
   avatarUrl: string;
 }
 
+type AuthResult = {
+  session: string;
+  id: string;
+  username: string;
+  avatarUrl: string;
+};
+
 export function useAuth() {
-  const [appSession, setAppSession] = useState<string | null>(() => {
-    return window.localStorage.getItem('app_session') ?? null;
+  const queryClient = useQueryClient();
+
+  const { 
+    data: user, 
+    isLoading, 
+    error,
+    isError,
+  } = useQuery<IUser | null>({
+    queryKey: ["auth", "current_user"],
+    queryFn: async () => {
+      const session = localStorage.getItem("app_session");
+      if (!session) return null;
+
+      const response = await fetch(`${config.API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${session}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Session invalid");
+      }
+
+      return response.json();
+    },
+    retry: false
   });
 
-  const [user, setUser] = useState<IUser | null>(null);
+  const { mutate: handleDiscordLogin } = useMutation({
+    mutationFn: async () => {
+      window.location.assign(getDiscordAuthUrl());
+    },
+  });
 
-  const handleDiscordLogin = useCallback(() => {
-    window.location.href = getDiscordAuthUrl();
-  }, []);
+  const { mutate: handleLogout } = useMutation({
+    mutationFn: async () => {
+      localStorage.removeItem("app_session");
+      queryClient.setQueryData(["auth", "current_user"], null);
+    },
+  });
 
-  const handleLogout = useCallback(() => {
-    setAppSession(null);
-    setUser(null);
-    window.localStorage.removeItem("app_session");
-  }, []);
-
-  const handleAuthResult = useCallback((data: any) => {
-    if (!data || !data.session) {
-      setAppSession(null);
-      setUser(null);
-      window.localStorage.removeItem("app_session");
-      return;
-    }
-    setAppSession(data.session);
-    setUser({ id: data.id, username: data.username, avatarUrl: data.avatarUrl });
-  }, []);
-
-  useEffect(() => {
-    if (!appSession) {
-      setUser(null);
-      return;
-    }
-    if (!user && appSession) {
-      fetch(config.API_URL + "/auth/me", {
-        headers: {
-          "Authorization": `Bearer ${appSession}`
-        }
-      })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Session invalid");
-        const data = await res.json();
-        setUser({
-          id: data.id,
-          username: data.username,
-          avatarUrl: data.avatarUrl,
-        });
-      })
-      .catch(e => {
-        console.error("Failed to validate session:", e);
+  const { mutate: handleAuthResult } = useMutation({
+    mutationFn: async (data: AuthResult | null) => {
+      if (!data?.session) {
         handleLogout();
+        return;
+      }
+
+      localStorage.setItem("app_session", data.session);
+      queryClient.setQueryData(["auth", "current_user"], {
+        id: data.id,
+        username: data.username,
+        avatarUrl: data.avatarUrl,
       });
-    }
-  }, [appSession, user, handleLogout]);
+    },
+  });
 
   return {
-    appSession,
     user,
+    isLoading,
+    error,
+    isAuthenticated: !!user && !isError,
     handleDiscordLogin,
     handleLogout,
-    handleAuthResult
+    handleAuthResult,
   };
 }

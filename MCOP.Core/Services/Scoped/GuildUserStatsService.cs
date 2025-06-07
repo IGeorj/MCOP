@@ -86,7 +86,12 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<(List<GuildUserStatsDto> stats, int totalCount)> GetGuildUserStatsAsync(ulong guildId, int page = 1, int pageSize = 20, string? sortBy = null, bool sortDescending = true)
+        public async Task<(List<GuildUserStatsDto> stats, int totalCount)> GetGuildUserStatsAsync(
+            ulong guildId,
+            int page = 1,
+            int pageSize = 20,
+            string? sortBy = null,
+            bool sortDescending = true)
         {
             try
             {

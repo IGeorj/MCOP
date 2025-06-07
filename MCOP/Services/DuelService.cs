@@ -57,7 +57,7 @@ namespace MCOP.Services
                 .WithTitle($"{randomNoun.Key}")
                 .AddField("Время бана", $"{timeoutString}", true)
                 .AddField("Кулдаун", $"{cooldownDurationMinutes} минут", true)
-                .WithAuthor(ctx.Member.DisplayName, null, ctx.Member.AvatarUrl);
+                .WithAuthor(ctx.Member!.DisplayName, null, ctx.Member.AvatarUrl);
 
             if (!string.IsNullOrEmpty(anomaly))
                 embed.AddField("Аномалия", anomaly, true);
@@ -101,7 +101,7 @@ namespace MCOP.Services
 
         public async Task HandleSpecificUserDuelAsync(CommandContext ctx, DiscordUser user, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton, string anomaly = AnomalyProvider.Random)
         {
-            var member2 = await ctx.Guild.GetMemberAsync(user.Id);
+            var member2 = await ctx.Guild!.GetMemberAsync(user.Id);
 
             if (ctx.User.Id == user.Id)
             {
@@ -110,7 +110,7 @@ namespace MCOP.Services
             }
 
             embed.WithThumbnail(member2.AvatarUrl);
-            embed.AddField("Бойцы", $"{ctx.Member.DisplayName} vs {member2.DisplayName}");
+            embed.AddField("Бойцы", $"{ctx.Member!.DisplayName} vs {member2.DisplayName}");
 
             var duelMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton));
 
@@ -167,10 +167,10 @@ namespace MCOP.Services
                 return;
             }
 
-            var member2 = await ctx.Guild.GetMemberAsync(interactivityResult.Result.User.Id);
+            var member2 = await ctx.Guild!.GetMemberAsync(interactivityResult.Result.User.Id);
             embed.WithThumbnail(member2.AvatarUrl);
 
-            await StartDuelAnimationAsync(ctx, ctx.Member, member2, duelMessage, timeoutMinutes, anomaly);
+            await StartDuelAnimationAsync(ctx, ctx.Member!, member2, duelMessage, timeoutMinutes, anomaly);
         }
 
         public async Task StartDuelAnimationAsync(CommandContext ctx, DiscordMember member1, DiscordMember member2, DiscordMessage duelMessage, int timeoutMinutes, string anomaly = AnomalyProvider.Random)
@@ -242,7 +242,7 @@ namespace MCOP.Services
             var duelEmoji = appEmojies.FirstOrDefault(x => x.Name == "legionCommander");
 
             SafeRandom rng = new();
-            var member1Emoji = rng.ChooseRandomElement(ctx.Guild.Emojis.Where(x => !x.Value.IsManaged)).Value;
+            var member1Emoji = rng.ChooseRandomElement(ctx.Guild!.Emojis.Where(x => !x.Value.IsManaged)).Value;
             var member2Emoji = rng.ChooseRandomElement(ctx.Guild.Emojis.Where(x => !x.Value.IsManaged)).Value;
 
             var embed = new DiscordEmbedBuilder()

@@ -2,7 +2,6 @@
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using MCOP.Core.Services.Scoped;
-using MCOP.Core.Services.Scoped.AI;
 using Serilog;
 
 namespace MCOP.EventListeners

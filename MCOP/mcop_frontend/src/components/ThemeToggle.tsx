@@ -30,7 +30,7 @@ const ThemeToggle: React.FC = () => {
           absolute top-1.1
           ${isDark ? "right-1" : "left-1"}
           w-5 h-5 rounded-full
-          bg-white dark:bg-gray-900
+          bg-navbar
           shadow 
           transition-all duration-300
           border border-gray-300 dark:border-gray-600

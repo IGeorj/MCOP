@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { GuildUserStats } from "../types/GuildUserStats";
-import { getDiscordAvatarUrl } from "../utils/avatarUtils";
+import { getDiscordAvatarUrl, getDefaultAvatarUrl } from "../utils/avatarUtils";
 import { config } from "../config";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { useParams } from "react-router-dom";
@@ -48,60 +49,47 @@ const PAGE_SIZE = 20;
 const Leaderboard: React.FC = () => {
   const { t } = useTranslation();
   const { guildId } = useParams<{ guildId: string }>();
-  const [sortKey, setSortKey] = useState<SortKey>("exp");
-  const [sortDescending, setSortDescending] = useState<boolean>(true);
-  const [data, setData] = useState<GuildUserStats[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const isMobile = useIsMobile(640); // Tailwind 'sm' breakpoint
+  const [sortKey, setSortKey] = React.useState<SortKey>("exp");
+  const [sortDescending, setSortDescending] = React.useState<boolean>(true);
 
-  const fetchLeaderboard = useCallback(async (
-    sortBy: SortKey,
-    pageNum: number,
-    descending: boolean,
-    reset: boolean = false
-  ): Promise<void> => {
-    if (!guildId || loading) return;
-    
-    setError(null);
-    const url = `${config.API_URL}/leaderboard/${guildId}?sortBy=${sortBy}&sortDescending=${descending}&page=${pageNum}&pageSize=${PAGE_SIZE}`;
-    try {
-      setLoading(true);
-      const resp = await fetch(url, {
-        credentials: "include",
-      });
-      if (!resp.ok) {
-        setLoading(false);
-        setError(t("leaderboard.error"));
-        return;
-      }
-      const result = await resp.json();
-      
-      setLoading(false);
-      setData(prev => reset ? result.map(mapDtoToGuildUserStats) : [...prev, ...result.map(mapDtoToGuildUserStats)]);
-      setHasMore(result.length === PAGE_SIZE);
-    } catch (err) {
-      setLoading(false);
-      setError(t("leaderboard.error"));
-    }
-  }, [guildId, loading, t]);
+  const isMobile = useIsMobile(640);
 
-  useEffect(() => {
-    setData([]);
-    setPage(1);
-    fetchLeaderboard(sortKey, 1, sortDescending, true);
-  }, [sortKey, sortDescending, guildId]);
+  const {
+    data,
+    error,
+    isFetching,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["leaderboard", guildId, sortKey, sortDescending],
+    queryFn: ({ pageParam }) => fetchLeaderboard(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _pages) => lastPage.nextPage,
+    enabled: !!guildId,
+    retry: 1,
+    staleTime: 1 * 60 * 1000, // cache for 1 minutes
+  });
 
-  const loadMore = useCallback(() => {
-    if (hasMore && !loading) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchLeaderboard(sortKey, nextPage, sortDescending);
-    }
-  }, [hasMore, loading, page, sortKey, sortDescending, fetchLeaderboard]);
+  const fetchLeaderboard = async (pageParam = 1) => {
+    if (!guildId) throw new Error("Missing guildId");
+    const url = `${config.API_URL}/leaderboard/${guildId}?sortBy=${sortKey}&sortDescending=${sortDescending}&page=${pageParam}&pageSize=${PAGE_SIZE}`;
+    const resp = await fetch(url, { credentials: "include" });
+    if (!resp.ok) throw new Error(t("leaderboard.error"));
+    const result = await resp.json();
+    return {
+      items: result.map(mapDtoToGuildUserStats),
+      nextPage: result.length === PAGE_SIZE ? pageParam + 1 : undefined,
+    };
+  };
+
+  React.useEffect(() => {
+    refetch();
+  }, [sortKey, sortDescending, guildId, refetch]);
+
+  const flatData = data?.pages ? data.pages.flatMap((p) => p.items) : [];
 
   const renderSortOrderIcon = (active: boolean) => {
     if (!active) return null;
@@ -121,10 +109,6 @@ const Leaderboard: React.FC = () => {
     }
   };
 
-  const handleRetry = () => {
-    fetchLeaderboard(sortKey, 1, sortDescending, true);
-  };
-
   // --- MOBILE CARD RENDERER ---
   const renderMobileCard = (u: GuildUserStats) => (
     <div
@@ -137,6 +121,11 @@ const Leaderboard: React.FC = () => {
         alt={u.username}
         className="rounded-full w-12 h-12 object-cover flex-shrink-0 mr-3"
         style={{ minWidth: 48, minHeight: 48 }}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = getDefaultAvatarUrl(u.userId)
+          target.onerror = null;
+        }}
       />
       <div className="flex flex-col flex-grow min-w-0">
         <span className="font-medium text-base break-words max-w-[150px] truncate" title={u.username}>
@@ -166,16 +155,21 @@ const Leaderboard: React.FC = () => {
         <tr></tr>
       </thead>
       <tbody>
-        {data.map((u) => (
+        {flatData.map((u) => (
           <tr
             key={u.userId}
-            className="group transition"
+            className="group transition "
           >
             <td className="px-2 py-1 align-middle bg-secondary rounded-l-2xl">
               <img
                 src={getDiscordAvatarUrl(u.userId, u.avatarHash)}
                 alt={u.username}
                 className="rounded-full w-10 h-10"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = getDefaultAvatarUrl(u.userId)
+                  target.onerror = null;
+                }}
               />
             </td>
             <td className="px-2 py-1 font-medium bg-secondary align-middle break-all max-w-[200px]">
@@ -211,8 +205,8 @@ const Leaderboard: React.FC = () => {
           <button
             key={opt.key}
             onClick={() => handleSortClick(opt.key)}
-            className={`px-3 py-1 rounded bg-secondary bg-hover ${sortKey === opt.key ? "selected" : ""}`}
-            disabled={loading}
+            className={`px-3 py-1 rounded text-primary cursor-pointer bg-secondary bg-hover ${sortKey === opt.key ? "border-primary border-1" : ""}`}
+            disabled={isFetching || isFetchingNextPage}
             style={{ display: "flex", alignItems: "center" }}
             aria-pressed={sortKey === opt.key}
           >
@@ -221,24 +215,24 @@ const Leaderboard: React.FC = () => {
           </button>
         ))}
       </div>
-      {error && (
+      {isError && (
         <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded text-center">
-          {error}
+          {error instanceof Error ? error.message : t("leaderboard.error")}
           <button
             className="ml-4 px-3 py-1 bg-red-200 hover:bg-red-300 rounded text-sm text-red-800"
-            onClick={handleRetry}
-            disabled={loading}
+            onClick={() => refetch()}
+            disabled={isFetching}
           >
             {t("leaderboard.retry")}
           </button>
         </div>
       )}
 
-      {!error && (
+      {!isError && (
         <InfiniteScroll
-          dataLength={data.length}
-          next={loadMore}
-          hasMore={hasMore}
+          dataLength={flatData.length}
+          next={fetchNextPage}
+          hasMore={!!hasNextPage}
           loader={<h4 style={{ textAlign: 'center' }}>{t("loading")}</h4>}
           endMessage={
             <p style={{ textAlign: 'center' }}>
@@ -248,12 +242,10 @@ const Leaderboard: React.FC = () => {
         >
           <div>
             {isMobile ? (
-              // Mobile: render as cards in a vertical list
               <div className="flex flex-col gap-2">
-                {data.map(renderMobileCard)}
+                {flatData.map(renderMobileCard)}
               </div>
             ) : (
-              // Desktop: table layout
               renderDesktopTable()
             )}
           </div>

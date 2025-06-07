@@ -1,9 +1,21 @@
-import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import {
+  ChevronDown,
+  LogOut,
+  User
+} from "lucide-react";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import ThemeToggle from "./ThemeToggle";
 import DiscordLoginButton from "./DiscordLoginButton";
-import LanguageSwitcher from "./LanguageSwitcher";
-import { useTranslation } from "react-i18next";
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -13,78 +25,106 @@ interface NavbarProps {
   onLogout: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({
+export const Navbar = ({
   isLoggedIn,
   username,
   avatarUrl,
   onLogin,
   onLogout,
-}) => {
+}: NavbarProps) => {
   const { t } = useTranslation();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    function handleClick(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick, true);
-    return () => document.removeEventListener("mousedown", handleClick, true);
-  }, [dropdownOpen]);
 
   return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-navbar shadow-lg">
-      <div className="flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
-          <img src="/coplogo.ico" alt="Site logo" className="h-10" />
-          <span className="font-bold text-2xl tracking-widest text-primary hover:opacity-80">
-            MCOP
-          </span>
-        </Link>
-      </div>
-      <div className="flex items-center gap-6">
+    <nav className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-navbar shadow-lg md:px-8">
+      {/* Логотип */}
+      <Link to="/" className="flex items-center gap-3">
+        <img src="/coplogo.ico" alt="Site logo" className="h-10" />
+        <span className="font-bold text-2xl tracking-widest text-primary hover:opacity-80">
+          MCOP
+        </span>
+      </Link>
+
+      {/* Десктопные элементы */}
+      <div className="hidden md:flex items-center gap-4">
         <LanguageSwitcher />
         <ThemeToggle />
+
         {isLoggedIn ? (
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              className="flex items-center gap-2 px-3 py-1 rounded transition cursor-pointer focus:outline-none"
-              onClick={() => setDropdownOpen((open) => !open)}
-              aria-haspopup="true"
-              aria-expanded={dropdownOpen}
-              tabIndex={0}
-            >
-              {avatarUrl && (
-                <img src={avatarUrl} alt="User avatar" className="h-8 w-8 rounded-full border" />
-              )}
-              <span>{username}</span>
-              <svg
-                className={`w-4 h-4 ml-1 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 px-3 cursor-pointer">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="User avatar"
+                    className="h-8 w-8 rounded-full border"
+                  />
+                ) : (
+                  <User className="h-5 w-5" />
+                )}
+                <span>{username}</span>
+                <ChevronDown className="h-4 w-4 opacity-80" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48" align="end">
+              <DropdownMenuItem
+                onClick={onLogout}
+                className="flex items-center gap-2 cursor-pointer"
               >
-                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.738l3.71-3.51a.75.75 0 011.04 1.08l-4.25 4.02a.75.75 0 01-1.04 0l-4.25-4.02a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-              </svg>
-            </button>
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 shadow-lg z-50 animate-fadein-fast">
-                <button
-                  onClick={() => { onLogout(); setDropdownOpen(false); }}
-                  className="w-full text-left px-4 py-2 cursor-pointer rounded-b bg-navbar bg-hover"
-                >
-                  {t("logout")}
-                </button>
+                <LogOut className="h-4 w-4" />
+                {t("logout")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <DiscordLoginButton onLogin={onLogin} />
+        )}
+      </div>
+
+      {/* Мобильные элементы */}
+      <div className="flex items-center gap-2 md:hidden">
+        {isLoggedIn ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 px-2"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="User avatar"
+                    className="h-9 w-9 rounded-full border"
+                  />
+                ) : (
+                  <User className="h-5 w-5" />
+                )}
+                <ChevronDown className="h-4 w-4 opacity-80" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <div className="px-4 py-1.5 flex items-center gap-2">
+                <p className="text-lg">{username}</p>
               </div>
-            )}
-          </div>
+
+              <DropdownMenuSeparator />
+
+              <div className="px-2 pr-4 py-2 flex items-center justify-between">
+                <LanguageSwitcher />
+                <ThemeToggle />
+              </div>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={onLogout}
+                className="px-4 py-2 flex items-center gap-2 cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+                {t("logout")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <DiscordLoginButton onLogin={onLogin} />
         )}
@@ -92,5 +132,3 @@ const Navbar: React.FC<NavbarProps> = ({
     </nav>
   );
 };
-
-export default Navbar;

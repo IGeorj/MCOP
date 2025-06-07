@@ -66,4 +66,7 @@ public sealed class BotConfiguration
     [JsonProperty("openrounter-api-key")]
     public string? OpenRounterApiKey { get; set; }
 
+    [JsonProperty("shared-files-path")]
+    public string? SharedFilesPath { get; set; }
+
 }
