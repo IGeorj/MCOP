@@ -35,8 +35,7 @@ export const Navbar = ({
   const { t } = useTranslation();
 
   return (
-    <nav className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-navbar shadow-lg md:px-8">
-      {/* Логотип */}
+    <nav className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-navbar md:px-8">
       <Link to="/" className="flex items-center gap-3">
         <img src="/coplogo.ico" alt="Site logo" className="h-10" />
         <span className="font-bold text-2xl tracking-widest text-primary hover:opacity-80">
@@ -44,7 +43,7 @@ export const Navbar = ({
         </span>
       </Link>
 
-      {/* Десктопные элементы */}
+      {/* Desktop */}
       <div className="hidden md:flex items-center gap-4">
         <LanguageSwitcher />
         <ThemeToggle />
@@ -81,7 +80,7 @@ export const Navbar = ({
         )}
       </div>
 
-      {/* Мобильные элементы */}
+      {/* Mobile */}
       <div className="flex items-center gap-2 md:hidden">
         {isLoggedIn ? (
           <DropdownMenu>

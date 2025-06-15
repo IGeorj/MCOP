@@ -13,7 +13,8 @@ namespace MCOP.Core.Services.Scoped
         public Task<List<GuildRole>> GetGuildRolesAsync(ulong guildId);
         public Task<List<GuildRole>> GetBlockedExpGuildRolesAsync(ulong guildId);
         public Task SetBlockedRoleAsync(ulong guildId, ulong roleId, bool isBlocked);
-        public Task SetRoleLevelAsync(ulong guildId, ulong roleId, int? level);
+        public Task ToggleBlockedRoleAsync(ulong guildId, ulong roleId);
+        public Task SetRoleLevelAsync(ulong guildId, ulong roleId, int? level = null);
         public Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel);
     }
 
@@ -81,6 +82,25 @@ namespace MCOP.Core.Services.Scoped
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Log.Error(ex, "Error in SetBlockedRoleAsync for guildId: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId, isBlocked);
+                throw;
+            }
+        }
+        public async Task ToggleBlockedRoleAsync(ulong guildId, ulong roleId)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
+                guildRole.IsGainExpBlocked = !guildRole.IsGainExpBlocked;
+
+                await context.SaveChangesAsync();
+
+                Log.Information("ToggleBlockedRoleAsync: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log.Error(ex, "Error in ToggleBlockedRoleAsync for guildId: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId);
                 throw;
             }
         }

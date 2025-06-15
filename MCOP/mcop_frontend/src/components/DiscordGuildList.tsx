@@ -6,14 +6,7 @@ import DiscordLoginButton from "./DiscordLoginButton";
 import { config } from "../config";
 import { useNavigate } from "react-router-dom";
 import { getAddBotUrl } from "../utils/discordApi";
-
-type Guild = {
-  id: string;
-  name: string;
-  icon: string | null;
-  botPresent: boolean;
-  isOwner: boolean;
-};
+import { Guild } from "@/types/Guild";
 
 const DiscordGuildList: React.FC = () => {
   const { t } = useTranslation();
@@ -86,7 +79,7 @@ const DiscordGuildList: React.FC = () => {
         {guilds.map((guild) => (
           <li
             key={guild.id}
-            className="card flex items-center bg-secondary"
+            className="card flex items-center bg-secondary justify"
           >
             <div className="flex items-center min-w-0">
               {guild.icon ? (

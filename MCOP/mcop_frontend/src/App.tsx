@@ -10,6 +10,7 @@ import i18n from './i18n';
 import { useAuth } from "./hooks/useAuth";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SlideShow } from "./components/Slideshow/Slideshow";
+import { GuildSettings } from "./components/GuildSettings/GuildSettings";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +41,7 @@ export function AuthApp() {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <Router>
-          <div className="min-h-screen transition-all">
+          <div className="h-screen flex flex-col transition-all">
             <Routes>
               <Route path="/" element={
                 <>
@@ -69,7 +70,7 @@ export function AuthApp() {
                     onLogin={handleDiscordLogin}
                     onLogout={handleLogout}
                   />
-                  <main className="container mx-auto px-3 py-7">
+                  <main className="flex-1 flex flex-col container mx-auto px-3 py-7">
                     <Leaderboard />
                   </main>
                 </>
@@ -83,9 +84,9 @@ export function AuthApp() {
                     onLogin={handleDiscordLogin}
                     onLogout={handleLogout}
                   />
-                  <main className="container mx-auto px-3 py-7">
-                    <Leaderboard />
-                  </main>
+                  <div className="flex-1 min-h-0 flex flex-col">
+                    <GuildSettings />
+                  </div>
                 </>
               } />
               <Route path="/slideshow" element={

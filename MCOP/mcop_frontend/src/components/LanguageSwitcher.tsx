@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { Button } from "../components/ui/button";
-import { Check, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 const LANGUAGES = [
   { code: "en", label: "EN" },
@@ -17,11 +17,6 @@ export const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
   const currentLang = LANGUAGES.find((lang) => lang.code === i18n.language) || LANGUAGES[0];
 
-  
-  const onSelecteLanguage = (event: React.MouseEvent<HTMLDivElement, MouseEvent>, lang: { code: string; label: string; }) => {
-    event.stopPropagation();
-    return () => i18n.changeLanguage(lang.code);
-  }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -41,7 +36,7 @@ export const LanguageSwitcher = () => {
         {LANGUAGES.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
-            onClick={(event) => onSelecteLanguage(event, lang)}
+            onClick={() => i18n.changeLanguage(lang.code)}
             className="flex justify-between "
           >
             <span>{lang.label}</span>

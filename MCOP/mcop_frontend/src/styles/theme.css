@@ -2,6 +2,11 @@
 @import "tw-animate-css";
 @custom-variant dark (&:where(.dark, .dark *));
 
+html, body, #root {
+  height: 100%;
+  min-height: 100%;
+}
+
 :root {
   --color-primary: #f03252;
   --color-secondary: #E5E7EB;
@@ -23,7 +28,7 @@
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --accent: #E5E7EB;
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
@@ -84,68 +89,6 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-body, html {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  transition: background 0.3s, color 0.3s;
-}
-
-.card, .section {
-  box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
-  border-radius: 0.75rem;
-  background-color: #fff;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-.dark .card, .dark .section {
-  background-color: #23232a;
-  box-shadow: 0 2px 8px rgba(20, 20, 36, 0.13);
-}
-
-.navbar { border-radius: 1rem; }
-.btn { border-radius: 0.5rem; transition: background 0.2s; }
-h1, h2, h3, h4 {
-  letter-spacing: 0.02em;
-  font-weight: 600;
-}
-
-.bg-primary { background-color: var(--color-primary); }
-.border-primary { border-color: var(--color-primary); }
-.bg-secondary { background-color: var(--color-secondary); }
-.bg-navbar { background-color: var(--color-navbar); }
-.fill-navbar { fill: var(--color-navbar); }
-.text-primary { color: var(--color-primary); }
-.text-secondary { color: var(--color-secondary); }
-.selected { background-color: var(--color-selected); }
-.bg-hover:hover { background-color: var(--color-hover); }
-
-table {
-  width: 100%;
-  border-collapse: separate;
-  color: var(--color-text);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
-  margin-bottom: 1.5rem;
-}
-
-th, td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-}
-
-th {
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-tr:last-child td {
-  border-bottom: none;
-}
-
-tr.group:hover td {
-  background-color: var(--color-hover);
-}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -183,6 +126,7 @@ tr.group:hover td {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --inset-shadow-md: inset 0 0px 6px rgba(0, 0, 0, 0.25); 
 }
 
 @layer base {
@@ -192,4 +136,77 @@ tr.group:hover td {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+body, html {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background 0.3s, color 0.3s;
+}
+
+.card, .section {
+  box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
+  border-radius: 0.75rem;
+  background-color: #fff;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.dark .card, .dark .section {
+  background-color: #23232a;
+  box-shadow: 0 2px 8px rgba(20, 20, 36, 0.13);
+}
+
+.navbar { border-radius: 1rem; }
+.btn { border-radius: 0.5rem; transition: background 0.2s; }
+h1, h2, h3, h4 {
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+.bg-primary { background-color: var(--color-bg); }
+.border-primary { border-color: var(--color-primary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-navbar { background-color: var(--color-navbar); }
+.fill-navbar { fill: var(--color-navbar); }
+.text-primary { color: var(--color-primary); }
+.text-secondary { color: var(--color-secondary); }
+.selected { background-color: var(--color-selected); }
+.bg-hover:hover { background-color: var(--color-hover); }
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  color: var(--color-text);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
+  margin-bottom: 1.5rem;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+th {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr.group:hover td {
+  background-color: var(--color-hover);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number]{
+    -moz-appearance: textfield;
 }

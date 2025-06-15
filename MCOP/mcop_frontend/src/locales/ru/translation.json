@@ -3,6 +3,7 @@
     "error": "Не удалось загрузить данные. Попробуйте позже.",
     "retry": "Повторить"
   },
+  "theEnd": "Конец",
   "likes": "Лайки",
   "level": "Уровень",
   "duelWin": "Победы",
@@ -20,5 +21,22 @@
     "settings": "Настройки",
     "addBot": "Добавить",
     "error": "Произошла ошибка при загрузке гильдий"
+  },
+  "leveling": {
+    "title": "Уровни",
+    "searchRoles": "Поиск ролей...",
+    "selectRole": "Выберите роль",
+    "loadingRoles": "Загрузка ролей..",
+    "level": "Уровень",
+    "updateRoleLevel": "Обновить Уровень",
+    "blockExperienceGain": "Заблокировать Получение XP",
+    "currentLevelRoles": "Текущии Уровни",
+    "noLevelRoles": "Роли не найдены",
+    "role": "Роль",
+    "actions": "Действия"
+  },
+  "settings": {
+    "title": "Настройки",
+    "error": "Ошибка"
   }
 }
