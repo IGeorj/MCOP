@@ -1,4 +1,4 @@
-﻿using MCOP.Core.Common.Attributes;
+﻿using MCOP.Common.Attributes;
 using MCOP.Utils;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +6,7 @@ namespace MCOP.Controllers
 {
     [ApiController]
     [Route("api/images")]
-    public class ImagesController : ControllerBase
+    public sealed class ImagesController : ControllerBase
     {
         private readonly string? _rootPath;
 

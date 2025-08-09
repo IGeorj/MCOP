@@ -1,6 +1,6 @@
 ﻿namespace MCOP.Services.Duels.Anomalies
 {
-    public class InstantWinAnomaly : DuelAnomaly
+    public sealed class InstantWinAnomaly : DuelAnomaly
     {
         public InstantWinAnomaly()
         {

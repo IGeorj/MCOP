@@ -1,6 +1,6 @@
 ﻿namespace MCOP.Exceptions;
 
-public class CommandFailedException : Exception
+public sealed class CommandFailedException : Exception
 {
     public CommandFailedException()
         : base("Command failed") { }

@@ -2,7 +2,7 @@
 
 namespace MCOP.Services
 {
-    public class CooldownService
+    public sealed class CooldownService
     {
         private static readonly Dictionary<(ulong UserId, string CommandName), (DateTime LastUsed, TimeSpan CooldownDuration)> _cooldowns = new();
 

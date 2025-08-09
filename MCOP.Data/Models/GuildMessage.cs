@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace MCOP.Data.Models
 {
     [PrimaryKey(nameof(GuildId), nameof(Id))]
-    public class GuildMessage
+    public sealed class GuildMessage
     {
         public ulong GuildId { get; set; }
 

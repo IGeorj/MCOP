@@ -2,7 +2,7 @@
 
 namespace MCOP.Core.Services.Scoped.OAuth
 {
-    public class DiscordTokenResponse
+    public sealed class DiscordTokenResponse
     {
         [JsonProperty("access_token")]
         public string AccessToken { get; set; } = null!;

@@ -13,7 +13,7 @@ using MCOP.Extensions;
 using Serilog;
 
 namespace MCOP.EventListeners;
-public class MessageListeners
+public sealed class MessageListeners
 {
     private static readonly ulong McopLewdChannelId = 586295440358506496;
     private static readonly ulong GaysAdminChannelId = 549313253541543951;

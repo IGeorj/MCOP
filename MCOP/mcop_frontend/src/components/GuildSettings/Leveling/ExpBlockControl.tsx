@@ -59,7 +59,10 @@ export function ExpBlockControl({
             <div className="space-y-2">
               {filteredRoles.map((role) => (
                 <div key={role.id} className="flex items-center justify-between p-2 rounded hover:bg-accent dark:hover:bg-accent/50">
-                  <span className="truncate max-w-[180px]" style={{ color: role.color }}>{role.name}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="mr-2 h-4 w-4 rounded-full" style={{ backgroundColor: role.color || 'transparent' }} />
+                    <span className="truncate max-w-[180px] text-base">{role.name}</span>
+                  </div>
                   <Button
                     variant={"outline"}
                     size="sm"

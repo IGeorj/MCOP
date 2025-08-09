@@ -3,20 +3,23 @@ using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using MCOP.Core.Common.Booru;
 
-public class SankakuTagsCompleteProvider : IAutoCompleteProvider
+namespace MCOP.Common.Autocomplete
 {
-    private readonly Sankaku _sankaku;
-
-    public SankakuTagsCompleteProvider(Sankaku sankaku) => _sankaku = sankaku;
-
-    public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
+    public sealed class SankakuTagsCompleteProvider : IAutoCompleteProvider
     {
-        if (context.UserInput is not null)
-        {
-            var tags = await _sankaku.GetSuggestionsAsync(context.UserInput);
-            return await ValueTask.FromResult(tags);
-        }
+        private readonly Sankaku _sankaku;
 
-        return [];
+        public SankakuTagsCompleteProvider(Sankaku sankaku) => _sankaku = sankaku;
+
+        public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
+        {
+            if (context.UserInput is not null)
+            {
+                var tags = await _sankaku.GetSuggestionsAsync(context.UserInput);
+                return await ValueTask.FromResult(tags);
+            }
+
+            return [];
+        }
     }
 }

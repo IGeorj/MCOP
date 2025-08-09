@@ -6,11 +6,11 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
+using MCOP.Common.Autocomplete;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Booru;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 

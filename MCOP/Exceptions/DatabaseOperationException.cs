@@ -1,6 +1,6 @@
 ﻿namespace MCOP.Exceptions;
 
-public class DatabaseOperationException : Exception
+public sealed class DatabaseOperationException : Exception
 {
     public DatabaseOperationException()
         : base("Database operation failed") { }

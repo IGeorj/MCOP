@@ -3,7 +3,7 @@ using MCOP.Core.Common;
 
 namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
 {
-    public class PokerAnomaly : DuelAnomaly
+    public sealed class PokerAnomaly : DuelAnomaly
     {
         public List<Card> Deck { get; set; } = [];
         public List<Card> BoardCards { get; set; } = [];

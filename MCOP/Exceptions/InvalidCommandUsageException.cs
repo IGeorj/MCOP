@@ -1,6 +1,6 @@
 ﻿namespace MCOP.Exceptions;
 
-public class InvalidCommandUsageException : Exception
+public sealed class InvalidCommandUsageException : Exception
 {
     public InvalidCommandUsageException()
         : base("Invalid command usage") { }

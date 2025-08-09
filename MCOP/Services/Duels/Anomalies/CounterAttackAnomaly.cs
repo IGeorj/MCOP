@@ -2,7 +2,7 @@
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class CounterAttackAnomaly : DuelAnomaly
+    public sealed class CounterAttackAnomaly : DuelAnomaly
     {
         private const int CounterAttackChance = 20;
         public CounterAttackAnomaly()

@@ -1,8 +1,9 @@
 ﻿using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
+using MCOP.Common.Helpers;
+using MCOP.Core.Models;
 using MCOP.Core.Services.Scoped;
-using MCOP.Data.Models;
 using MCOP.Extensions;
 using System.ComponentModel;
 using System.Text;
@@ -20,26 +21,8 @@ namespace MCOP.Modules.User
             [Description("Кол-во опыта")] int exp,
             [Description("Пользователь")] DiscordUser? user = null)
         {
-            await ctx.DeferEphemeralAsync();
-
-            if (ctx.Guild is null)
-            {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
-                return;
-            }
-
-            var member = user is null ? ctx.Member : await ctx.Guild.GetMemberAsync(user.Id);
-            if (member is null)
-            {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Member not found!"));
-                return;
-            }
-
-            var statsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
-
-            await statsService.AddExpAsync(ctx.Guild.Id, ctx.Channel.Id, member.Id, exp);
-
-            await ctx.EditResponseAsync("👌");
+            await HandleExpModificationAsync(ctx, user, (service, guildId, channelId, userId) =>
+                service.AddExpAsync(guildId, channelId, userId, exp));
         }
 
         [Command("remove_exp")]
@@ -48,26 +31,8 @@ namespace MCOP.Modules.User
             [Description("Кол-во опыта")] int exp,
             [Description("Пользователь")] DiscordUser? user = null)
         {
-            await ctx.DeferEphemeralAsync();
-
-            if (ctx.Guild is null)
-            {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
-                return;
-            }
-
-            var member = user is null ? ctx.Member : await ctx.Guild.GetMemberAsync(user.Id);
-            if (member is null)
-            {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Member not found!"));
-                return;
-            }
-
-            var statsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
-
-            await statsService.RemoveExpAsync(ctx.Guild.Id, ctx.Channel.Id, member.Id, exp);
-
-            await ctx.EditResponseAsync("👌");
+            await HandleExpModificationAsync(ctx, user, (service, guildId, channelId, userId) =>
+                service.RemoveExpAsync(guildId, channelId, userId, exp));
         }
 
         [Command("set_role")]
@@ -76,30 +41,11 @@ namespace MCOP.Modules.User
             [Description("Роль")] DiscordRole role,
             [Description("Уровень, если пусто - > убирает уровень с роли")] int? level)
         {
-            await ctx.DeferEphemeralAsync();
-
-            if (ctx.Guild is null)
+            await HandleRoleOperationAsync(ctx, async service =>
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
-                return;
-            }
-
-            IGuildRoleService guildRoleService = ctx.ServiceProvider.GetRequiredService<IGuildRoleService>();
-
-            await guildRoleService.SetRoleLevelAsync(ctx.Guild.Id, role.Id, level);
-
-            List<GuildRole> guildRoles = await guildRoleService.GetGuildRolesAsync(ctx.Guild.Id);
-
-            var embedBuilder = new DiscordEmbedBuilder();
-            var stringBuilder = new StringBuilder();
-            embedBuilder.WithTitle("Роли");
-
-            foreach (GuildRole guildRole in guildRoles)
-                stringBuilder.AppendLine($"<@&{guildRole.Id}> - {guildRole.LevelToGetRole.ToString() ?? "0"} уровень");
-
-            embedBuilder.WithDescription(stringBuilder.ToString());
-
-            await ctx.EditResponseAsync(embedBuilder.Build());
+                await service.SetRoleLevelAsync(ctx.Guild!.Id, role.Id, level);
+                return await BuildRolesEmbedAsync(service, ctx.Guild.Id, "Роли", r => r.LevelToGetRole?.ToString() ?? "0 уровень");
+            });
         }
 
         [Command("set_blocked_role")]
@@ -108,30 +54,58 @@ namespace MCOP.Modules.User
             [Description("Роль")] DiscordRole role,
             [Description("Заблокировать да/нет")] bool isBlocked)
         {
+            await HandleRoleOperationAsync(ctx, async service =>
+            {
+                await service.SetBlockedRoleAsync(ctx.Guild!.Id, role.Id, isBlocked);
+                return await BuildRolesEmbedAsync(service, ctx.Guild.Id, "Заблокированные роли", _ => string.Empty);
+            });
+        }
+
+        private async Task HandleExpModificationAsync(
+            CommandContext ctx,
+            DiscordUser? user,
+            Func<IGuildUserStatsService, ulong, ulong, ulong, Task> operation)
+        {
             await ctx.DeferEphemeralAsync();
 
-            if (ctx.Guild is null)
+            var (guild, member) = await CommandContextHelper.ValidateAndGetMemberAsync(ctx, user);
+            if (guild is null || member is null) return;
+
+            var statsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
+            await operation(statsService, guild.Id, ctx.Channel.Id, member.Id);
+            await ctx.EditResponseAsync("👌");
+        }
+
+        private async Task HandleRoleOperationAsync(
+            CommandContext ctx,
+            Func<IGuildRoleService, Task<DiscordEmbed>> operation)
+        {
+            await ctx.DeferEphemeralAsync();
+
+            var guild = await CommandContextHelper.ValidateAndGetGuildAsync(ctx);
+            if (guild is null) return;
+
+            var roleService = ctx.ServiceProvider.GetRequiredService<IGuildRoleService>();
+            var embed = await operation(roleService);
+            await ctx.EditResponseAsync(embed);
+        }
+
+        private async Task<DiscordEmbed> BuildRolesEmbedAsync(
+            IGuildRoleService service,
+            ulong guildId,
+            string title,
+            Func<GuildRoleDto, string> roleInfoFormatter)
+        {
+            var roles = await service.GetGuildRolesAsync(guildId);
+            var embedBuilder = new DiscordEmbedBuilder().WithTitle(title);
+
+            var descriptionBuilder = new StringBuilder();
+            foreach (var role in roles)
             {
-                await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild not found!"));
-                return;
+                descriptionBuilder.AppendLine($"<@&{role.Id}> - {roleInfoFormatter(role)}");
             }
 
-            IGuildRoleService guildRoleService = ctx.ServiceProvider.GetRequiredService<IGuildRoleService>();
-
-            await guildRoleService.SetBlockedRoleAsync(ctx.Guild.Id, role.Id, isBlocked);
-
-            List<GuildRole> guildRoles = await guildRoleService.GetBlockedExpGuildRolesAsync(ctx.Guild.Id);
-
-            var embedBuilder = new DiscordEmbedBuilder();
-            var stringBuilder = new StringBuilder();
-            embedBuilder.WithTitle("Заблокированые роли");
-
-            foreach (GuildRole guildRole in guildRoles)
-                stringBuilder.AppendLine($"<@&{guildRole.Id}>");
-
-            embedBuilder.WithDescription(stringBuilder.ToString());
-
-            await ctx.EditResponseAsync(embedBuilder.Build());
+            return embedBuilder.WithDescription(descriptionBuilder.ToString()).Build();
         }
     }
 }

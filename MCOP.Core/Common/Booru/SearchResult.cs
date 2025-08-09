@@ -2,7 +2,7 @@
 
 namespace MCOP.Core.Common.Booru
 {
-    public class SearchResult
+    public sealed class SearchResult
     {
         private ConcurrentBag<BooruPost> posts = new();
         private string? _next;

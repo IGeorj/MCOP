@@ -3,7 +3,7 @@ using Humanizer;
 
 namespace MCOP.Core.Helpers
 {
-    public class LevelingHelper
+    public static class LevelingHelper
     {
         private static readonly double a = 1.6665;
         private static readonly double b = 22.5;

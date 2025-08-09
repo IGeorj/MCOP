@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MCOP.Data.Models
 {
-    public class ImageHash
+    public sealed class ImageHash
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

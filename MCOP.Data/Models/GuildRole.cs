@@ -5,7 +5,7 @@
 namespace MCOP.Data.Models
 {
     [PrimaryKey(nameof(GuildId), nameof(Id))]
-    public class GuildRole
+    public sealed class GuildRole
     {
         public ulong GuildId { get; set; }
 

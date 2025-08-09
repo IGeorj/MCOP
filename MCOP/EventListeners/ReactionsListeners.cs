@@ -6,7 +6,7 @@ using Serilog;
 
 namespace MCOP.EventListeners
 {
-    public class ReactionsListeners
+    public sealed class ReactionsListeners
     {
         private const string HeartEmojiName = ":heart:";
 

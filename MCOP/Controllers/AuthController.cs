@@ -13,7 +13,7 @@ namespace MCOP.Controllers
 {
     [ApiController]
     [Route("api/auth")]
-    public class AuthController : ControllerBase
+    public sealed class AuthController : ControllerBase
     {
         private readonly IDiscordOAuthService _discordService;
         private readonly IAppUserService _appUserService;

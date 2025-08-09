@@ -2,7 +2,7 @@
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class HarakiriAnomaly : DuelAnomaly
+    public sealed class HarakiriAnomaly : DuelAnomaly
     {
         private const int HarakiriChance = 10;
         public HarakiriAnomaly()

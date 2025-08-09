@@ -26,23 +26,21 @@ export function useSlideshow(
     try {
       const blob = await fetchImage(image.path);
       const imageUrl = URL.createObjectURL(blob);
-      
-      // Сначала создаем новый Image для предзагрузки
+
       const img = new Image();
       img.src = imageUrl;
       img.onload = () => {
-        // Когда изображение загружено, обновляем состояние
         setCurrentImage(prev => {
           if (prev) URL.revokeObjectURL(prev);
           return imageUrl;
         });
-        setCurrentIndex(index);
-        setIsLoading(false);
       };
     } catch (error) {
       console.error('Error loading image:', error);
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
+    setCurrentIndex(index);
   }, [images, fetchImage]);
 
   const next = useCallback(() => {

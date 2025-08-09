@@ -4,14 +4,14 @@ using System.Net.Http.Headers;
 
 namespace MCOP.Core.Common.Booru
 {
-    public record Tag
+    public sealed record Tag
     {
         public string Id { get; set; } = default!;
         public string Name { get; set; } = default!;
         public int Type { get; set; } = default!;
     }
 
-    public record BooruPost
+    public sealed record BooruPost
     {
         public string ID { get; init; } = default!;
         public string MD5 { get; init; } = default!;
@@ -31,7 +31,7 @@ namespace MCOP.Core.Common.Booru
         {
             try
             {
-                var folderName = string.Join("_", Artist.Split(Path.GetInvalidFileNameChars()));
+                var folderName = string.Join("_", Artist.Split(Path.GetInvalidFileNameChars())).Replace(".", string.Empty);
                 Directory.CreateDirectory($"Images/Nsfw/{folderName}/");
                 string path = $"Images/Nsfw/{folderName}/{MD5}.jpg";
 

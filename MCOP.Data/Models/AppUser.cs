@@ -2,7 +2,7 @@
 
 namespace MCOP.Data.Models
 {
-    public class AppUser
+    public sealed class AppUser
     {
         [Key]
         public string Id { get; set; } = null!;

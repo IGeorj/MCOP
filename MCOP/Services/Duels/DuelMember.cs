@@ -2,7 +2,7 @@
 
 namespace MCOP.Services.Duels
 {
-    public class DuelMember
+    public sealed class DuelMember
     {
         public readonly static int InitialHP = 120;
 

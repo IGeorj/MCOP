@@ -2,7 +2,7 @@
 
 namespace MCOP.Utils;
 
-public class AsyncExecutionService : ISharedService
+public sealed class AsyncExecutionService : ISharedService
 {
     public void Execute(Task? task)
     {

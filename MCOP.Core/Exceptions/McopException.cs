@@ -2,7 +2,7 @@
 
 namespace MCOP.Core.Exceptions
 {
-    public class McopException : Exception
+    public sealed class McopException : Exception
     {
         public string UserMessage { get; set; }
 

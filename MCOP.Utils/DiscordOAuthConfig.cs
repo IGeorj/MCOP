@@ -2,7 +2,7 @@
 
 namespace MCOP.Utils;
 
-public class DiscordOAuthConfig
+public sealed class DiscordOAuthConfig
 {
     [JsonProperty("clientId")]
     public string ClientId { get; set; } = "YOUR_DISCORD_CLIENT_ID";

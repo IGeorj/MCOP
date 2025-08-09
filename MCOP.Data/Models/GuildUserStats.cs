@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace MCOP.Data.Models
 {
     [PrimaryKey(nameof(GuildId), nameof(UserId))]
-    public class GuildUserStats
+    public sealed class GuildUserStats
     {
         public ulong GuildId { get; set; }
         public ulong UserId { get; set; }

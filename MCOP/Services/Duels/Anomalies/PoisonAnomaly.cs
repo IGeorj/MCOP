@@ -2,7 +2,7 @@
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class PoisonAnomaly : DuelAnomaly
+    public sealed class PoisonAnomaly : DuelAnomaly
     {
         const int MaxPoisonDamage = 10;
         public PoisonAnomaly()

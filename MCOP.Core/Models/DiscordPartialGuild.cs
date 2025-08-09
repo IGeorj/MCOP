@@ -2,7 +2,7 @@
 
 namespace MCOP.Core.Models
 {
-    public class DiscordPartialGuild
+    public sealed class DiscordPartialGuild
     {
         [JsonProperty("id")]
         public string Id { get; set; } = null!;

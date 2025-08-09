@@ -68,8 +68,11 @@ export function CurrentLevelRoles({
           </TableHeader>
           <TableBody>
             {filteredRoles.map((role) => (
-              <TableRow key={role.id} className="hover:bg-accent dark:hover:bg-accent/50">
-                <TableCell style={{ color: role.color }}>{role.name}</TableCell>
+              <TableRow key={role.id} className="border-0 hover:bg-accent dark:hover:bg-accent/50">
+                <TableCell className="flex items-center gap-1 text-base">
+                  <span className="mr-2 h-4 w-4 rounded-full" style={{ backgroundColor: role.color || 'transparent' }} />
+                  {role.name}
+                  </TableCell>
                 <TableCell>{role.levelToGetRole}</TableCell>
                 <TableCell>
                   <Button

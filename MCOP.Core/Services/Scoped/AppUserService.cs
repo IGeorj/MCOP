@@ -11,7 +11,7 @@ namespace MCOP.Core.Services.Scoped
         Task StoreTokensAsync(string userId, string accessToken, string refreshToken, DateTime expiresAt);
     }
 
-    public class AppUserService : IAppUserService
+    public sealed class AppUserService : IAppUserService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly IDiscordOAuthService _oAuthService;

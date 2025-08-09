@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MCOP.Data.Models
 {
-    public class GuildConfig
+    public sealed class GuildConfig
     {
         [Key]
         public ulong GuildId { get; set; }

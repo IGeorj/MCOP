@@ -2,7 +2,7 @@
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class SelfDamageAnomaly : DuelAnomaly
+    public sealed class SelfDamageAnomaly : DuelAnomaly
     {
         private const int SelfDamageChance = 25;
         public SelfDamageAnomaly()

@@ -2,9 +2,9 @@
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
+using MCOP.Common.Helpers;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
-using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 
 namespace MCOP.Modules.Basic
@@ -32,25 +32,10 @@ namespace MCOP.Modules.Basic
                 message = await ctx.Channel.GetMessageAsync(ulongMessageId);
                 hashes = await hashService.GetHashesFromMessageAsync(message);
 
-                if (ctx.Guild is null || message.Author is null)
-                {
-                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Guild or Author not found!"));
-                    return;
-                }
+                var (guild, member) = await CommandContextHelper.ValidateAndGetMemberAsync(ctx, message.Author);
+                if (guild is null || member is null) return;
 
-                var searchHashResult = await hashService.SearchHashesAsync(hashes);
-
-                foreach (var hashResult in searchHashResult)
-                {
-                    var resultMessageId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
-                    if (resultMessageId is not null)
-                    {
-                        continue;
-                    }
-
-                    await hashService.SaveHashAsync(ctx.Guild.Id, message.Id, message.Author.Id, hashResult.HashToCheck);
-                    count++;
-                }
+                count = await ProcessMessageHashesAsync(count, message, hashes, hashService, guild, member);
 
                 await message.CreateReactionAsync(DiscordEmoji.FromName(ctx.Client, ":heart:"));
             }
@@ -61,6 +46,31 @@ namespace MCOP.Modules.Basic
             }
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Added {count} of {hashes.Count} images"));
+        }
+
+        private static async Task<int> ProcessMessageHashesAsync(
+            int count,
+            DiscordMessage message,
+            List<byte[]> hashes,
+            IImageHashService hashService,
+            DiscordGuild guild, 
+            DiscordMember member)
+        {
+            var searchHashResult = await hashService.SearchHashesAsync(hashes);
+
+            foreach (var hashResult in searchHashResult)
+            {
+                var resultMessageId = hashResult.MessageId ?? hashResult.MessageIdNormalized;
+                if (resultMessageId is not null)
+                {
+                    continue;
+                }
+
+                await hashService.SaveHashAsync(guild.Id, message.Id, member.Id, hashResult.HashToCheck);
+                count++;
+            }
+
+            return count;
         }
     }
 }

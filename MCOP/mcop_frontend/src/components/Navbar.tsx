@@ -61,11 +61,11 @@ export const Navbar = ({
                 ) : (
                   <User className="h-5 w-5" />
                 )}
-                <span>{username}</span>
+                <span className="text-base">{username}</span>
                 <ChevronDown className="h-4 w-4 opacity-80" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48" align="end">
+            <DropdownMenuContent className="w-48 hidden md:flex" align="end">
               <DropdownMenuItem
                 onClick={onLogout}
                 className="flex items-center gap-2 cursor-pointer"
@@ -101,9 +101,9 @@ export const Navbar = ({
                 <ChevronDown className="h-4 w-4 opacity-80" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuContent className="w-56 md:hidden" align="end">
               <div className="px-4 py-1.5 flex items-center gap-2">
-                <p className="text-lg">{username}</p>
+                <p className="text-base font-bold">{username}</p>
               </div>
 
               <DropdownMenuSeparator />

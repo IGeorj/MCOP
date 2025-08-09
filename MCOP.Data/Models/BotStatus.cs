@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MCOP.Data.Models
 {
-    public class BotStatus
+    public sealed class BotStatus
     {
         public const int StatusLimit = 64;
 

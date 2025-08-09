@@ -8,7 +8,7 @@ using Serilog;
 using System.Reflection;
 namespace MCOP.EventListeners;
 
-public class CommandListeners
+public sealed class CommandListeners
 {
     public Task CommandExecutionEventHandler(CommandsExtension commandEx, CommandExecutedEventArgs e)
     {

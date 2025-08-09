@@ -1,12 +1,12 @@
-﻿using DSharpPlus.EventArgs;
-using DSharpPlus;
+﻿using DSharpPlus;
+using DSharpPlus.EventArgs;
+using MCOP.Core.Common;
+using MCOP.Utils;
 using OpenAI;
 using OpenAI.Chat;
-using System.ClientModel;
-using MCOP.Core.Common;
-using System.Text.RegularExpressions;
 using Serilog;
-using MCOP.Utils;
+using System.ClientModel;
+using System.Text.RegularExpressions;
 
 namespace MCOP.Core.Services.Scoped.AI;
 
@@ -15,7 +15,7 @@ public interface IAIService
     public Task GenerateAIResponseOnMentionAsync(MessageCreatedEventArgs e);
 }
 
-public class AIService : IAIService
+public sealed class AIService : IAIService
 {
     private const int OpenRouterDailyLimit = 1000;
     private readonly IApiLimitService _apiLimit;
@@ -77,10 +77,13 @@ public class AIService : IAIService
             var emojiContext = await GetEmojiPromptAsync();
             var mentionsContext = GetMentionsPrompt(e);
             var systemMessage = DeepSeekContext + emojiContext + mentionsContext;
+            var contentParts = new List<ChatMessageContentPart>();
             var chatRequest = new List<ChatMessage> {
                 new SystemChatMessage(systemMessage),
-                new UserChatMessage(CleanBotMentions(e.Message.Content))
             };
+
+            contentParts.Add(ChatMessageContentPart.CreateTextPart(CleanBotMentions(e.Message.Content)));
+            chatRequest.Add(new UserChatMessage(contentParts));
 
             if (e.Message.ReferencedMessage is not null && !string.IsNullOrWhiteSpace(e.Message.ReferencedMessage.Content)) 
             {

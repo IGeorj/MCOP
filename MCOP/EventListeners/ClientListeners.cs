@@ -5,7 +5,7 @@ using Serilog;
 
 namespace MCOP.EventListeners;
 
-public class ClientListeners
+public sealed class ClientListeners
 {
     private IGuildUserStatsService _guildUserStatsService;
     public ClientListeners(IGuildUserStatsService guildUserStatsService) 

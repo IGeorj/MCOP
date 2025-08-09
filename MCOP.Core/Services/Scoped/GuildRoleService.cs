@@ -1,5 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
+using MCOP.Core.Models;
 using MCOP.Data;
 using MCOP.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -10,18 +11,16 @@ namespace MCOP.Core.Services.Scoped
 {
     public interface IGuildRoleService
     {
-        public Task<List<GuildRole>> GetGuildRolesAsync(ulong guildId);
-        public Task<List<GuildRole>> GetBlockedExpGuildRolesAsync(ulong guildId);
+        public Task<List<GuildRoleDto>> GetGuildRolesAsync(ulong guildId);
+        public Task<List<GuildRoleDto>> GetBlockedExpGuildRolesAsync(ulong guildId);
         public Task SetBlockedRoleAsync(ulong guildId, ulong roleId, bool isBlocked);
         public Task ToggleBlockedRoleAsync(ulong guildId, ulong roleId);
         public Task SetRoleLevelAsync(ulong guildId, ulong roleId, int? level = null);
         public Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel);
     }
 
-    public class GuildRoleService : IGuildRoleService
+    public sealed class GuildRoleService : IGuildRoleService
     {
-        public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
-
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly DiscordClient _discordClient;
 
@@ -31,7 +30,7 @@ namespace MCOP.Core.Services.Scoped
             _discordClient = discordClient;
         }
 
-        public async Task<List<GuildRole>> GetGuildRolesAsync(ulong guildId)
+        public async Task<List<GuildRoleDto>> GetGuildRolesAsync(ulong guildId)
         {
             try
             {
@@ -40,6 +39,7 @@ namespace MCOP.Core.Services.Scoped
                     .AsNoTracking()
                     .Where(us => us.GuildId == guildId)
                     .OrderBy(us => us.LevelToGetRole)
+                    .Select(r => new GuildRoleDto(r.GuildId, r.Id, r.LevelToGetRole, r.IsGainExpBlocked))
                     .ToListAsync();
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -49,7 +49,7 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<List<GuildRole>> GetBlockedExpGuildRolesAsync(ulong guildId)
+        public async Task<List<GuildRoleDto>> GetBlockedExpGuildRolesAsync(ulong guildId)
         {
             try
             {
@@ -57,6 +57,7 @@ namespace MCOP.Core.Services.Scoped
                 return await context.GuildRoles
                     .AsNoTracking()
                     .Where(us => us.GuildId == guildId && us.IsGainExpBlocked)
+                    .Select(r => new GuildRoleDto(r.GuildId, r.Id, r.LevelToGetRole, r.IsGainExpBlocked))
                     .ToListAsync();
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -96,11 +97,11 @@ namespace MCOP.Core.Services.Scoped
 
                 await context.SaveChangesAsync();
 
-                Log.Information("ToggleBlockedRoleAsync: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId);
+                Log.Information("ToggleBlockedRoleAsync: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId, guildRole.IsGainExpBlocked);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Log.Error(ex, "Error in ToggleBlockedRoleAsync for guildId: {guildId}, roleId: {roleId}, isBlocked: {isBlocked}", guildId, roleId);
+                Log.Error(ex, "Error in ToggleBlockedRoleAsync for guildId: {guildId}, roleId: {roleId}", guildId, roleId);
                 throw;
             }
         }
@@ -168,20 +169,13 @@ namespace MCOP.Core.Services.Scoped
 
         private async Task<GuildRole> GetOrCreateGuildRoleInternalAsync(McopDbContext context, ulong guildId, ulong roleId)
         {
-            var guildRole = await context.GuildRoles
-                .SingleOrDefaultAsync(us => us.GuildId == guildId && us.Id == roleId);
-
-            if (guildRole == null)
+            var role = await context.GuildRoles.FirstOrDefaultAsync(r => r.GuildId == guildId && r.Id == roleId);
+            if (role is null)
             {
-                guildRole = new GuildRole
-                {
-                    GuildId = guildId,
-                    Id = roleId,
-                };
-                context.GuildRoles.Add(guildRole);
+                role = new GuildRole { GuildId = guildId, Id = roleId };
+                context.GuildRoles.Add(role);
             }
-
-            return guildRole;
+            return role;
         }
 
         private List<GuildRole> GetRolesToProcess(List<GuildRole> levelRoles, int oldLevel, int newLevel)

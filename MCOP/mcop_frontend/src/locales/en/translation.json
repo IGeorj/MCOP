@@ -35,8 +35,30 @@
     "role": "Role",
     "actions": "Actions"
   },
+  "nsfw": {
+    "title": "Nsfw",
+    "updateDailyNsfwChannel": "Update Daily Nsfw Channel"
+  },
+  "common": {
+    "selectChannel": "Select a channel",
+    "searchRoles": "Search channels...",
+    "none": "None",
+    "update": "Update"
+  },
   "settings": {
     "title": "Settings",
     "error": "Error"
+  },
+  "auth":{
+    "processing": "Processing login...",
+    "noCodeFound": "No authentication code found - please try logging in again",
+    "loginAlreadyProcessed": "Login already processed - redirecting...",
+    "connectingToDiscord": "Connecting to Discord...",
+    "verifyingYourAccount": "Verifying your account...",
+    "loginSuccessful": "Login successful! Redirecting...",
+    "loginFailed": "Login failed. Please try again.",
+    "authenticationFailed": "Authentication Failed",
+    "authenticating": "Authenticating...",
+    "returnToHome": "Return to Home"
   }
 }

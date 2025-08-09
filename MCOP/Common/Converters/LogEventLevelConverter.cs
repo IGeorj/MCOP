@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace MCOP.Common.Converters;
 
-public class LogEventLevelConverter : BaseArgumentConverter<LogEventLevel>
+public sealed class LogEventLevelConverter : BaseArgumentConverter<LogEventLevel>
 {
     private static readonly Regex _dbgRegex;
     private static readonly Regex _errRegex;

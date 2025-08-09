@@ -2,7 +2,7 @@
 
 namespace MCOP.Core.Common
 {
-    public class SemaphoreLock
+    public sealed class SemaphoreLock
     {
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 

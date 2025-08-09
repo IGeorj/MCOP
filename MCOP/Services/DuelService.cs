@@ -14,7 +14,7 @@ using System.Globalization;
 
 namespace MCOP.Services
 {
-    public class DuelService
+    public sealed class DuelService
     {
         private readonly SafeRandom _rng = new();
 

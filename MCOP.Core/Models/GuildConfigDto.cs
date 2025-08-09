@@ -1,0 +1,12 @@
+﻿
+namespace MCOP.Core.Models
+{
+    public sealed record GuildConfigDto(
+        ulong GuildId,
+        string Prefix,
+        ulong? LogChannelId,
+        bool LoggingEnabled,
+        ulong? LewdChannelId,
+        bool LewdEnabled
+    );
+}

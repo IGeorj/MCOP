@@ -1,6 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" rel="stylesheet');
 @import "tailwindcss";
 @import "tw-animate-css";
 @custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  font-family: "Roboto", sans-serif;
+}
 
 html, body, #root {
   height: 100%;
@@ -168,20 +173,11 @@ h1, h2, h3, h4 {
 .bg-secondary { background-color: var(--color-secondary); }
 .bg-navbar { background-color: var(--color-navbar); }
 .fill-navbar { fill: var(--color-navbar); }
+.fill-bg { fill: var(--color-bg); }
 .text-primary { color: var(--color-primary); }
 .text-secondary { color: var(--color-secondary); }
 .selected { background-color: var(--color-selected); }
 .bg-hover:hover { background-color: var(--color-hover); }
-
-table {
-  width: 100%;
-  border-collapse: separate;
-  color: var(--color-text);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
-  margin-bottom: 1.5rem;
-}
 
 th, td {
   padding: 0.75rem 1rem;
@@ -191,10 +187,6 @@ th, td {
 th {
   font-weight: 600;
   letter-spacing: 0.02em;
-}
-
-tr:last-child td {
-  border-bottom: none;
 }
 
 tr.group:hover td {

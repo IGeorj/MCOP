@@ -2,7 +2,7 @@
 
 namespace MCOP.Utils;
 
-public class DBConfig
+public sealed class DBConfig
 {
     [JsonProperty("database")]
     public string DatabaseName { get; set; } = "mcop_db";

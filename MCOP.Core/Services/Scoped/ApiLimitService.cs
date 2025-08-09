@@ -10,7 +10,7 @@ namespace MCOP.Core.Services.Scoped
         public Task<int> GetTodayUsageAsync();
     }
 
-    public class ApiLimitService : IApiLimitService
+    public sealed class ApiLimitService : IApiLimitService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly SemaphoreSlim _lock = new(1, 1);

@@ -1,13 +1,12 @@
 ﻿using MCOP.Core.Models;
 using MCOP.Core.Services.Scoped;
-using MCOP.Core.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MCOP.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class LeaderboardController : ControllerBase
+    public sealed class LeaderboardController : ControllerBase
     {
         private readonly IGuildUserStatsService _statsService;
 

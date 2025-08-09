@@ -1,4 +1,4 @@
-import React, { MouseEvent } from "react";
+import React, { MouseEvent, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "react-i18next";
@@ -7,6 +7,9 @@ import { config } from "../config";
 import { useNavigate } from "react-router-dom";
 import { getAddBotUrl } from "../utils/discordApi";
 import { Guild } from "@/types/Guild";
+import { useGuildList } from "../contexts/GuildListContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FaChevronRight } from "react-icons/fa";
 
 const DiscordGuildList: React.FC = () => {
   const { t } = useTranslation();
@@ -17,8 +20,9 @@ const DiscordGuildList: React.FC = () => {
     handleDiscordLogin,
   } = useAuth();
 
+  const { guilds, setGuilds } = useGuildList();
   const {
-    data: guilds = [],
+    data: fetchedGuilds = [],
     isLoading: isGuildsLoading,
     error: guildsError,
   } = useQuery<Guild[]>({
@@ -36,6 +40,16 @@ const DiscordGuildList: React.FC = () => {
     retry: 1,
   });
 
+  useEffect(() => {
+    if (
+      Array.isArray(fetchedGuilds) &&
+      (guilds.length !== fetchedGuilds.length ||
+        !guilds.every((g, i) => g.id === fetchedGuilds[i].id))
+    ) {
+      setGuilds(fetchedGuilds);
+    }
+  }, [fetchedGuilds, guilds, setGuilds]);
+
   const onAddBotClick = (e: MouseEvent, guildId: string) => {
     e.preventDefault();
     window.open(getAddBotUrl(guildId), "_blank", "noopener,noreferrer");
@@ -46,16 +60,27 @@ const DiscordGuildList: React.FC = () => {
     navigate(`/guilds/${guildId}`);
   };
 
-  if (isAuthLoading) {
-    return <div className="text-center py-4">{t("loading")}</div>;
+  if (isGuildsLoading || isAuthLoading) {
+    return (
+      <section className="max-w-2xl mx-auto my-8">
+        <div className="flex flex-1 min-h-0 w-full">
+          <div className="flex-1 min-h-0 flex flex-col p-8 space-y-4">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-22 w-full" />
+            <Skeleton className="h-22 w-full" />
+            <Skeleton className="h-22 w-full" />
+          </div>
+        </div>
+      </section>
+    );
   }
 
   if (!isAuthenticated) {
     return (
       <div className="section flex flex-col items-center justify-center">
-        <DiscordLoginButton 
-          onLogin={handleDiscordLogin} 
-          text={t("welcome.login")} 
+        <DiscordLoginButton
+          onLogin={handleDiscordLogin}
+          text={t("welcome.login")}
         />
       </div>
     );
@@ -64,13 +89,11 @@ const DiscordGuildList: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto my-8">
       <h2 className="mb-4 text-2xl font-semibold">{t("guilds.title")}</h2>
-      
-      {isGuildsLoading && <div className="text-center py-2">{t("loading")}</div>}
-      
+
       {guildsError && (
         <div className="text-center py-2 text-primary">
-          {guildsError instanceof Error 
-            ? guildsError.message 
+          {guildsError instanceof Error
+            ? guildsError.message
             : t("errors.generic")}
         </div>
       )}
@@ -93,15 +116,15 @@ const DiscordGuildList: React.FC = () => {
                   {guild.name[0].toUpperCase()}
                 </div>
               )}
-              
+
               <span className="truncate text-base text-text">
                 {guild.name}
               </span>
             </div>
-            
+
             {guild.botPresent ? (
               <button
-                className="ml-auto selected font-semibold px-3 py-1 rounded cursor-pointer bg-hover"
+                className="ml-auto text-primary font-semibold px-3 py-1 rounded cursor-pointer bg-hover"
                 onClick={(e) => onSettingsClick(e, guild.id)}
                 aria-label={t("guilds.settings")}
               >
@@ -109,11 +132,11 @@ const DiscordGuildList: React.FC = () => {
               </button>
             ) : (
               <button
-                className="ml-auto bg-hover px-3 py-1 cursor-pointer rounded font-medium"
+                className="ml-auto flex gap-2 items-center bg-hover px-3 py-1 cursor-pointer rounded font-medium"
                 onClick={(e) => onAddBotClick(e, guild.id)}
                 aria-label={t("guilds.addBot")}
               >
-                {t("guilds.addBot")}
+                {t("guilds.addBot")} <FaChevronRight className="h-3" />
               </button>
             )}
           </li>

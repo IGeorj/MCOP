@@ -12,7 +12,7 @@ namespace MCOP.Core.Services.Scoped
         public Task RemoveMessageAsync(ulong guildId, ulong messageId);
     }
 
-    public class GuildMessageService : IGuildMessageService
+    public sealed class GuildMessageService : IGuildMessageService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 

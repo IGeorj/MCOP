@@ -1,11 +1,8 @@
 ﻿using MCOP.Core.Common;
-using DSharpPlus.Entities;
-using System.Text;
-using System.Linq;
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class GlitchHorrorAnomaly : DuelAnomaly
+    public sealed class GlitchHorrorAnomaly : DuelAnomaly
     {
         private readonly string[] _glitchSymbols = new[]
         {

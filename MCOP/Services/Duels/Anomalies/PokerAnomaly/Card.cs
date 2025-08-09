@@ -44,7 +44,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
         Ace
     }
 
-    public class Card
+    public sealed class Card
     {
         public Suit Suit { get; }
         public Rank Rank { get; }

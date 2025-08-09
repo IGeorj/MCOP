@@ -8,7 +8,7 @@ import { useParams } from "react-router-dom";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useTranslation } from "react-i18next";
 import LevelWithProgress from "./LevelWithProgress";
-
+import { FaSortAmountUp, FaSortAmountDown  } from "react-icons/fa";
 type SortKey = "likes" | "exp" | "duelWin" | "duelLose";
 
 interface SortOption {
@@ -93,11 +93,9 @@ const Leaderboard: React.FC = () => {
 
   const renderSortOrderIcon = (active: boolean) => {
     if (!active) return null;
-    return (
-      <span style={{ marginLeft: 4 }}>
-        {sortDescending ? "↓" : "↑"}
-      </span>
-    );
+    return sortDescending 
+    ? <FaSortAmountDown className="h-3.5 w-3.5 ml-1" /> 
+    : <FaSortAmountUp className="h-3.5 w-3.5 ml-1" />;
   };
 
   const handleSortClick = (key: SortKey) => {
@@ -158,7 +156,7 @@ const Leaderboard: React.FC = () => {
         {flatData.map((u) => (
           <tr
             key={u.userId}
-            className="group transition "
+            className="group transition"
           >
             <td className="px-2 py-1 align-middle bg-secondary rounded-l-2xl">
               <img
@@ -205,7 +203,7 @@ const Leaderboard: React.FC = () => {
           <button
             key={opt.key}
             onClick={() => handleSortClick(opt.key)}
-            className={`px-3 py-1 rounded text-primary cursor-pointer bg-secondary bg-hover ${sortKey === opt.key ? "border-primary border-1" : ""}`}
+            className={`px-3 py-1 items-center rounded text-primary cursor-pointer bg-secondary bg-hover ${sortKey === opt.key ? "border-primary border-1" : ""}`}
             disabled={isFetching || isFetchingNextPage}
             style={{ display: "flex", alignItems: "center" }}
             aria-pressed={sortKey === opt.key}

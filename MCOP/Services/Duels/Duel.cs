@@ -6,7 +6,7 @@ using MCOP.Services.Duels.Anomalies.PokerAnomaly;
 
 namespace MCOP.Services.Duels
 {
-    public class Duel
+    public sealed class Duel
     {
         public int DelayBetweenTurn { get; set; } = 1500;
         public DuelMember DuelMember1 { get; }

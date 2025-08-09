@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Security.Claims;
 
-namespace MCOP.Core.Common.Attributes
+namespace MCOP.Common.Attributes
 {
-    public class AuthorizeUserIdAttribute : AuthorizeAttribute, IAuthorizationFilter
+    public sealed class AuthorizeUserIdAttribute : AuthorizeAttribute, IAuthorizationFilter
     {
         private readonly ulong _requiredOwnerId;
 

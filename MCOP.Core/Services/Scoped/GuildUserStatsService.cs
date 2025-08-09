@@ -12,7 +12,7 @@ namespace MCOP.Core.Services.Scoped
 {
     public interface IGuildUserStatsService
     {
-        public Task<GuildUserStats> GetGuildUserStatAsync(ulong guildId, ulong userId);
+        public Task<GuildUserStatsDto> GetGuildUserStatAsync(ulong guildId, ulong userId);
         public Task<(List<GuildUserStatsDto> stats, int totalCount)> GetGuildUserStatsAsync(ulong guildId, int page = 1, int pageSize = 20, string? sortBy = null, bool sortDescending = true);
         public Task<int> GetUserExpRankAsync(ulong guildId, ulong userId);
         public Task AddLikeAsync(ulong guildId, ulong userId);
@@ -27,7 +27,7 @@ namespace MCOP.Core.Services.Scoped
         public Task UpdateMissingUserInfoAsync(ulong guildId, List<GuildUserStatsDto> guildUserStats);
     }
 
-    public class GuildUserStatsService : IGuildUserStatsService
+    public sealed class GuildUserStatsService : IGuildUserStatsService
     {
         public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
 
@@ -50,7 +50,7 @@ namespace MCOP.Core.Services.Scoped
 
         #region public
 
-        public async Task<GuildUserStats> GetGuildUserStatAsync(ulong guildId, ulong userId)
+        public async Task<GuildUserStatsDto> GetGuildUserStatAsync(ulong guildId, ulong userId)
         {
             await using var context = _contextFactory.CreateDbContext();
 
@@ -77,7 +77,18 @@ namespace MCOP.Core.Services.Scoped
                 }
 
                 Log.Information("GetGuildUserStatAsync: Retrieved stats for guildId: {guildId}, userId: {userId}", guildId, userId);
-                return userStats;
+
+                return new GuildUserStatsDto
+                {
+                    GuildId = userStats.GuildId.ToString(),
+                    UserId = userStats.UserId.ToString(),
+                    Username = userStats.Username,
+                    AvatarHash = userStats.AvatarHash,
+                    DuelWin = userStats.DuelWin,
+                    DuelLose = userStats.DuelLose,
+                    Likes = userStats.Likes,
+                    Exp = userStats.Exp,
+                };
             }
             catch (Exception ex)
             {

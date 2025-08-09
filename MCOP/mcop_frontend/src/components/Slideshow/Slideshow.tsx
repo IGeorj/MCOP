@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { FaPlay, FaStop, FaAngleRight, FaAngleLeft, FaTrashAlt } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
@@ -6,21 +6,40 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { authFetch } from "../../utils/authFetch";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { FullscreenButton } from "../buttons/FullscreenButton";
-import useTheme from "@/hooks/useTheme";
 import { ImageInfoDisplay } from "./ImageInfoDisplay";
 import { IntervalControl } from "./IntervalControl";
 import { useSlideshow } from "@/hooks/useSlideshow";
 
 export const SlideShow = () => {
-    useTheme();
-
     const [intervalSec, setIntervalSec] = useState(5);
-    const [loadedImages, setLoadedImages] = useState<ImageInfo[]>([]);
     const [isControlsVisible, setIsControlsVisible] = useState(true);
     const isMobile = useIsMobile(640);
+    
     const fetchImageContent = useCallback(async (path: string, requestInit?: RequestInit) => {
-        return await authFetch<Blob>(`/images/content/${path}`, { responseType: 'blob', requestInit: requestInit });
+        return await authFetch<Blob>(`/images/content/${path}`, { 
+            responseType: 'blob', 
+            requestInit: requestInit 
+        });
     }, []);
+
+    const queryClient = useQueryClient();
+
+    const { data: loadedImages = [], isLoading } = useQuery<ImageInfo[]>({
+        queryKey: ['randomImages'],
+        queryFn: () => authFetch(`/images/random?count=${50}`),
+        staleTime: 60000,
+        refetchOnWindowFocus: false,
+    });
+
+    const fetchMoreImages = async () => {
+        const newImages = await authFetch<ImageInfo[]>(`/images/random?count=${50}`);
+        queryClient.setQueryData<ImageInfo[]>(['randomImages'], (prev = []) => {
+            const combined = [...prev, ...newImages];
+            return combined.reduce((unique, item) => 
+                unique.some(img => img.path === item.path) ? unique : [...unique, item], 
+            [] as ImageInfo[]);
+        });
+    };
 
     const {
         currentImageSrc,
@@ -30,36 +49,19 @@ export const SlideShow = () => {
         pause,
         next,
         prev,
-    } = useSlideshow(loadedImages, fetchImageContent, { initialIndex: 0, interval: intervalSec * 1000 });
-
-    const fetchMoreImages = async () => {
-        const newImages = await authFetch<ImageInfo[]>(`/images/random?count=${50}`);
-        setLoadedImages(prev => [...prev, ...newImages]);
-        return newImages;
-    };
-
-    const { data: initialImages, isLoading } = useQuery<ImageInfo[]>({
-        queryKey: ['randomImages'],
-        queryFn: () => authFetch(`/images/random?count=${50}`),
-        staleTime: 60000,
-        refetchOnWindowFocus: false
+    } = useSlideshow(loadedImages, fetchImageContent, { 
+        initialIndex: 0, 
+        interval: intervalSec * 1000 
     });
 
     useEffect(() => {
-        if (initialImages) {
-            setLoadedImages(initialImages);
-        }
-    }, [initialImages]);
-
-    useEffect(() => {
-        if (isPlaying && currentIndex >= loadedImages.length - 10 && loadedImages.length > 0) {
+        if (isPlaying && currentIndex >= loadedImages.length - 5 && loadedImages.length > 0) {
             fetchMoreImages();
         }
     }, [currentIndex, isPlaying, loadedImages.length]);
 
     if (isLoading) return <div className="flex items-center justify-center h-screen">Loading slideshow...</div>;
     if (!loadedImages.length) return <div className="flex items-center justify-center h-screen">No images found</div>;
-
     return (
         <div className="relative h-screen touch-none select-none">
             <div

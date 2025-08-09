@@ -8,7 +8,7 @@ namespace MCOP.Core.Services.Scoped
         public Task RemoveLikeAsync(ulong guildId, ulong userId, ulong messageId);
     }
 
-    public class LikeService : ILikeService
+    public sealed class LikeService : ILikeService
     {
         private readonly IGuildMessageService _guildMessageService;
         private readonly IGuildUserStatsService _guildUserStatService;

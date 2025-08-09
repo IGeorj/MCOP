@@ -1,12 +1,10 @@
 ﻿using Humanizer;
 using MCOP.Core.Common;
-using Newtonsoft.Json.Linq;
-using System;
 using System.ComponentModel;
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class ElementalAnomaly : DuelAnomaly
+    public sealed class ElementalAnomaly : DuelAnomaly
     {
         private enum Element
         {

@@ -3,7 +3,7 @@ using MCOP.Core.Helpers;
 
 namespace MCOP.Core.Models
 {
-    public class GuildUserStatsDto
+    public sealed class GuildUserStatsDto
     {
         public string GuildId { get; set; } = string.Empty;
         public string UserId { get; set; } = string.Empty;

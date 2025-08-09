@@ -118,7 +118,7 @@ export function SetLevelRole({
           disabled={!selectedRole || !levelInput}
           className={`w-full text-primary border-primary border-1 ${(!selectedRole || !levelInput) ? " cursor-not-allowed" : "cursor-pointer"}`}
         >
-          <FiPlus className="mr-2 w-4 h-4" /> {t("leveling.updateRoleLevel")}
+          {t("common.update")}
         </Button>
       </div>
     </div>

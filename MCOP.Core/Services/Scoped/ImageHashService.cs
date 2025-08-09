@@ -1,5 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using MCOP.Core.Exceptions;
+using MCOP.Core.Models;
 using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Shared;
 using MCOP.Core.ViewModels;
@@ -15,18 +16,18 @@ namespace MCOP.Core.Services.Scoped
         private const double _defaultNormalizedThreshold = 99.5;
         private const double _defaultDiffThreshold = 95;
 
-        public Task<List<ImageHash>> GetAllHashesAsync();
-        public Task<List<ImageHash>> GetHashesByGuildAsync(ulong guildId);
+        public Task<List<ImageHashDto>> GetAllHashesAsync();
+        public Task<List<ImageHashDto>> GetHashesByGuildAsync(ulong guildId);
         public Task<int> SaveHashAsync(ulong guildId, ulong messageId, ulong userId, byte[] hash);
         public Task<List<HashSearchResultVM>> SearchHashesAsync(List<byte[]> hashes, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold);
         public Task<List<HashSearchResultVM>> SearchHashesByGuildAsync(ulong guildId, List<byte[]> hashes, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold);
         public Task<List<byte[]>> GetHashesFromMessageAsync(DiscordMessage message);
         public Task RemoveHashesByMessageId(ulong guildId, ulong messageId);
         public Task<int> GetTotalCountAsync();
-        public List<HashSearchResultVM> FindBestMatches(List<ImageHash> imageHashes, List<byte[]> hashesToCheck, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold);
+        public List<HashSearchResultVM> FindBestMatches(List<ImageHashDto> imageHashes, List<byte[]> hashesToCheck, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold);
     }
 
-    public class ImageHashService : IImageHashService
+    public sealed class ImageHashService : IImageHashService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
@@ -38,13 +39,16 @@ namespace MCOP.Core.Services.Scoped
             _contextFactory = contextFactory;
         }
 
-        public async Task<List<ImageHash>> GetAllHashesAsync()
+        public async Task<List<ImageHashDto>> GetAllHashesAsync()
         {
             try
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                return await context.ImageHashes.OrderByDescending(x => x.Id).ToListAsync();
+                return await context.ImageHashes
+                    .OrderByDescending(x => x.Id)
+                    .Select(h => new ImageHashDto(h.Id, h.MessageId, h.GuildId, h.Hash))
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -52,13 +56,15 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<List<ImageHash>> GetHashesByGuildAsync(ulong guildId)
+        public async Task<List<ImageHashDto>> GetHashesByGuildAsync(ulong guildId)
         {
             try
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                return (await context.ImageHashes.Where(x => x.GuildId == guildId).ToListAsync()).OrderByDescending(x => x.Id).ToList();
+                return (await context.ImageHashes.Where(x => x.GuildId == guildId).ToListAsync())
+                    .Select(h => new ImageHashDto(h.Id, h.MessageId, h.GuildId, h.Hash))
+                    .OrderByDescending(x => x.Id).ToList();
             }
             catch (Exception ex)
             {
@@ -105,7 +111,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                List<ImageHash> hashesDB = await GetAllHashesAsync();
+                List<ImageHashDto> hashesDB = await GetAllHashesAsync();
                 return FindBestMatches(hashesDB, hashes, diffThreshold, normalizedThreshold);
 
             }
@@ -119,7 +125,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                List<ImageHash> hashesDB = await GetHashesByGuildAsync(guildId);
+                List<ImageHashDto> hashesDB = await GetHashesByGuildAsync(guildId);
                 return FindBestMatches(hashesDB, hashes, diffThreshold, normalizedThreshold);
             }
             catch (Exception ex)
@@ -204,7 +210,7 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public List<HashSearchResultVM> FindBestMatches(List<ImageHash> imageHashes, List<byte[]> hashesToCheck, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold)
+        public List<HashSearchResultVM> FindBestMatches(List<ImageHashDto> imageHashes, List<byte[]> hashesToCheck, double diffThreshold = _defaultDiffThreshold, double normalizedThreshold = _defaultNormalizedThreshold)
         {
             List<HashSearchResultVM> results = [];
             hashesToCheck.ForEach(checkedHash => results.Add(new HashSearchResultVM() { HashToCheck = checkedHash}));

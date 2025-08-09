@@ -1,11 +1,8 @@
-﻿using System.Text;
-using Humanizer;
-using MCOP.Data.Models;
-using Serilog;
+﻿using Serilog;
 
 namespace MCOP.Core.Helpers
 {
-    public class LogHelper
+    public static class LogHelper
     {
         public static Dictionary<string, object?> GetClassProperties<T>(T userStats)
         {

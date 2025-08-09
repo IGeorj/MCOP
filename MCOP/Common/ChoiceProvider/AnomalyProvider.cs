@@ -6,7 +6,7 @@ using MCOP.Services.Duels.Anomalies.PokerAnomaly;
 
 namespace MCOP.Common.ChoiceProvider
 {
-    public class AnomalyProvider : IChoiceProvider
+    public sealed class AnomalyProvider : IChoiceProvider
     {
         public const string NoAnomaly = "NoAnomaly";
         public const string Random = "Random";

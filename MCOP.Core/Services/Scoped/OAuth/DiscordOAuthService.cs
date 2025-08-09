@@ -13,7 +13,7 @@ namespace MCOP.Core.Services.Scoped.OAuth
         public Task<DiscordUser?> FetchDiscordUserAsync(string accessToken);
     }
 
-    public class DiscordOAuthService : IDiscordOAuthService
+    public sealed class DiscordOAuthService : IDiscordOAuthService
     {
         private readonly ConfigurationService _config;
         private readonly ILogger _logger;

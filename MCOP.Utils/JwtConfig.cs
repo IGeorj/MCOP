@@ -2,7 +2,7 @@
 
 namespace MCOP.Utils;
 
-public class JwtConfig
+public sealed class JwtConfig
 {
     [JsonProperty("key")]
     public string Key { get; set; } = "SOME_SUPER_SECRET_KEY_CHANGE_THIS";

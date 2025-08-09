@@ -35,8 +35,30 @@
     "role": "Роль",
     "actions": "Действия"
   },
+  "nsfw": {
+    "title": "Nsfw",
+    "updateDailyNsfwChannel": "Обновить Ежедневный Nsfw Канал"
+  },
+  "common": {
+    "selectChannel": "Выбрать канал",
+    "searchRoles": "Поиск каналов...",
+    "none": "Отсутствует",
+    "update": "Обновить"
+  },
   "settings": {
     "title": "Настройки",
     "error": "Ошибка"
+  },
+  "auth": {
+    "processing": "Обработка...",
+    "noCodeFound": "Код аутентификации не найден - пожалуйста, попробуйте войти снова",
+    "loginAlreadyProcessed": "Вход уже выполнен - перенаправление...",
+    "connectingToDiscord": "Подключение к Discord...",
+    "verifyingYourAccount": "Проверка вашего аккаунта...",
+    "loginSuccessful": "Вход выполнен успешно! Перенаправление...",
+    "loginFailed": "Ошибка входа. Пожалуйста, попробуйте снова.",
+    "authenticationFailed": "Ошибка аутентификации",
+    "authenticating": "Аутентификация...",
+    "returnToHome": "Вернуться на главную"
   }
 }

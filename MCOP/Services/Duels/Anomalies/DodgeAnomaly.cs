@@ -2,7 +2,7 @@
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class DodgeAnomaly : DuelAnomaly
+    public sealed class DodgeAnomaly : DuelAnomaly
     {
         private const int DodgeChance = 25;
         public DodgeAnomaly()

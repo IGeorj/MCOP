@@ -1,4 +1,5 @@
-﻿using MCOP.Data;
+﻿using MCOP.Core.Models;
+using MCOP.Data;
 using MCOP.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -6,13 +7,13 @@ namespace MCOP.Core.Services.Scoped
 {
     public interface IGuildConfigService
     {
-        public Task<GuildConfig> GetOrAddGuildConfigAsync(ulong guildId);
-        public Task<List<GuildConfig>> GetGuildConfigsWithLewdChannelAsync();
-        public Task SetLewdChannelAsync(ulong guildId, ulong channelId);
+        public Task<GuildConfigDto> GetOrAddGuildConfigAsync(ulong guildId);
+        public Task<List<GuildConfigDto>> GetGuildConfigsWithLewdChannelAsync();
+        public Task SetLewdChannelAsync(ulong guildId, ulong? channelId);
         public Task SetLoggingChannelAsync(ulong guildId, ulong channelId);
     }
 
-    public class GuildConfigService : IGuildConfigService
+    public sealed class GuildConfigService : IGuildConfigService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
@@ -21,7 +22,7 @@ namespace MCOP.Core.Services.Scoped
             _contextFactory = contextFactory;
         }
 
-        public async Task<GuildConfig> GetOrAddGuildConfigAsync(ulong guildId)
+        public async Task<GuildConfigDto> GetOrAddGuildConfigAsync(ulong guildId)
         {
             try
             {
@@ -36,7 +37,7 @@ namespace MCOP.Core.Services.Scoped
 
                 Log.Information("GetOrAddGuildConfigAsync guildId: {guildId}", guildId);
 
-                return config;
+                return new GuildConfigDto(config.GuildId, config.Prefix, config.LogChannelId, config.LoggingEnabled, config.LewdChannelId, config.LewdEnabled);
             }
             catch (Exception ex)
             {
@@ -45,7 +46,7 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<List<GuildConfig>> GetGuildConfigsWithLewdChannelAsync()
+        public async Task<List<GuildConfigDto>> GetGuildConfigsWithLewdChannelAsync()
         {
             try
             {
@@ -53,7 +54,11 @@ namespace MCOP.Core.Services.Scoped
 
                 Log.Information("GetGuildConfigsWithLewdChannelAsync");
 
-                return await context.GuildConfigs.Where(x => x.LewdChannelId != null).ToListAsync();
+                return await context.GuildConfigs
+                    .AsNoTracking()
+                    .Where(x => x.LewdChannelId != null)
+                    .Select(c => new GuildConfigDto(c.GuildId, c.Prefix, c.LogChannelId, c.LoggingEnabled, c.LewdChannelId, c.LewdEnabled))
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -62,13 +67,13 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task SetLewdChannelAsync(ulong guildId, ulong channelId)
+        public async Task SetLewdChannelAsync(ulong guildId, ulong? channelId)
         {
             try
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                GuildConfig config = await GetOrAddGuildConfigAsync(guildId);
+                GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
                 config.LewdChannelId = channelId;
 
                 context.GuildConfigs.Update(config);
@@ -91,7 +96,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 await using var context = _contextFactory.CreateDbContext();
 
-                GuildConfig config = await GetOrAddGuildConfigAsync(guildId);
+                GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
                 config.LogChannelId = channelId;
 
                 context.GuildConfigs.Update(config);
@@ -107,5 +112,31 @@ namespace MCOP.Core.Services.Scoped
                 throw;
             }
         }
+
+
+        private async Task<GuildConfig> GetOrAddGuildConfigInternalAsync(ulong guildId)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                GuildConfig? config = await context.GuildConfigs.FindAsync(guildId);
+                if (config is null)
+                {
+                    config = (await context.GuildConfigs.AddAsync(new GuildConfig { GuildId = guildId })).Entity;
+                    await context.SaveChangesAsync();
+                }
+
+                Log.Information("GetOrAddGuildConfigInternalAsync guildId: {guildId}", guildId);
+
+                return config;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in GetOrAddGuildConfigInternalAsync guildId: {guildId}", guildId);
+                throw;
+            }
+        }
+
     }
 }

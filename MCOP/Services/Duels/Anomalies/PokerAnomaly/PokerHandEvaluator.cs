@@ -2,7 +2,7 @@
 
 namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
 {
-    public class PokerHandEvaluator
+    public sealed class PokerHandEvaluator
     {
         public enum HandRank
         {
@@ -28,7 +28,7 @@ namespace MCOP.Services.Duels.Anomalies.PokerAnomaly
             RoyalFlush
         }
 
-        public class EvaluationResult
+        public sealed class EvaluationResult
         {
             public HandRank Rank { get; set; }
             public List<Card> CardsInCombination { get; set; } = new List<Card>();

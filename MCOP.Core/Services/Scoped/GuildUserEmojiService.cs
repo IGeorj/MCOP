@@ -1,4 +1,5 @@
 ﻿using DSharpPlus.Entities;
+using MCOP.Core.Models;
 using MCOP.Data;
 using MCOP.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +11,11 @@ namespace MCOP.Core.Services.Scoped
     {
         public Task AddRecievedAmountAsync(ulong guildId, ulong userId, ulong emojiId, int amount);
         public Task RemoveRecievedAmountAsync(ulong guildId, ulong userId, ulong emojiId, int amount);
-        public Task<List<GuildUserEmoji>> GetTopEmojisForUserAsync(ulong guildId, ulong userId, int topAmount = 5);
+        public Task<List<GuildUserEmojiDto>> GetTopEmojisForUserAsync(ulong guildId, ulong userId, int topAmount = 5);
         public Task SetGuildUserEmojiCountAsync(ulong guildId, ulong userId, DiscordEmoji discordEmoji, int count);
     }
 
-    public class GuildUserEmojiService : IGuildUserEmojiService
+    public sealed class GuildUserEmojiService : IGuildUserEmojiService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
 
@@ -80,7 +81,7 @@ namespace MCOP.Core.Services.Scoped
             return userEmoji;
         }
 
-        public async Task<List<GuildUserEmoji>> GetTopEmojisForUserAsync(ulong guildId, ulong userId, int topAmount = 5)
+        public async Task<List<GuildUserEmojiDto>> GetTopEmojisForUserAsync(ulong guildId, ulong userId, int topAmount = 5)
         {
             try
             {
@@ -92,6 +93,7 @@ namespace MCOP.Core.Services.Scoped
                     .Where(x => x.GuildId == guildId && x.UserId == userId)
                     .OrderByDescending(x => x.RecievedAmount)
                     .Take(topAmount)
+                    .Select(e => new GuildUserEmojiDto(e.GuildId, e.UserId, e.EmojiId, e.RecievedAmount))
                     .ToListAsync();
             }
             catch (Exception ex)

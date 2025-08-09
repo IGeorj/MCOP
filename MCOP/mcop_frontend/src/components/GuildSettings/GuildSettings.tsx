@@ -1,35 +1,100 @@
-import { useState } from "react";
-import { FiMenu, FiX, FiAward, FiLoader } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiMenu, FiAward, FiEyeOff } from "react-icons/fi";
 import { cn } from "@/lib/utils";
 import { LevelingSettings } from "./Leveling/LevelingSettings";
-import { Navigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { Guild } from "@/types/Guild";
-import { config } from "@/config";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingsCategory } from "@/types/SettingsCategory";
 import { Sidebar } from "./Sidebar";
 import { useTranslation } from "react-i18next";
+import { useGuildList } from "../../contexts/GuildListContext";
+import { config } from "@/config";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
+import { GuildSelect } from "./GuildSelect";
+import { NsfwSettings } from "./Nsfw/NsfwSettings";
 
+const LoadingSkeleton = () => (
+  <section className="flex flex-col flex-1 min-h-0 w-full">
+    <div className="md:hidden flex items-center p-4 bg-navbar gap-4">
+      <Skeleton className="h-8 w-8 rounded-full" />
+      <Skeleton className="h-6 w-32" />
+    </div>
+    <div className="flex flex-1 min-h-0 w-full">
+      <aside className="bg-navbar flex-shrink-0 min-h-0 md:w-64 md:block overflow-y-auto transition-all z-20 hidden">
+        <div className="p-4 hidden items-center md:flex">
+          <Skeleton className="w-8 h-8 rounded-full mr-4" />
+          <Skeleton className="h-6 w-24" />
+        </div>
+        <div className="space-y-4 p-4">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-6 w-24" />
+        </div>
+      </aside>
+      <div className="flex-1 min-h-0 flex flex-col p-8 space-y-4">
+        <Skeleton className="h-8 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+      </div>
+    </div>
+  </section>
+);
 
+const MobileSidebar = ({ 
+  currentGuild, 
+  guilds, 
+  onGuildSelect, 
+  onMenuToggle 
+}: {
+  currentGuild: Guild;
+  guilds: Guild[];
+  onGuildSelect: (value: string) => void;
+  onMenuToggle: () => void;
+}) => (
+  <div className="md:hidden flex items-center justify-between p-4 bg-navbar">
+    <GuildSelect 
+      guilds={guilds} 
+      currentGuild={currentGuild} 
+      onSelect={onGuildSelect} 
+    />
+    <button
+      onClick={onMenuToggle}
+      className="p-2 rounded-md hover:bg-accent cursor-pointer"
+    >
+      {<FiMenu className="w-5 h-5" />}
+    </button>
+  </div>
+);
 
 export function GuildSettings() {
   const { t } = useTranslation();
+  const { guildId } = useParams();
+  const navigate = useNavigate();
+  const { guilds, setGuilds } = useGuildList();
+  const [activeCategory, setActiveCategory] = useState("leveling");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const categories: SettingsCategory[] = [
     {
       id: "leveling",
       name: t("leveling.title"),
-      icon: <FiAward className="w-4 h-4" />,
+      icon: <FiAward className="w-5 h-5" />,
       component: (guildId: string) => <LevelingSettings guildId={guildId} />,
+    },
+    {
+      id: "nsfw",
+      name: t("nsfw.title"),
+      icon: <FiEyeOff className="w-5 h-5" />,
+      component: (guildId: string) => <NsfwSettings guildId={guildId} />,
     }
   ];
 
-  const { guildId } = useParams();
-  const [activeCategory, setActiveCategory] = useState("leveling");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const { data: guild, isLoading, error } = useQuery<Guild>({
+  const guild = guilds.find(g => g.id === guildId);
+  const { data: fetchedGuild, isLoading, error } = useQuery({
     queryKey: ["guild", guildId],
     queryFn: async () => {
       const res = await fetch(`${config.API_URL}/guilds/${guildId}`, {
@@ -40,54 +105,52 @@ export function GuildSettings() {
       if (!res.ok) throw new Error("Failed to fetch guild");
       return res.json();
     },
+    enabled: !guild && !!guildId,
     retry: 1,
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-        <FiLoader className="animate-spin w-8 h-8" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (fetchedGuild && !guilds.some(g => g.id === fetchedGuild.id)) {
+      setGuilds(prev => [...prev, fetchedGuild]);
+    }
+  }, [fetchedGuild, guilds, setGuilds]);
 
-  if (error || !guild) {
-    return <Navigate to="/guilds" replace />;
+  const currentGuild = guild || fetchedGuild;
+
+  const handleGuildSelect = (value: string) => {
+    navigate(`/guilds/${value}`);
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(v => !v);
+  };
+
+  if (isLoading || !currentGuild) {
+    return <LoadingSkeleton />;
   }
 
   return (
     <section className="flex flex-col flex-1 min-h-0 w-full">
-      {/* Mobile Navbar */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-navbar">
-        <h2 className="text-xl font-semibold">{t("settings.title")}</h2>
-        <button
-          onClick={() => setMobileMenuOpen((v) => !v)}
-          className="p-2 rounded-md hover:bg-accent focus:outline-none focus:ring"
-        >
-          {mobileMenuOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
-        </button>
-      </div>
+      <MobileSidebar
+        currentGuild={currentGuild}
+        guilds={guilds}
+        onGuildSelect={handleGuildSelect}
+        onMenuToggle={toggleMobileMenu}
+      />
+
       <div className="flex flex-1 min-h-0 w-full">
-        {/* Desktop Sidebar */}
         <aside
           className={cn(
             "bg-navbar text-sidebar-foreground flex-shrink-0 min-h-0 md:w-64 md:block overflow-y-auto transition-all z-20",
-            mobileMenuOpen ? " w-64 h-full block shadow-lg" : "hidden md:block"
+            mobileMenuOpen ? "w-64 h-full block shadow-lg" : "hidden md:block"
           )}
         >
-          <div className="p-4 hidden items-center md:flex">
-            {guild.icon ? (
-              <img
-                src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.webp`}
-                alt={guild.name}
-                className="w-8 h-8 rounded-full mr-4 object-cover bg-hover"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full mr-4 flex items-center justify-center font-bold text-xl bg-gray-500">
-                {guild.name[0].toUpperCase()}
-              </div>
-            )}
-            <h2 className="font-medium">{guild.name}</h2>
+          <div className="gap-1 px-2 pt-1 pb-0 hidden items-center md:flex">
+            <GuildSelect 
+              guilds={guilds} 
+              currentGuild={currentGuild} 
+              onSelect={handleGuildSelect} 
+            />
           </div>
           <Sidebar
             categories={categories}
@@ -96,9 +159,9 @@ export function GuildSettings() {
             setMobileMenuOpen={setMobileMenuOpen}
           />
         </aside>
-        {/* Main content */}
+
         <ScrollArea className="flex-1 min-h-0 flex flex-col inset-shadow-md">
-          {categories.find((cat) => cat.id === activeCategory)?.component(guild.id) || (
+          {categories.find((cat) => cat.id === activeCategory)?.component(currentGuild.id) || (
             <div>{t("settings.error")}</div>
           )}
         </ScrollArea>

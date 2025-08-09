@@ -1,6 +1,6 @@
 ﻿namespace MCOP.Core.ViewModels
 {
-    public class HashSearchResultVM
+    public sealed class HashSearchResultVM
     {
         public ulong? MessageId { get; set; } = null;
         public ulong? MessageIdNormalized { get; set; } = null;

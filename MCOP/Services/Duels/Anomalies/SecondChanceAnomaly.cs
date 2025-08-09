@@ -1,9 +1,8 @@
 ﻿using MCOP.Core.Common;
-using System;
 
 namespace MCOP.Services.Duels.Anomalies
 {
-    public class SecondChanceAnomaly : DuelAnomaly
+    public sealed class SecondChanceAnomaly : DuelAnomaly
     {
         private const double SecondChance = 50;
 
