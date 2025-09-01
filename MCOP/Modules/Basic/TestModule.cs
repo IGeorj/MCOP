@@ -2,7 +2,7 @@
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using MCOP.Core.Services.Image;
-using MCOP.Core.Services.Shared;
+using MCOP.Core.Services.Scoped;
 
 namespace MCOP.Modules.Basic
 {
@@ -11,18 +11,17 @@ namespace MCOP.Modules.Basic
     public sealed class TestModule
     {
         [Command("images")]
-        public async Task Random(CommandContext ctx, params DiscordAttachment[] images)
+        public async Task Random(CommandContext ctx)
         {
             await ctx.DeferResponseAsync();
+            IGuildUserStatsService guildUserStatsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
 
-            byte[] img1Bytes = await HttpService.GetByteArrayAsync(images[0].Url);
-            byte[] img2Bytes = await HttpService.GetByteArrayAsync(images[1].Url);
-            using var bitmap1 = SkiaSharp.SKBitmap.Decode(img1Bytes);
-            using var bitmap2 = SkiaSharp.SKBitmap.Decode(img2Bytes);
-            var test1 = SkiaSharpService.GetPercentageDifference(bitmap1, bitmap2);
-            var test2 = SkiaSharpService.GetNormalizedDifference(bitmap1, bitmap2);
+            var topTen =  await guildUserStatsService.GetGuildUserStatsAsync(ctx.Guild.Id, pageSize: 10);
+            UserTopRendered userTopRendered = new UserTopRendered();
+            var sKImage = userTopRendered.RenderTable(topTen.stats, 1000);
 
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"Default: {test1}% Normalized:{test2}%"));
+            var sKData = sKImage.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 95);
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddFile("top10.jpg", sKData.AsStream()));
         }
     }
 }

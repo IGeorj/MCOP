@@ -4,6 +4,7 @@ using DSharpPlus.Entities;
 using MCOP.Common.Helpers;
 using MCOP.Core.Helpers;
 using MCOP.Core.Models;
+using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
 using MCOP.Extensions;
 using Newtonsoft.Json.Linq;
@@ -47,7 +48,14 @@ namespace MCOP.Modules.User
             var guild = await CommandContextHelper.ValidateAndGetGuildAsync(ctx);
             if (guild is null) return;
 
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"{LeaderboardUrl}{guild.Id}"));
+            var guildUserStatsService = ctx.ServiceProvider.GetRequiredService<IGuildUserStatsService>();
+
+            var (stats, totalCount) = await guildUserStatsService.GetGuildUserStatsAsync(guild.Id, pageSize: 10);
+            var userTopRendered = new UserTopRendered();
+            var sKImage = userTopRendered.RenderTable(stats, 1000);
+            var sKData = sKImage.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 95);
+
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"[-> Полный список <-](<{LeaderboardUrl}{guild.Id}>)").AddFile("top10.jpg", sKData.AsStream()));
         }
 
         [Command("set-emoji-count")]

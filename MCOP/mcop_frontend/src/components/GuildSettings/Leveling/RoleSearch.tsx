@@ -9,7 +9,7 @@ export function RoleSearch({ searchTerm, setSearchTerm }: {
   const { t } = useTranslation();
 
   return (
-    <div className="relative mb-4">
+    <div className="relative">
       <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
       <Input
         placeholder={t("leveling.searchRoles")}

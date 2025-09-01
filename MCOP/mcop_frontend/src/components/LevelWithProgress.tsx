@@ -13,16 +13,6 @@ interface LevelWithProgressProps {
   nextLevelExp: number;
 }
 
-const getProgressGradient = (percent: number): string => {
-  if (percent < 33) {
-    return "linear-gradient(90deg, #ef4444 0%, #f59e0b 100%)";
-  } else if (percent < 66) {
-    return "linear-gradient(90deg, #f59e0b 0%, #f97316 100%)";
-  } else {
-    return "linear-gradient(90deg, #f97316 0%, #22c55e 100%)";
-  }
-};
-
 const LevelWithProgress: React.FC<LevelWithProgressProps> = ({
   level,
   exp,
@@ -62,7 +52,7 @@ const LevelWithProgress: React.FC<LevelWithProgressProps> = ({
                 className="h-full transition-all duration-200"
                 style={{
                   width: `${progress}%`,
-                  background: getProgressGradient(progress),
+                  background: "linear-gradient(90deg, #6366f1 0%, #06b6d4 100%)",
                 }}
               />
             </div>

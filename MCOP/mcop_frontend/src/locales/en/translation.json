@@ -1,7 +1,8 @@
 {
   "leaderboard": {
     "error": "Failed to load data. Please try again later.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "title": "Leaderboard"
   },
   "theEnd": "The End",
   "likes": "Likes",
