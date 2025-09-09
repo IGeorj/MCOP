@@ -55,26 +55,32 @@ namespace MCOP.Controllers
 
         [HttpGet("content/{*imagePath}")]
         [AuthorizeUserId(226810751308791809)]
-        public IActionResult GetImageContent(string imagePath)
+        public IActionResult GetImageContent(string imagePath)  
         {
             if (string.IsNullOrEmpty(_rootPath)) return NotFound();
 
+            if (string.IsNullOrEmpty(imagePath) ||
+                imagePath.Contains("..") ||
+                imagePath.Contains(':') ||
+                imagePath.Contains("//"))
+            {
+                return BadRequest("Invalid path.");
+            }
+
             try
             {
-                var fullPath = Path.GetFullPath(Path.Combine(_rootPath, imagePath));
+                var safePath = Path.GetFullPath(Path.Combine(_rootPath, imagePath.TrimStart('/', '\\')));
 
-                if (!fullPath.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
+                if (!safePath.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
                 {
                     return BadRequest("Invalid path.");
                 }
 
-                if (!System.IO.File.Exists(fullPath))
+                if (!System.IO.File.Exists(safePath))
                     return NotFound();
 
-                var mimeType = GetMimeType(fullPath);
-                var fileStream = System.IO.File.OpenRead(fullPath);
-
-                return File(fileStream, mimeType);
+                var mimeType = GetMimeType(safePath);
+                return PhysicalFile(safePath, mimeType);
             }
             catch (Exception ex)
             {
