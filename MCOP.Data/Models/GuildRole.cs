@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 namespace MCOP.Data.Models
 {
     [PrimaryKey(nameof(GuildId), nameof(Id))]
@@ -13,8 +11,8 @@ namespace MCOP.Data.Models
 
         public int? LevelToGetRole { get; set; } = null;
 
+        public string? LevelUpMessageTemplate { get; set; }
+
         public bool IsGainExpBlocked { get; set; } = false;
     }
 }
-
-#nullable restore

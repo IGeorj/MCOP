@@ -114,11 +114,49 @@ namespace MCOP.Controllers
                 return StatusCode(500, "Failed to remove level role");
             }
         }
+
+        [Authorize]
+        [HttpPost("{guildId}/level-roles/{roleId}/message-template")]
+        public async Task<IActionResult> SetRoleMessageTemplate(
+            string guildId,
+            string roleId,
+            [FromBody] RoleMessageTemplateRequest request)
+        {
+            try
+            {
+                if (!ulong.TryParse(guildId, out var guildUlongId))
+                    return BadRequest("Invalid guild ID");
+
+                if (!ulong.TryParse(roleId, out var roleUlongId))
+                    return BadRequest("Invalid role ID");
+
+                var forbiddenResult = await CheckUserPermissionsAsync(guildUlongId);
+                if (forbiddenResult is not null)
+                    return forbiddenResult;
+
+                await _guildRoleService.SetRoleLevelUpMessageTemplateAsync(
+                    guildUlongId,
+                    roleUlongId,
+                    request?.Template);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error updating role message template {RoleId} in guild {GuildId}", roleId, guildId);
+                return StatusCode(500, "Failed to update role message template");
+            }
+        }
     }
 
     public class LevelRoleRequest
     {
         public string? RoleId { get; set; }
         public int Level { get; set; }
+    }
+
+    public class RoleMessageTemplateRequest
+    {
+        public string? Template { get; set; }
     }
 }

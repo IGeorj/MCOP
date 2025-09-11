@@ -157,7 +157,8 @@ namespace MCOP.Controllers
                             color = role.Color.ToString(),
                             iconUrl = role.IconUrl,
                             levelToGetRole = settings?.LevelToGetRole,
-                            isGainExpBlocked = settings?.IsGainExpBlocked ?? false
+                            isGainExpBlocked = settings?.IsGainExpBlocked ?? false,
+                            levelUpMessageTemplate = settings?.LevelUpMessageTemplate
                         };
                     })
                     .OrderByDescending(x => x.position)

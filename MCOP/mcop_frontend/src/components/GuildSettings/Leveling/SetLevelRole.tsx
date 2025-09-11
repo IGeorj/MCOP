@@ -116,7 +116,7 @@ export function SetLevelRole({
         <Button
           onClick={handleAddLevelRole}
           disabled={!selectedRole || !levelInput}
-          className={`w-full text-primary border-primary border-1 ${(!selectedRole || !levelInput) ? " cursor-not-allowed" : "cursor-pointer"}`}
+          className={`w-full text-primary border-primary border-1 cursor-pointer hover:opacity-75`}
         >
           {t("common.update")}
         </Button>

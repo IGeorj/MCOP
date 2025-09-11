@@ -4,6 +4,7 @@
         ulong GuildId,
         ulong Id,
         int? LevelToGetRole,
-        bool IsGainExpBlocked
+        bool IsGainExpBlocked,
+        string? LevelUpMessageTemplate
     );
 }

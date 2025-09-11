@@ -34,7 +34,12 @@
     "currentLevelRoles": "Текущии Уровни",
     "noLevelRoles": "Роли не найдены",
     "role": "Роль",
-    "actions": "Действия"
+    "actions": "Действия",
+    "levelUpMessageSettings": "Настройки сообщений о повышении уровня",
+    "enableMessages": "Включить сообщения",
+    "templateHelp": "Используйте {user}, {role}, {level} для отображения соответствующих значений",
+    "templatePlaceholder": "например, {user} достиг уровня {level} и получил роль {role}!",
+    "messageTemplate": "Шаблон сообщения"
   },
   "nsfw": {
     "title": "Nsfw",
@@ -44,7 +49,9 @@
     "selectChannel": "Выбрать канал",
     "searchRoles": "Поиск каналов...",
     "none": "Отсутствует",
-    "update": "Обновить"
+    "update": "Обновить",
+    "save": "Сохранить",
+    "cancel": "Отменить"
   },
   "settings": {
     "title": "Настройки",

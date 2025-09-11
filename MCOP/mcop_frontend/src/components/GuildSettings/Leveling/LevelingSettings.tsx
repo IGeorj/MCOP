@@ -7,6 +7,7 @@ import { SetLevelRole } from "./SetLevelRole";
 import { CurrentLevelRoles } from "./CurrentLevelRoles";
 import { ExpBlockControl } from "./ExpBlockControl";
 import { RoleSearch } from "./RoleSearch";
+import { LevelUpMessageSettings } from "./LevelUpMessageSettings";
 import { useTranslation } from "react-i18next";
 
 export function LevelingSettings({ guildId }: { guildId: string }) {
@@ -27,6 +28,7 @@ export function LevelingSettings({ guildId }: { guildId: string }) {
     },
     enabled: !!guildId,
   });
+
 
   return (
     <div className="space-y-6 p-6">
@@ -52,6 +54,7 @@ export function LevelingSettings({ guildId }: { guildId: string }) {
           roles={roles}
         />
       </div>
+      <LevelUpMessageSettings guildId={guildId} />
       <CurrentLevelRoles
         guildId={guildId}
         roles={roles}

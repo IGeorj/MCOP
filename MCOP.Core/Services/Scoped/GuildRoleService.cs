@@ -16,17 +16,22 @@ namespace MCOP.Core.Services.Scoped
         public Task SetBlockedRoleAsync(ulong guildId, ulong roleId, bool isBlocked);
         public Task ToggleBlockedRoleAsync(ulong guildId, ulong roleId);
         public Task SetRoleLevelAsync(ulong guildId, ulong roleId, int? level = null);
+        public Task SetRoleLevelUpMessageTemplateAsync(ulong guildId, ulong roleId, string? template);
         public Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel);
     }
 
     public sealed class GuildRoleService : IGuildRoleService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
+        private readonly IGuildConfigService _guildConfigService;
+        private readonly IRoleApplicationService _roleApplicationService;
         private readonly DiscordClient _discordClient;
 
-        public GuildRoleService(IDbContextFactory<McopDbContext> contextFactory, DiscordClient discordClient)
+        public GuildRoleService(IDbContextFactory<McopDbContext> contextFactory, IGuildConfigService guildConfigService, IRoleApplicationService roleApplicationService, DiscordClient discordClient)
         {
             _contextFactory = contextFactory;
+            _guildConfigService = guildConfigService;
+            _roleApplicationService = roleApplicationService;
             _discordClient = discordClient;
         }
 
@@ -39,7 +44,7 @@ namespace MCOP.Core.Services.Scoped
                     .AsNoTracking()
                     .Where(us => us.GuildId == guildId)
                     .OrderBy(us => us.LevelToGetRole)
-                    .Select(r => new GuildRoleDto(r.GuildId, r.Id, r.LevelToGetRole, r.IsGainExpBlocked))
+                    .Select(r => new GuildRoleDto(r.GuildId, r.Id, r.LevelToGetRole, r.IsGainExpBlocked, r.LevelUpMessageTemplate))
                     .ToListAsync();
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -57,7 +62,7 @@ namespace MCOP.Core.Services.Scoped
                 return await context.GuildRoles
                     .AsNoTracking()
                     .Where(us => us.GuildId == guildId && us.IsGainExpBlocked)
-                    .Select(r => new GuildRoleDto(r.GuildId, r.Id, r.LevelToGetRole, r.IsGainExpBlocked))
+                    .Select(r => new GuildRoleDto(r.GuildId, r.Id, r.LevelToGetRole, r.IsGainExpBlocked, r.LevelUpMessageTemplate))
                     .ToListAsync();
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -126,6 +131,26 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
+        public async Task SetRoleLevelUpMessageTemplateAsync(ulong guildId, ulong roleId, string? template)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
+                guildRole.LevelUpMessageTemplate = template;
+
+                await context.SaveChangesAsync();
+
+                Log.Information("SetRoleLevelUpMessageTemplateAsync: {guildId}, roleId: {roleId}, hasTemplate: {hasTemplate}", guildId, roleId, !string.IsNullOrWhiteSpace(template));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                Log.Error(ex, "Error in SetRoleLevelUpMessageTemplateAsync for guildId: {guildId}, roleId: {roleId}", guildId, roleId);
+                throw;
+            }
+        }
+
         public async Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel)
         {
             if (oldLevel == newLevel) return;
@@ -151,7 +176,7 @@ namespace MCOP.Core.Services.Scoped
                     return;
                 }
 
-                await ApplyRoleChangesAsync(guildId, channelId, userId, rolesToProcess, newLevel);
+                await _roleApplicationService.ApplyLevelingRolesAsync(guildId, channelId, userId, rolesToProcess, newLevel);
 
                 foreach (var role in rolesToProcess)
                 {
@@ -194,71 +219,6 @@ namespace MCOP.Core.Services.Scoped
             }
 
             return rolesToProcess.Distinct().ToList();
-        }
-
-        private async Task ApplyRoleChangesAsync(ulong guildId, ulong channelId, ulong userId, List<GuildRole> rolesToProcess, int newLevel)
-        {
-            if (rolesToProcess.Count == 0)
-                return;
-
-            var guild = await _discordClient.GetGuildAsync(guildId);
-            if (guild is null)
-            {
-                Log.Warning("Guild {GuildId} not found", guildId);
-                return;
-            }
-
-            var user = await guild.GetMemberAsync(userId);
-            if (user is null)
-            {
-                Log.Warning("User {UserId} not found in guild {GuildId}", userId, guildId);
-                return;
-            }
-
-            var channel = await guild.GetChannelAsync(channelId);
-
-            foreach (var role in rolesToProcess)
-            {
-                var discordRole = await guild.GetRoleAsync(role.Id);
-                if (discordRole is null)
-                {
-                    Log.Warning("Role {RoleId} not found in guild {GuildId}", role.Id, guildId);
-                    continue;
-                }
-
-                try
-                {
-                    if (role.LevelToGetRole <= newLevel)
-                    {
-                        if (channel is not null)
-                        {
-                            DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder();
-                            messageBuilder.AddMention(new UserMention(user));
-                            messageBuilder.WithContent($"<@{user.Id}> Ого ты жёсткий, повышаем до <@&{role.Id}>");
-                            await messageBuilder.SendAsync(channel);
-                        }
-
-                        await user.GrantRoleAsync(discordRole, "LvlUp");
-                        Log.Information("Added role {RoleName} to user {UserId}", discordRole.Name, userId);
-                    }
-                    else
-                    {
-                        if (channel is not null)
-                        {
-                            DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder();
-                            messageBuilder.WithContent($"<@{user.Id}> Заскамили на роль, убираем <@&{role.Id}>");
-                            await messageBuilder.SendAsync(channel);
-                        }
-
-                        await user.RevokeRoleAsync(discordRole);
-                        Log.Information("Removed role {RoleName} from user {UserId}", discordRole.Name, userId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Failed to modify role {RoleId} for user {UserId}", role.Id, userId);
-                }
-            }
         }
     }
 }

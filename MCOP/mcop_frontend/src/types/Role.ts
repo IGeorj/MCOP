@@ -5,4 +5,5 @@ type Role = {
   iconUrl: string;
   levelToGetRole: number | null;
   isGainExpBlocked: boolean;
+  levelUpMessageTemplate?: string | null;
 };

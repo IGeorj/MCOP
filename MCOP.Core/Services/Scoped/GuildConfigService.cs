@@ -11,6 +11,9 @@ namespace MCOP.Core.Services.Scoped
         public Task<List<GuildConfigDto>> GetGuildConfigsWithLewdChannelAsync();
         public Task SetLewdChannelAsync(ulong guildId, ulong? channelId);
         public Task SetLoggingChannelAsync(ulong guildId, ulong channelId);
+        public Task SetLevelUpMessageTemplateAsync(ulong guildId, string? template);
+        public Task<bool> IsLevelUpMessagesEnabledAsync(ulong guildId);
+        public Task SetLevelUpMessagesEnabledAsync(ulong guildId, bool enabled);
     }
 
     public sealed class GuildConfigService : IGuildConfigService
@@ -37,7 +40,7 @@ namespace MCOP.Core.Services.Scoped
 
                 Log.Information("GetOrAddGuildConfigAsync guildId: {guildId}", guildId);
 
-                return new GuildConfigDto(config.GuildId, config.Prefix, config.LogChannelId, config.LoggingEnabled, config.LewdChannelId, config.LewdEnabled);
+                return new GuildConfigDto(config.GuildId, config.Prefix, config.LogChannelId, config.LoggingEnabled, config.LewdChannelId, config.LewdEnabled, config.LevelUpMessageTemplate, config.LevelUpMessagesEnabled);
             }
             catch (Exception ex)
             {
@@ -57,7 +60,7 @@ namespace MCOP.Core.Services.Scoped
                 return await context.GuildConfigs
                     .AsNoTracking()
                     .Where(x => x.LewdChannelId != null)
-                    .Select(c => new GuildConfigDto(c.GuildId, c.Prefix, c.LogChannelId, c.LoggingEnabled, c.LewdChannelId, c.LewdEnabled))
+                    .Select(c => new GuildConfigDto(c.GuildId, c.Prefix, c.LogChannelId, c.LoggingEnabled, c.LewdChannelId, c.LewdEnabled, c.LevelUpMessageTemplate, c.LevelUpMessagesEnabled))
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -109,6 +112,63 @@ namespace MCOP.Core.Services.Scoped
             catch (Exception ex)
             {
                 Log.Error(ex, "Error in SetLoggingChannelAsync for guildId: {guildId}, channelId: {channelId}", guildId, channelId);
+                throw;
+            }
+        }
+
+        public async Task<bool> IsLevelUpMessagesEnabledAsync(ulong guildId)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+                var config = await context.GuildConfigs.FindAsync(guildId);
+                return config?.LevelUpMessagesEnabled ?? true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error checking LevelUpMessagesEnabled for guild {GuildId}", guildId);
+                return true;
+            }
+        }
+
+        public async Task SetLevelUpMessageTemplateAsync(ulong guildId, string? template)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
+                config.LevelUpMessageTemplate = template;
+
+                context.GuildConfigs.Update(config);
+                await context.SaveChangesAsync();
+
+                Log.Information("SetLevelUpMessageTemplateAsync guildId: {guildId}, hasTemplate: {hasTemplate}", guildId, !string.IsNullOrWhiteSpace(template));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in SetLevelUpMessageTemplateAsync for guildId: {guildId}", guildId);
+                throw;
+            }
+        }
+
+        public async Task SetLevelUpMessagesEnabledAsync(ulong guildId, bool enabled)
+        {
+            try
+            {
+                await using var context = _contextFactory.CreateDbContext();
+
+                GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
+                config.LevelUpMessagesEnabled = enabled;
+
+                context.GuildConfigs.Update(config);
+                await context.SaveChangesAsync();
+
+                Log.Information("SetLevelUpMessagesEnabledAsync guildId: {guildId}, enabled: {enabled}", guildId, enabled);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in SetLevelUpMessagesEnabledAsync for guildId: {guildId}", guildId);
                 throw;
             }
         }

@@ -1,7 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
-
-#nullable disable
 
 namespace MCOP.Data.Models
 {
@@ -19,5 +16,3 @@ namespace MCOP.Data.Models
         public ICollection<ImageHash> ImageHashes { get; set; } = null!;
     }
 }
-
-#nullable restore

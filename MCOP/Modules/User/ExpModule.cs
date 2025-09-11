@@ -15,6 +15,63 @@ namespace MCOP.Modules.User
     [RequirePermissions(DiscordPermission.Administrator)]
     public sealed class ExpModule
     {
+        [Command("set_levelup_message")]
+        [Description("Устанавливает шаблон сообщения при лвл апе. Используйте {user}, {role}, {level}.")]
+        [RequirePermissions(DiscordPermission.Administrator)]
+        public async Task SetLevelUpMessageAsync(CommandContext ctx, [Description("Шаблон или off")] string template)
+        {
+            await ctx.DeferEphemeralAsync();
+
+            if (ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync("Only works on server!");
+                return;
+            }
+
+            var cfgService = ctx.ServiceProvider.GetRequiredService<IGuildConfigService>();
+
+            await cfgService.SetLevelUpMessageTemplateAsync(ctx.Guild.Id, template);
+            await ctx.EditResponseAsync("Шаблон установлен.");
+        }
+
+        [Command("toggle_levelup_messages")]
+        [Description("Включает/выключает отправку сообщений о повышении уровня.")]
+        [RequirePermissions(DiscordPermission.Administrator)]
+        public async Task ToggleLevelUpMessagesAsync(CommandContext ctx)
+        {
+            await ctx.DeferEphemeralAsync();
+
+            if (ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync("Only works on server!");
+                return;
+            }
+
+            var cfgService = ctx.ServiceProvider.GetRequiredService<IGuildConfigService>();
+            var cfg = await cfgService.GetOrAddGuildConfigAsync(ctx.Guild.Id);
+            var newValue = !cfg.LevelUpMessagesEnabled;
+            await cfgService.SetLevelUpMessagesEnabledAsync(ctx.Guild.Id, newValue);
+            await ctx.EditResponseAsync(newValue ? "Сообщения включены." : "Сообщения выключены.");
+        }
+
+        [Command("set_role_levelup_message")]
+        [Description("Устанавливает индивидуальный шаблон сообщения для роли. Используйте {user}, {role}, {level}.")]
+        [RequirePermissions(DiscordPermission.Administrator)]
+        public async Task SetRoleLevelUpMessageAsync(CommandContext ctx, [Description("Роль")] DiscordRole role, [Description("Шаблон")] string template)
+        {
+            await ctx.DeferEphemeralAsync();
+
+            if (ctx.Guild is null)
+            {
+                await ctx.EditResponseAsync("Only works on server!");
+                return;
+            }
+
+            var roleService = ctx.ServiceProvider.GetRequiredService<IGuildRoleService>();
+            await roleService.SetRoleLevelUpMessageTemplateAsync(ctx.Guild.Id, role.Id, string.IsNullOrWhiteSpace(template) ? null : template);
+            await ctx.EditResponseAsync("Готово.");
+        }
+
         [Command("add_exp")]
         [Description("Добавляет опыт")]
         public async Task AddExp(CommandContext ctx,

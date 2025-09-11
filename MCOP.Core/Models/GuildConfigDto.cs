@@ -7,6 +7,8 @@ namespace MCOP.Core.Models
         ulong? LogChannelId,
         bool LoggingEnabled,
         ulong? LewdChannelId,
-        bool LewdEnabled
+        bool LewdEnabled,
+        string? LevelUpMessageTemplate,
+        bool LevelUpMessagesEnabled
     );
 }
