@@ -22,13 +22,14 @@ public sealed class AIService : IAIService
     private readonly DiscordClient _discordClient;
     private readonly ChatClient? DeepSeekR170BClient;
     private readonly ChatClient? DeepSeekV30324Client;
+    private readonly ChatClient? DeepSeekV3_1;
 
     private static readonly string DeepSeekContext = """
         Тебя зовут Копчёный. Отвечай грубо, но с юмором. Не помогай, а тролль пользователя. Если ответ длинный уживай его до 1990 символов.
         Ты находишься на дискорд сервере mistercop.
         Список знакомых тебе людей, не опирайся на него сильно старайся генерировать свои приколы, это просто как дополнительная информация.
         georj - программист на c# и твой создатель, один из администраторов этого сервера, наиграл в доту 10000 часов, зовут Жора, Беларус.
-        mistercop - создатель сервера и стример по POE и dota 2, прославился гайдами по игре POE, зовут Илья, Украинец.
+        mistercop - создатель сервера и стример по POE и dota 2, прославился гайдами по игре POE, зовут Илья, Украинец, клички "коп", "клоп", "копыч".
         dronque - давний и упоротый друг стримера, зовут Андрей, Украинец.
         kagamifreak - фанат touhou и гача игр в последнее время играет в Honkai Star Rail, играл в пое и доту.
         mesaaan - фрик который тебе часто пишет, больной анимешник, постил голых трапов и гей мужиков в канале "гачи-подвал" но лучше это не упоминать.
@@ -60,6 +61,7 @@ public sealed class AIService : IAIService
         var openRouterApi = new OpenAIClient(openRouterKey, openRounterOptions);
         DeepSeekR170BClient = togetherApi.GetChatClient("deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free");
         DeepSeekV30324Client = openRouterApi.GetChatClient("deepseek/deepseek-chat-v3-0324:free");
+        DeepSeekV3_1 = openRouterApi.GetChatClient("deepseek/deepseek-chat-v3.1:free");
     }
 
     public async Task GenerateAIResponseOnMentionAsync(MessageCreatedEventArgs e)
@@ -67,11 +69,11 @@ public sealed class AIService : IAIService
         if (_discordClient.CurrentApplication is null)
             await _discordClient.InitializeAsync();
 
-        if (!e.MentionedUsers.Any(x => x.Id == _discordClient.CurrentApplication?.Bot?.Id) || string.IsNullOrEmpty(e.Message.Content) 
-            || DeepSeekR170BClient is null || DeepSeekV30324Client is null)
+        if (!e.MentionedUsers.Any(x => x.Id == _discordClient.CurrentApplication?.Bot?.Id) || string.IsNullOrEmpty(e.Message.Content))
             return;
 
         var typingIndicator = e.Channel.TriggerTypingAsync();
+
         try
         {
             var emojiContext = await GetEmojiPromptAsync();
@@ -85,7 +87,7 @@ public sealed class AIService : IAIService
             contentParts.Add(ChatMessageContentPart.CreateTextPart(CleanBotMentions(e.Message.Content)));
             chatRequest.Add(new UserChatMessage(contentParts));
 
-            if (e.Message.ReferencedMessage is not null && !string.IsNullOrWhiteSpace(e.Message.ReferencedMessage.Content)) 
+            if (e.Message.ReferencedMessage is not null && !string.IsNullOrWhiteSpace(e.Message.ReferencedMessage.Content))
             {
                 var referenceMessage = e.Message.ReferencedMessage;
                 if (referenceMessage.Author?.Id == _discordClient.CurrentApplication?.Bot?.Id)
@@ -98,25 +100,11 @@ public sealed class AIService : IAIService
                 {
                     chatRequest.Insert(1, new SystemChatMessage($"Упомянуто сообщение {referenceMessage.Author?.GlobalName}: " + CleanBotMentions(referenceMessage.Content)));
                 }
-
             }
 
-            ClientResult<ChatCompletion> response;
-            int apiUsedToday = await _apiLimit.IncrementUsageAsync();
-            string modeText = "";
-            if (apiUsedToday < OpenRouterDailyLimit)
-            {
-                modeText = $"Mode: Умный {apiUsedToday}/{OpenRouterDailyLimit}\n";
-                response = await DeepSeekV30324Client.CompleteChatAsync(chatRequest);
-            }
-            else
-            {
-                modeText = $"Mode: Тупой\n";
-                response = await DeepSeekR170BClient.CompleteChatAsync(chatRequest);
-            }
+            (ClientResult<ChatCompletion> response, string modeText) = await GetAiResponse(chatRequest);
 
-
-            string aiResponse = response.Value.Content[0].Text;
+            string aiResponse = string.Join(Environment.NewLine, response.Value.Content.Select(x => x.Text));
             string text = modeText + CleanMessage(RemoveThinkTags(aiResponse));
             Log.Information(text);
             text = await ReplaceEmojiNamesWithActualEmojisAsync(text);
@@ -138,9 +126,7 @@ public sealed class AIService : IAIService
                 }
             }
             else
-            {
                 await e.Message.RespondAsync(text);
-            }
 
             Log.Information("GenerateAIResponseOnMentionAsync " + modeText);
         }
@@ -149,6 +135,44 @@ public sealed class AIService : IAIService
             Log.Error(ex, "Error in GenerateAIResponseOnMentionAsync");
             await e.Message.RespondAsync($"*затягивает сигарету* Чёт сломалось...");
         }
+    }
+
+    private async Task<(ClientResult<ChatCompletion> response, string modeText)> GetAiResponse(List<ChatMessage> chatRequest)
+    {
+        ClientResult<ChatCompletion> response;
+        int apiUsedToday = await _apiLimit.IncrementUsageAsync();
+        string modeText = "";
+        if (apiUsedToday < OpenRouterDailyLimit)
+        {
+            try
+            {
+                if (DeepSeekV30324Client is null) throw new Exception("DeepSeekV30324Client is null");
+                modeText = $"Mode: Умный {apiUsedToday}/{OpenRouterDailyLimit}\n";
+                response = await DeepSeekV30324Client.CompleteChatAsync(chatRequest);
+            }
+            catch (Exception)
+            {
+                try
+                {
+                    if (DeepSeekV3_1 is null) throw new Exception("DeepSeekV3_1 is null");
+                    Log.Information("DeepSeekV30324Client failed");
+                    response = await DeepSeekV3_1.CompleteChatAsync(chatRequest);
+                }
+                catch (Exception)
+                {
+                    modeText = $"Mode: Тупой\n";
+                    Log.Information("DeepSeekV3_1 failed");
+                    response = await DeepSeekR170BClient.CompleteChatAsync(chatRequest);
+                }
+            }
+        }
+        else
+        {
+            modeText = $"Mode: Тупой\n";
+            response = await DeepSeekR170BClient.CompleteChatAsync(chatRequest);
+        }
+
+        return (response, modeText);
     }
 
     private string GetMentionsPrompt(MessageCreatedEventArgs e)

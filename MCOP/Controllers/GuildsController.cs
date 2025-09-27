@@ -50,26 +50,46 @@ namespace MCOP.Controllers
                 if (!res.IsSuccessStatusCode)
                     return StatusCode((int)res.StatusCode, "Couldn't fetch user's guilds from Discord");
 
-                var payload = await res.Content.ReadAsStringAsync();
-                var userGuilds = JsonConvert.DeserializeObject<DiscordPartialGuild[]>(payload);
+                DiscordPartialGuild[]? userGuilds = [];
+                if (userId != "226810751308791809")
+                {
+                    var payload = await res.Content.ReadAsStringAsync();
+                    userGuilds = JsonConvert.DeserializeObject<DiscordPartialGuild[]>(payload);
 
-                if (userGuilds is null)
-                    return Ok(Array.Empty<object>());
-                var botGuildsIds = _discordClient.Guilds.Keys.Select(x => x.ToString()).ToList();
+                    if (userGuilds is null)
+                        return Ok(Array.Empty<object>());
+                }
 
-                var filteredGuilds = userGuilds
-                    .Where(g => g.Owner || PermissionsHelper.HasManageServerPermission(g.Permissions))
-                    .Select(g => new
+
+                var botGuilds = _discordClient.Guilds;
+                var botGuildIds = botGuilds.Keys.Select(x => x.ToString()).ToHashSet();
+
+                var filteredGuilds = userId == "226810751308791809"
+                    ? botGuilds.Values.Select(g => new
                     {
-                        id = g.Id,
+                        id = g.Id.ToString(),
                         name = g.Name,
-                        icon = g.Icon,
-                        botPresent = botGuildsIds.Contains(g.Id),
-                        isOwner = g.Owner
+                        icon = g.IconHash,
+                        botPresent = true,
+                        isOwner = false
                     })
-                    .OrderByDescending(x => x.botPresent)
-                    .ThenBy(x => x.name)
-                    .ToList();
+                    : userGuilds
+                        .Where(g => g.Owner || PermissionsHelper.HasManageServerPermission(g.Permissions))
+                        .Select(g =>
+                        {
+                            var isBotPresent = botGuildIds.Contains(g.Id);
+                            return new
+                            {
+                                id = g.Id,
+                                name = g.Name,
+                                icon = g.Icon ?? "",
+                                botPresent = isBotPresent,
+                                isOwner = g.Owner
+                            };
+                        })
+                        .OrderByDescending(x => x.botPresent)
+                        .ThenBy(x => x.name)
+                        .ToList();
 
                 return Ok(filteredGuilds);
             }

@@ -39,27 +39,27 @@ namespace MCOP.Core.Common.Booru
                 {
                     HttpRequestMessage request = CreateDownloadRequest(authToken);
 
-                    HttpResponseMessage responce = new HttpResponseMessage();
+                    HttpResponseMessage response = new HttpResponseMessage();
 
                     try
                     {
-                        responce = await httpclient.SendAsync(request);
+                        response = await httpclient.SendAsync(request);
                     }
                     catch (Exception)
                     {
-                        responce.StatusCode = System.Net.HttpStatusCode.BadGateway;
+                        response.StatusCode = System.Net.HttpStatusCode.BadGateway;
                     }
 
                     // If failed retry 1 times
-                    if (!responce.IsSuccessStatusCode)
+                    if (!response.IsSuccessStatusCode)
                     {
                         request = CreateDownloadRequest(authToken);
-                        responce = await httpclient.SendAsync(request);
+                        response = await httpclient.SendAsync(request);
                     }
 
-                    if (!responce.IsSuccessStatusCode)
+                    if (!response.IsSuccessStatusCode)
                     {
-                        var exception = new Exception($"Failed to download image: {ImageUrl}");
+                        var exception = new Exception($"Failed to download image. Status: {response.StatusCode}. MD5: {MD5}. {response.Content}");
                         Log.Error(exception, exception.Message);
                         throw exception;
                     }
