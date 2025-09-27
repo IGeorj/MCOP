@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using DSharpPlus;
-using System.Net.Http.Headers;
-using MCOP.Core.Services.Scoped;
-using Newtonsoft.Json;
-using MCOP.Core.Models;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
 using MCOP.Common.Helpers;
+using MCOP.Controllers.Responses;
+using MCOP.Core.Models;
+using MCOP.Core.Services.Scoped;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 
 namespace MCOP.Controllers
 {
@@ -39,57 +41,16 @@ namespace MCOP.Controllers
                 if (userId == null)
                     return Unauthorized();
 
-                var discordToken = await _appUserService.GetAccessTokenForUserAsync(userId);
-                if (discordToken == null)
+                var isAdminUser = userId == "226810751308791809";
+
+                var userGuilds = await GetUserGuildsAsync(userId);
+                if (userGuilds == null && !isAdminUser)
                     return Unauthorized();
 
-                var client = _httpClientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", discordToken);
-
-                var res = await client.GetAsync("https://discord.com/api/users/@me/guilds");
-                if (!res.IsSuccessStatusCode)
-                    return StatusCode((int)res.StatusCode, "Couldn't fetch user's guilds from Discord");
-
-                DiscordPartialGuild[]? userGuilds = [];
-                if (userId != "226810751308791809")
-                {
-                    var payload = await res.Content.ReadAsStringAsync();
-                    userGuilds = JsonConvert.DeserializeObject<DiscordPartialGuild[]>(payload);
-
-                    if (userGuilds is null)
-                        return Ok(Array.Empty<object>());
-                }
-
-
                 var botGuilds = _discordClient.Guilds;
-                var botGuildIds = botGuilds.Keys.Select(x => x.ToString()).ToHashSet();
-
-                var filteredGuilds = userId == "226810751308791809"
-                    ? botGuilds.Values.Select(g => new
-                    {
-                        id = g.Id.ToString(),
-                        name = g.Name,
-                        icon = g.IconHash,
-                        botPresent = true,
-                        isOwner = false
-                    })
-                    : userGuilds
-                        .Where(g => g.Owner || PermissionsHelper.HasManageServerPermission(g.Permissions))
-                        .Select(g =>
-                        {
-                            var isBotPresent = botGuildIds.Contains(g.Id);
-                            return new
-                            {
-                                id = g.Id,
-                                name = g.Name,
-                                icon = g.Icon ?? "",
-                                botPresent = isBotPresent,
-                                isOwner = g.Owner
-                            };
-                        })
-                        .OrderByDescending(x => x.botPresent)
-                        .ThenBy(x => x.name)
-                        .ToList();
+                var filteredGuilds = isAdminUser
+                    ? GetAdminGuilds(userGuilds, botGuilds)
+                    : GetUserFilteredGuilds(userGuilds, botGuilds);
 
                 return Ok(filteredGuilds);
             }
@@ -99,7 +60,6 @@ namespace MCOP.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
-
         [Authorize]
         [HttpGet("{guildId}")]
         public async Task<IActionResult> GetGuild(string guildId)
@@ -110,19 +70,7 @@ namespace MCOP.Controllers
                 if (userId == null)
                     return Unauthorized();
 
-                var discordToken = await _appUserService.GetAccessTokenForUserAsync(userId);
-                if (discordToken == null)
-                    return Unauthorized();
-
-                var client = _httpClientFactory.CreateClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", discordToken);
-
-                var res = await client.GetAsync("https://discord.com/api/users/@me/guilds");
-                if (!res.IsSuccessStatusCode)
-                    return StatusCode((int)res.StatusCode, "Couldn't fetch user's guilds from Discord");
-
-                var payload = await res.Content.ReadAsStringAsync();
-                var userGuilds = JsonConvert.DeserializeObject<DiscordPartialGuild[]>(payload);
+                var userGuilds = await GetUserGuildsAsync(userId);
 
                 if (userGuilds is null)
                     return Ok(null);
@@ -193,5 +141,77 @@ namespace MCOP.Controllers
             }
         }
 
+
+        private async Task<DiscordPartialGuild[]?> GetUserGuildsAsync(string userId)
+        {
+            var discordToken = await _appUserService.GetAccessTokenForUserAsync(userId);
+            if (discordToken == null)
+                return null;
+
+            using var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", discordToken);
+
+            var response = await client.GetAsync("https://discord.com/api/users/@me/guilds");
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var payload = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<DiscordPartialGuild[]>(payload);
+        }
+
+        private static List<GuildResponse> GetAdminGuilds(DiscordPartialGuild[]? userGuilds, IReadOnlyDictionary<ulong, DiscordGuild> botGuilds)
+        {
+            var botGuildIds = botGuilds.Keys.Select(x => x.ToString()).ToHashSet();
+            var allGuilds = new List<GuildResponse>();
+
+            allGuilds.AddRange(botGuilds.Values.Select(g => new GuildResponse
+            {
+                Id = g.Id.ToString(),
+                Name = g.Name,
+                Icon = g.IconHash ?? "",
+                BotPresent = true,
+                IsOwner = false
+            }));
+
+            if (userGuilds != null)
+            {
+                var userGuildsToAdd = userGuilds
+                    .Where(g => g.Owner || PermissionsHelper.HasManageServerPermission(g.Permissions))
+                    .Where(g => !botGuildIds.Contains(g.Id))
+                    .Select(g => new GuildResponse
+                    {
+                        Id = g.Id,
+                        Name = g.Name,
+                        Icon = g.Icon ?? "",
+                        BotPresent = false,
+                        IsOwner = g.Owner
+                    });
+
+                allGuilds.AddRange(userGuildsToAdd);
+            }
+
+            return allGuilds.OrderByDescending(x => x.BotPresent)
+                            .ThenBy(x => x.Name)
+                            .ToList();
+        }
+
+        private static List<GuildResponse> GetUserFilteredGuilds(DiscordPartialGuild[] userGuilds, IReadOnlyDictionary<ulong, DiscordGuild> botGuilds)
+        {
+            var botGuildIds = botGuilds.Keys.Select(x => x.ToString()).ToHashSet();
+
+            return userGuilds
+                .Where(g => g.Owner || PermissionsHelper.HasManageServerPermission(g.Permissions))
+                .Select(g => new GuildResponse
+                {
+                    Id = g.Id,
+                    Name = g.Name,
+                    Icon = g.Icon ?? "",
+                    BotPresent = botGuildIds.Contains(g.Id),
+                    IsOwner = g.Owner
+                })
+                .OrderByDescending(x => x.BotPresent)
+                .ThenBy(x => x.Name)
+                .ToList();
+        }
     }
 }
