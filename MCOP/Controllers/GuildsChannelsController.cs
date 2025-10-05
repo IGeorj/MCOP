@@ -64,6 +64,7 @@ namespace MCOP.Controllers
                 var guild = await _discordClient.GetGuildAsync(id);
                 var channels = await guild.GetChannelsAsync();
                 var guildConfig = await _guildConfigService.GetOrAddGuildConfigAsync(id);
+                channels = channels.OrderBy(x => x.Position).Where(x => x.Type == DSharpPlus.Entities.DiscordChannelType.Text).ToList();
 
                 return Ok(channels.Select(channel => new
                 {

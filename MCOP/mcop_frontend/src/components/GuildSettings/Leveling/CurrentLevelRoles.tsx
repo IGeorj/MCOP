@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FiTrash2, FiEdit, FiCheck, FiX } from "react-icons/fi";
+import { FiTrash2, FiEdit, FiCheck, FiX, FiAward } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
 
@@ -95,8 +95,9 @@ export function CurrentLevelRoles({
 
   return (
     <div className="bg-navbar p-4 rounded-lg border border-border">
-      <h4 className="font-medium mb-4">{t("leveling.currentLevelRoles")}</h4>
-
+      <h4 className="font-medium mb-4 flex items-center gap-2">
+        <FiAward className="w-4 h-4" /> {t("leveling.currentLevelRoles")}
+      </h4>
       {isLoadingRoles ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (

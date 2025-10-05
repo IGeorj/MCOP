@@ -56,7 +56,7 @@ namespace MCOP.Modules.Basic
             DiscordGuild guild, 
             DiscordMember member)
         {
-            var searchHashResult = await hashService.SearchHashesAsync(hashes);
+            var searchHashResult = await hashService.SearchHashesAsync(guild.Id, hashes);
 
             foreach (var hashResult in searchHashResult)
             {
@@ -66,7 +66,7 @@ namespace MCOP.Modules.Basic
                     continue;
                 }
 
-                await hashService.SaveHashAsync(guild.Id, message.Id, member.Id, hashResult.HashToCheck);
+                await hashService.SaveHashAsync(guild.Id, message.ChannelId, message.Id, member.Id, hashResult.HashToCheck);
                 count++;
             }
 

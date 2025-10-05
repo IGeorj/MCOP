@@ -15,29 +15,33 @@ using Serilog;
 namespace MCOP.EventListeners;
 public sealed class MessageListeners
 {
-    private static readonly ulong McopLewdChannelId = 586295440358506496;
-    private static readonly ulong GaysAdminChannelId = 549313253541543951;
 
-    private readonly IImageHashService _hashService;
+    private readonly IImageHashService _imageHashService;
     private readonly IAIService _aiService;
     private readonly IGuildUserStatsService _levelingService;
     private readonly IGuildMessageService _messageService;
+    private readonly IDiscordMessageService _discordMessageService;
+    private readonly IImageVerificationChannelService _channelService;
 
     public MessageListeners(
         IImageHashService hashService,
         IAIService aiService,
         IGuildUserStatsService levelingService,
-        IGuildMessageService messageService)
+        IGuildMessageService messageService,
+        IDiscordMessageService discordMessageService,
+        IImageVerificationChannelService channelService)
     {
-        _hashService = hashService;
+        _imageHashService = hashService;
         _aiService = aiService;
         _levelingService = levelingService;
         _messageService = messageService;
+        _discordMessageService = discordMessageService;
+        _channelService = channelService;
     }
 
     public async Task MessageCreateEventHandler(DiscordClient client, MessageCreatedEventArgs e)
     {
-        if (ShouldIgnoreMessage(e))
+        if (ShouldIgnoreCreatedMessage(e))
             return;
 
         await ProcessMessageCreation(client, e);
@@ -45,13 +49,13 @@ public sealed class MessageListeners
 
     public async Task MessageUpdatedEventHandler(DiscordClient client, MessageUpdatedEventArgs e)
     {
-        if (IsSpecialChannel(e.Guild.Id, e.Channel.Id))
+        if (await IsSpecialChannel(e.Guild.Id, e.Channel.Id))
             await ProcessMessageUpdate(client, e);
     }
 
     public async Task MessageDeleteEventHandler(DiscordClient client, MessageDeletedEventArgs e)
     {
-        if (IsSpecialChannel(e.Guild.Id, e.Channel.Id))
+        if (await IsSpecialChannel(e.Guild.Id, e.Channel.Id))
         {
             await _messageService.RemoveMessageAsync(e.Guild.Id, e.Message.Id);
         }
@@ -65,8 +69,6 @@ public sealed class MessageListeners
             await HandleRemoveMessageButton(e);
     }
 
-
-
     private async Task ProcessMessageCreation(DiscordClient client, MessageCreatedEventArgs e)
     {
         await MessageHelper.CheckEveryoneAsync(client, e);
@@ -75,15 +77,15 @@ public sealed class MessageListeners
         await _aiService.GenerateAIResponseOnMentionAsync(e);
         await _levelingService.AddMessageExpAsync(e.Guild.Id, e.Channel.Id, e.Author.Id);
 
-        if (ShouldReactWithHeart(e))
+        if (await ShouldReactWithHeart(e))
         {
             try
             {
                 await e.Message.CreateReactionAsync(DiscordEmoji.FromName(client, ":heart:"));
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                if (ex is UnauthorizedException) 
+                if (ex is UnauthorizedException)
                 {
                     Log.Warning("Can't add reaction, probably user have blocked bot");
                 }
@@ -91,7 +93,7 @@ public sealed class MessageListeners
             }
         }
 
-        if (IsSpecialChannel(e.Guild.Id, e.Channel.Id))
+        if (await IsSpecialChannel(e.Guild.Id, e.Channel.Id))
             await ProcessImageHashes(client, e);
     }
 
@@ -100,12 +102,12 @@ public sealed class MessageListeners
         if (!HasAttachmentsChanged(e.Message, e.MessageBefore))
             return;
 
-        List<byte[]> hashes = await _hashService.GetHashesFromMessageAsync(e.Message);
+        List<byte[]> hashes = await _imageHashService.GetHashesFromMessageAsync(e.Message);
         int updated = 0;
 
-        await _hashService.RemoveHashesByMessageId(e.Guild.Id, e.Message.Id);
+        await _imageHashService.RemoveHashes(e.Guild.Id, e.Channel.Id, e.Message.Id);
 
-        var searchHashResult = await _hashService.SearchHashesByGuildAsync(e.Guild.Id, hashes);
+        var searchHashResult = await _imageHashService.SearchHashesAsync(e.Guild.Id, hashes);
 
         foreach (var hashResult in searchHashResult)
         {
@@ -113,22 +115,22 @@ public sealed class MessageListeners
             if (resultMessageId is not null)
                 continue;
 
-            updated += await _hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
+            updated += await _imageHashService.SaveHashAsync(e.Guild.Id, e.Channel.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
         }
 
         if (updated > 0)
-            Log.Information("Updated {Amount} hashes ({Total} total)", updated, await _hashService.GetTotalCountAsync());
+            Log.Information("Updated {Amount} hashes from {count}", updated, hashes.Count);
     }
 
     private async Task ProcessImageHashes(DiscordClient client, MessageCreatedEventArgs e)
     {
-        List<byte[]> hashes = await _hashService.GetHashesFromMessageAsync(e.Message);
+        List<byte[]> hashes = await _imageHashService.GetHashesFromMessageAsync(e.Message);
 
         if (hashes.Count == 0)
             return;
 
         int added = 0;
-        var searchHashResult = await _hashService.SearchHashesByGuildAsync(e.Guild.Id, hashes);
+        var searchHashResult = await _imageHashService.SearchHashesAsync(e.Guild.Id, e.Channel.Id, hashes);
 
         foreach (var hashResult in searchHashResult)
         {
@@ -137,11 +139,11 @@ public sealed class MessageListeners
             if (messageFoundId is not null)
                 await TrySendCopyFoundMessageAsync(client, e, hashResult, messageFoundId.Value);
             else
-                added += await _hashService.SaveHashAsync(e.Guild.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
+                added += await _imageHashService.SaveHashAsync(e.Guild.Id, e.Channel.Id, e.Message.Id, e.Author.Id, hashResult.HashToCheck);
         }
 
         if (added > 0)
-            Log.Information("Added {Amount} hashes ({Total} total)", added, await _hashService.GetTotalCountAsync());
+            Log.Information("Added {Amount} hashes from {count}", added, hashes.Count);
     }
 
     private static bool HasAttachmentsChanged(DiscordMessage message, DiscordMessage? messageBefore)
@@ -155,13 +157,13 @@ public sealed class MessageListeners
         var currentAttachments = message.Attachments.ToList();
         var previousAttachments = messageBefore.Attachments.ToList();
 
-        return previousAttachments.Any(attachment => 
+        return previousAttachments.Any(attachment =>
             !currentAttachments.Any(x => x.Id == attachment.Id));
     }
 
     private async Task<int> GetAttachmentsHashIndex(DiscordClient client, DiscordMessage messageFromHash, byte[] hash)
     {
-        List<byte[]> oldHashes = await _hashService.GetHashesFromMessageAsync(messageFromHash);
+        List<byte[]> oldHashes = await _imageHashService.GetHashesFromMessageAsync(messageFromHash);
 
         double bestMatch = 0;
         int indexMatch = 0;
@@ -189,10 +191,9 @@ public sealed class MessageListeners
         catch (Exception)
         {
             Log.Warning("Can't get message from hash. messageId:{hashMessageId}, channelId:{channelId}, guildId:{guildId}", messageFoundId, e.Channel.Id, e.Guild.Id);
-            await _hashService.RemoveHashesByMessageId(e.Guild.Id, messageFoundId);
+            await _imageHashService.RemoveHashes(e.Guild.Id, e.Channel.Id, messageFoundId);
             return;
         }
-
 
         if (hashResult.HashFound is null && hashResult.HashFoundNormalized is null)
             return;
@@ -201,28 +202,7 @@ public sealed class MessageListeners
         var attachemnt = messageFromHash.Attachments[matchIndex];
         var diff = hashResult.MessageId.HasValue ? hashResult.Difference : hashResult.DifferenceNormalized;
 
-        DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
-            .WithTitle("Найдено совпадение")
-            .AddField("Новое", e.Author.Username, true)
-            .AddField("Прошлое", messageFromHash.Author?.Username ?? "", true)
-            .AddField("Совпадение", $"{diff:0.00}")
-            .WithThumbnail(attachemnt.Url ?? "");
-
-        DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
-            .AddEmbed(embedBuilder)
-            .AddComponents(
-            [
-                new DiscordLinkButtonComponent(e.Message.JumpLink.ToString(), "Новое"),
-                new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
-                new DiscordButtonComponent(
-                    DiscordButtonStyle.Success,
-                    GlobalNames.Buttons.RemoveMessage + $"UID:{e.Author.Id}",
-                    "Понял",
-                    false,
-                    new DiscordComponentEmoji(DiscordEmoji.FromName(client, ":heavy_check_mark:" ))),
-            ]);
-
-        await e.Channel.SendMessageAsync(messageBuilder);
+        await _discordMessageService.SendCopyFoundMessageAsync(e.Author, e.Channel, e.Message, messageFromHash, diff, attachemnt.Url);
     }
 
     private async Task HandleRemoveMessageButton(ComponentInteractionCreatedEventArgs e)
@@ -232,20 +212,20 @@ public sealed class MessageListeners
             await e.Message.DeleteSilentAsync();
     }
 
-    private bool ShouldReactWithHeart(MessageCreatedEventArgs e)
+    private async Task<bool> ShouldReactWithHeart(MessageCreatedEventArgs e)
     {
-        return (e.Guild.Id == GlobalVariables.McopServerId || IsSpecialChannel(e.Guild.Id, e.Channel.Id)) &&
+        return (e.Guild.Id == GlobalVariables.McopServerId || await IsSpecialChannel(e.Guild.Id, e.Channel.Id)) &&
                (e.Message.Attachments.Count > 0 || e.Message.IsContainsImageLink());
     }
 
-    private bool ShouldIgnoreMessage(MessageCreatedEventArgs e)
+    private bool ShouldIgnoreCreatedMessage(MessageCreatedEventArgs e)
     {
         return e.Author.IsBot || e.Guild is null;
     }
 
-    private bool IsSpecialChannel(ulong guildId, ulong channelId)
+    private async Task<bool> IsSpecialChannel(ulong guildId, ulong channelId)
     {
-        return (guildId == GlobalVariables.McopServerId && channelId == McopLewdChannelId) ||
-               (guildId == GlobalVariables.MyServerId && channelId == GaysAdminChannelId);
+        var channels = await _channelService.GetVerificationChannelsAsync(guildId);
+        return channels.Contains(channelId);
     }
 }

@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { FiMessageSquare } from "react-icons/fi";
 
 export function LevelUpMessageSettings({ guildId }: { guildId: string }) {
   const { t } = useTranslation();
@@ -85,7 +86,9 @@ export function LevelUpMessageSettings({ guildId }: { guildId: string }) {
 
   return (
     <div className="bg-navbar p-4 rounded-lg border border-border space-y-4">
-      <h4 className="font-medium">{t("leveling.levelUpMessageSettings")}</h4>
+      <h4 className="font-medium mb-4 flex items-center gap-2">
+        <FiMessageSquare className="w-4 h-4" /> {t("leveling.levelUpMessageSettings")}
+      </h4>
       <div className="flex items-center gap-2">
         <Switch id="lvlup-enabled" checked={enabled} onCheckedChange={handleToggle} />
         <Label htmlFor="lvlup-enabled">{t("leveling.enableMessages")}</Label>

@@ -81,6 +81,7 @@ builder.Services
     .AddScoped<IGuildUserEmojiService, GuildUserEmojiService>()
     .AddScoped<IGuildUserStatsService, GuildUserStatsService>()
     .AddScoped<IImageHashService, ImageHashService>()
+    .AddScoped<IImageVerificationChannelService, ImageVerificationChannelService>()
     .AddScoped<ILikeService, LikeService>()
     .AddScoped<IAppUserService, AppUserService>()
     .AddDiscordEvents()

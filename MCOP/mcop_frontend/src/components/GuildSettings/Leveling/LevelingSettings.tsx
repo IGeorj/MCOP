@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FaTrophy } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import { config } from "@/config";
-import { SetLevelRole } from "./SetLevelRole";
+import { SetLevelRole } from "./UpdateRoleLevel";
 import { CurrentLevelRoles } from "./CurrentLevelRoles";
 import { ExpBlockControl } from "./ExpBlockControl";
 import { RoleSearch } from "./RoleSearch";

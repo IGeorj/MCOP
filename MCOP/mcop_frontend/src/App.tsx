@@ -13,6 +13,7 @@ import { SlideShow } from "./components/Slideshow/Slideshow";
 import { GuildSettings } from "./components/GuildSettings/GuildSettings";
 import { GuildListProvider } from "./contexts/GuildListContext";
 import useTheme from "@/hooks/useTheme";
+import { GuildLayout } from "./components/GuildSettings/GuildSettingsLayout";
 
 const queryClient = new QueryClient();
 
@@ -32,7 +33,7 @@ export default function App() {
 
 export function AuthApp() {
   useTheme();
-  
+
   const {
     isAuthenticated,
     user,
@@ -80,20 +81,12 @@ export function AuthApp() {
                     </main>
                   </>
                 } />
-                <Route path="/guilds/:guildId" element={
-                  <>
-                    <Navbar
-                      isLoggedIn={isAuthenticated}
-                      username={user?.username}
-                      avatarUrl={user?.avatarUrl}
-                      onLogin={handleDiscordLogin}
-                      onLogout={handleLogout}
-                    />
-                    <div className="flex-1 min-h-0 flex flex-col">
-                      <GuildSettings />
-                    </div>
-                  </>
-                } />
+                <Route path="/guilds/:guildId" element={<GuildLayout />}>
+                  <Route index element={<GuildSettings />} />
+                  <Route path="leveling" element={<GuildSettings activeCategory="leveling" />} />
+                  <Route path="nsfw" element={<GuildSettings activeCategory="nsfw" />} />
+                  <Route path="image" element={<GuildSettings activeCategory="image" />} />
+                </Route>
                 <Route path="/slideshow" element={
                   <FullScreenLayout>
                     <SlideShow />

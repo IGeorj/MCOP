@@ -11,6 +11,8 @@ namespace MCOP.Data.Models
 
         public ulong UserId { get; set; }
 
+        public ulong ChannelId { get; set; }
+
         public int Likes { get; set; } = 0;
 
         public ICollection<ImageHash> ImageHashes { get; set; } = null!;

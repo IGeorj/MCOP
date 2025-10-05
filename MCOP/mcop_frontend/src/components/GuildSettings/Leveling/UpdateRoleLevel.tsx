@@ -1,4 +1,4 @@
-import { FiAward, FiChevronDown, FiPlus } from "react-icons/fi";
+import { FiRefreshCw , FiChevronDown } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -59,9 +59,8 @@ export function SetLevelRole({
   return (
     <div className="bg-navbar p-4 rounded-lg border border-border">
       <h4 className="font-medium mb-4 flex items-center gap-2">
-        <FiAward className="w-4 h-4" /> {t("leveling.updateRoleLevel")}
+        <FiRefreshCw className="w-4 h-4" /> {t("leveling.updateRoleLevel")}
       </h4>
-
       <div className="space-y-4">
         <Popover open={open} onOpenChange={setOpen} modal={true}>
           <PopoverTrigger asChild>
@@ -104,7 +103,6 @@ export function SetLevelRole({
             </Command>
           </PopoverContent>
         </Popover>
-
         <Input
           type="number"
           placeholder="Required level"
@@ -112,7 +110,6 @@ export function SetLevelRole({
           onChange={(e) => setLevelInput(e.target.value)}
           min="1"
         />
-
         <Button
           onClick={handleAddLevelRole}
           disabled={!selectedRole || !levelInput}

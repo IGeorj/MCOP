@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiMenu, FiAward, FiEyeOff } from "react-icons/fi";
+import { FiMenu, FiAward, FiEyeOff, FiImage } from "react-icons/fi";
 import { cn } from "@/lib/utils";
 import { LevelingSettings } from "./Leveling/LevelingSettings";
 import { useParams } from "react-router-dom";
@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { GuildSelect } from "./GuildSelect";
 import { NsfwSettings } from "./Nsfw/NsfwSettings";
+import { ImageVerificationSettings } from "./ImageVerification/ImageVerificationSettings";
 
 const LoadingSkeleton = () => (
   <section className="flex flex-col flex-1 min-h-0 w-full">
@@ -70,12 +71,12 @@ const MobileSidebar = ({
   </div>
 );
 
-export function GuildSettings() {
+export function GuildSettings({ activeCategory: initialActiveCategory = "leveling" }: { activeCategory?: string }) {
   const { t } = useTranslation();
   const { guildId } = useParams();
   const navigate = useNavigate();
   const { guilds, setGuilds } = useGuildList();
-  const [activeCategory, setActiveCategory] = useState("leveling");
+  const [activeCategory, setActiveCategory] = useState(initialActiveCategory);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const categories: SettingsCategory[] = [
@@ -84,12 +85,20 @@ export function GuildSettings() {
       name: t("leveling.title"),
       icon: <FiAward className="w-5 h-5" />,
       component: (guildId: string) => <LevelingSettings guildId={guildId} />,
-    },
-    {
+      link: `/guilds/${guildId}/leveling`,
+    },    {
       id: "nsfw",
       name: t("nsfw.title"),
       icon: <FiEyeOff className="w-5 h-5" />,
       component: (guildId: string) => <NsfwSettings guildId={guildId} />,
+      link: `/guilds/${guildId}/nsfw`,
+    },
+    {
+      id: "image",
+      name: "Image",
+      icon: <FiImage className="w-5 h-5" />,
+      component: (guildId: string) => <ImageVerificationSettings guildId={guildId} />,
+      link: `/guilds/${guildId}/image`,
     }
   ];
 
@@ -159,7 +168,6 @@ export function GuildSettings() {
             setMobileMenuOpen={setMobileMenuOpen}
           />
         </aside>
-
         <ScrollArea className="flex-1 min-h-0 flex flex-col inset-shadow-md">
           {categories.find((cat) => cat.id === activeCategory)?.component(currentGuild.id) || (
             <div>{t("settings.error")}</div>

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 import { SettingsCategory } from "@/types/SettingsCategory";
 import { Dispatch, SetStateAction } from "react";
 import { FaAngleRight } from "react-icons/fa";
@@ -19,8 +20,9 @@ export function Sidebar({
             aria-label="Server settings categories"
         >
             {categories.map((category) => (
-                <button
-                    key={category.id}
+                <Link
+                    key={category.name}
+                    to={category.link}
                     onClick={() => {
                         setActiveCategory(category.id);
                         setMobileMenuOpen(false);
@@ -36,7 +38,7 @@ export function Sidebar({
                         <span>{category.name}</span>
                         {activeCategory === category.id && <FaAngleRight />}
                     </div>
-                </button>
+                </Link>
             ))}
         </nav>
     );

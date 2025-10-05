@@ -7,4 +7,5 @@ export interface SettingsCategory {
   name: string;
   icon: ReactNode;
   component: CategoryComponent;
+  link: string;
 }

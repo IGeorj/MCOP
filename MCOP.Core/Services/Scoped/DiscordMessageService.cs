@@ -1,7 +1,10 @@
-﻿using DSharpPlus.Entities;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using MCOP.Common;
 using MCOP.Data;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Net.Mail;
 
 namespace MCOP.Core.Services.Scoped
 {
@@ -11,17 +14,20 @@ namespace MCOP.Core.Services.Scoped
         Task SendRoleRevokedMessageAsync(ulong guildId, DiscordMember user, DiscordRole role, DiscordChannel channel);
         Task<bool> IsLevelUpMessagesEnabledAsync(ulong guildId);
         Task<string> BuildLevelUpMessageAsync(ulong guildId, DiscordMember user, DiscordRole role, int newLevel);
+        Task SendCopyFoundMessageAsync(DiscordUser user, DiscordChannel channel, DiscordMessage message, DiscordMessage messageFromHash, double difference, string? attachmentUrl);
     }
 
     public class DiscordMessageService : IDiscordMessageService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly IGuildConfigService _guildConfigService;
+        private readonly DiscordClient _discordClient;
 
-        public DiscordMessageService(IDbContextFactory<McopDbContext> contextFactory, IGuildConfigService guildConfigService)
+        public DiscordMessageService(IDbContextFactory<McopDbContext> contextFactory, IGuildConfigService guildConfigService, DiscordClient discordClient)
         {
             _contextFactory = contextFactory;
             _guildConfigService = guildConfigService;
+            _discordClient = discordClient;
         }
 
         public async Task SendRoleGrantedMessageAsync(ulong guildId, DiscordMember user, DiscordRole role, int newLevel, DiscordChannel channel)
@@ -45,6 +51,38 @@ namespace MCOP.Core.Services.Scoped
             string content = $"<@{user.Id}> Заскамили на роль, убираем <@&{role.Id}>";
             var messageBuilder = new DiscordMessageBuilder().WithContent(content);
             await messageBuilder.SendAsync(channel);
+        }
+
+        public async Task SendCopyFoundMessageAsync(
+            DiscordUser user,
+            DiscordChannel channel,
+            DiscordMessage message,
+            DiscordMessage messageFromHash,
+            double difference,
+            string? attachmentUrl)
+        {
+            DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
+                .WithTitle("Найдено совпадение")
+                .AddField("Новое", user.Username, true)
+                .AddField("Прошлое", messageFromHash.Author?.Username ?? "", true)
+                .AddField("Совпадение", $"{difference:0.00} %")
+                .WithThumbnail(attachmentUrl ?? "");
+
+            DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
+                .AddEmbed(embedBuilder)
+                .AddComponents(
+                [
+                    new DiscordLinkButtonComponent(message.JumpLink.ToString(), "Новое"),
+                    new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
+                    new DiscordButtonComponent(
+                        DiscordButtonStyle.Success,
+                        GlobalNames.Buttons.RemoveMessage + $"UID:{user.Id}",
+                        "Понял",
+                        false,
+                        new DiscordComponentEmoji(DiscordEmoji.FromName(_discordClient, ":heavy_check_mark:" ))),
+                ]);
+
+            await channel.SendMessageAsync(messageBuilder);
         }
 
         public Task<bool> IsLevelUpMessagesEnabledAsync(ulong guildId)
