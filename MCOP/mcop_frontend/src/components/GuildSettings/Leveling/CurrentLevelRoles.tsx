@@ -1,7 +1,6 @@
 import { config } from "@/config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { FiTrash2, FiEdit, FiCheck, FiX, FiAward } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
@@ -78,7 +77,6 @@ export function CurrentLevelRoles({
 
   const handleBlur = () => {
     if (ignoreBlurRef.current) {
-      // Focus moved to action button (Save/Cancel); do not commit on blur
       ignoreBlurRef.current = false;
       return;
     }
@@ -92,105 +90,130 @@ export function CurrentLevelRoles({
     )
     ?.sort((a, b) => (a.levelToGetRole || 0) - (b.levelToGetRole || 0)) || [];
 
-
   return (
     <div className="bg-navbar p-4 rounded-lg border border-border">
       <h4 className="font-medium mb-4 flex items-center gap-2">
         <FiAward className="w-4 h-4" /> {t("leveling.currentLevelRoles")}
       </h4>
+      
       {isLoadingRoles ? (
-        <div className="space-y-2">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-card rounded-lg border border-border p-4">
+              <Skeleton className="h-4 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2 mb-3" />
+              <Skeleton className="h-10 w-full mb-3" />
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-8 rounded" />
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            </div>
           ))}
         </div>
       ) : filteredRoles.length === 0 ? (
         <p className="text-muted-foreground">{t("leveling.noLevelRoles")}</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("leveling.role")}</TableHead>
-              <TableHead>{t("leveling.level")}</TableHead>
-              <TableHead>{t("leveling.messageTemplate") ?? "Message Template"}</TableHead>
-              <TableHead>{t("leveling.actions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredRoles.map((role) => (
-              <TableRow key={role.id} className="border-0 hover:bg-accent dark:hover:bg-accent/50">
-                <TableCell className="flex items-center gap-1 text-base">
-                  <span className="mr-2 h-4 w-4 rounded-full" style={{ backgroundColor: role.color || 'transparent' }} />
-                  {role.name}
-                </TableCell>
-                <TableCell>{role.levelToGetRole}</TableCell>
-                <TableCell className="max-w-[300px]">
-                  {editingRoleId === role.id ? (
-                    <input
-                      autoFocus
-                      className="w-full bg-background border border-border rounded p-1 text-sm"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onBlur={handleBlur}
-                      placeholder={t("leveling.templatePlaceholder") ?? "e.g. {user} достиг {level} уровня и получает роль {role}!"}
-                    />
-                  ) : (
-                    <span className="truncate block" title={role.levelUpMessageTemplate ?? ""}>
-                      {role.levelUpMessageTemplate ?? "-"}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    {editingRoleId === role.id ? (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="cursor-pointer"
-                          onMouseDown={() => (ignoreBlurRef.current = true)}
-                          onClick={() => commitEdit()}
-                          title={t("common.save") ?? "Save"}
-                        >
-                          <FiCheck className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="cursor-pointer"
-                          onMouseDown={() => (ignoreBlurRef.current = true)}
-                          onClick={() => cancelEdit()}
-                          title={t("common.cancel") ?? "Cancel"}
-                        >
-                          <FiX className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="cursor-pointer"
-                          onClick={() => startEdit(role)}
-                        >
-                          <FiEdit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="cursor-pointer"
-                          onClick={() => removeLevelRole(role.id)}
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </Button>
-                      </>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRoles.map((role) => (
+            <div 
+              key={role.id} 
+              className="rounded-lg border border-border p-4 hover:bg-accent dark:hover:bg-accent/50 transition-colors"
+            >
+              {/* Role Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span 
+                    className="h-3 w-3 rounded-full flex-shrink-0" 
+                    style={{ backgroundColor: role.color || 'transparent' }} 
+                  />
+                  <span className="font-medium text-sm truncate" title={role.name}>
+                    {role.name}
+                  </span>
+                </div>
+                <div className="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded">
+                  {t("leveling.level")} {role.levelToGetRole}
+                </div>
+              </div>
+
+              {/* Message Template */}
+              <div className="mb-4">
+                <label className="text-xs text-muted-foreground block mb-2">
+                  {t("leveling.messageTemplate") ?? "Message Template"}
+                </label>
+                {editingRoleId === role.id ? (
+                  <input
+                    autoFocus
+                    className="w-full bg-background border border-border rounded p-2 text-sm"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={handleBlur}
+                    placeholder={t("leveling.templatePlaceholder") ?? "e.g. {user} достиг {level} уровня и получает роль {role}!"}
+                  />
+                ) : (
+                  <div 
+                    className="border border-border rounded p-2 text-sm min-h-[42px] break-words"
+                    title={role.levelUpMessageTemplate ?? ""}
+                  >
+                    {role.levelUpMessageTemplate || (
+                      <span className="text-muted-foreground italic">
+                        {""}
+                      </span>
                     )}
                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-1">
+                {editingRoleId === role.id ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer h-8 w-8 p-0"
+                      onMouseDown={() => (ignoreBlurRef.current = true)}
+                      onClick={() => commitEdit()}
+                      title={t("common.save") ?? "Save"}
+                    >
+                      <FiCheck className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer h-8 w-8 p-0"
+                      onMouseDown={() => (ignoreBlurRef.current = true)}
+                      onClick={() => cancelEdit()}
+                      title={t("common.cancel") ?? "Cancel"}
+                    >
+                      <FiX className="w-4 h-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer h-8 w-8 p-0"
+                      onClick={() => startEdit(role)}
+                      title={t("common.edit") ?? "Edit"}
+                    >
+                      <FiEdit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="cursor-pointer h-8 w-8 p-0"
+                      onClick={() => removeLevelRole(role.id)}
+                      title={t("common.delete") ?? "Delete"}
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
