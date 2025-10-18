@@ -77,7 +77,7 @@ export function GuildSettings({ activeCategory: initialActiveCategory = "levelin
   const navigate = useNavigate();
   const { guilds, setGuilds } = useGuildList();
   const [activeCategory, setActiveCategory] = useState(initialActiveCategory);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const categories: SettingsCategory[] = [
     {
@@ -131,7 +131,7 @@ export function GuildSettings({ activeCategory: initialActiveCategory = "levelin
   };
 
   const toggleMobileMenu = () => {
-    setMobileMenuOpen(v => !v);
+    setIsMobileMenuOpen(v => !v);
   };
 
   if (isLoading || !currentGuild) {
@@ -151,7 +151,7 @@ export function GuildSettings({ activeCategory: initialActiveCategory = "levelin
         <aside
           className={cn(
             "bg-navbar text-sidebar-foreground flex-shrink-0 min-h-0 md:w-64 md:block overflow-y-auto transition-all z-20",
-            mobileMenuOpen ? "w-64 h-full block shadow-lg" : "hidden md:block"
+            isMobileMenuOpen ? "w-full h-full block shadow-lg" : "hidden md:block"
           )}
         >
           <div className="gap-1 px-2 pt-1 pb-0 hidden items-center md:flex">
@@ -165,10 +165,10 @@ export function GuildSettings({ activeCategory: initialActiveCategory = "levelin
             categories={categories}
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
-            setMobileMenuOpen={setMobileMenuOpen}
+            setMobileMenuOpen={setIsMobileMenuOpen}
           />
         </aside>
-        <ScrollArea className="flex-1 min-h-0 flex flex-col inset-shadow-md">
+        <ScrollArea className={`flex-1 min-h-0 flex flex-col inset-shadow-md ${isMobileMenuOpen ? "hidden": ""}`}>
           {categories.find((cat) => cat.id === activeCategory)?.component(currentGuild.id) || (
             <div>{t("settings.error")}</div>
           )}
