@@ -37,6 +37,7 @@ const DiscordGuildList: React.FC = () => {
       return res.json();
     },
     enabled: isAuthenticated,
+    staleTime: 1000 * 60 * 1, // 1 min
     retry: 1,
   });
 

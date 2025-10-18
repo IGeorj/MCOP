@@ -2,33 +2,20 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaTrophy } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
-import { config } from "@/config";
-import { SetLevelRole } from "./UpdateRoleLevel";
 import { CurrentLevelRoles } from "./CurrentLevelRoles";
 import { ExpBlockControl } from "./ExpBlockControl";
 import { RoleSearch } from "./RoleSearch";
 import { LevelUpMessageSettings } from "./LevelUpMessageSettings";
 import { useTranslation } from "react-i18next";
+import { roleQueries } from "@/api/roles";
 
 export function LevelingSettings({ guildId }: { guildId: string }) {
   const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: roles, isLoading: isLoadingRoles } = useQuery<Role[]>({
-    queryKey: ["guildRoles", guildId],
-    queryFn: async () => {
-      const resp = await fetch(`${config.API_URL}/guilds/${guildId}/roles`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("app_session")}`,
-        },
-      });
-      if (!resp.ok) throw new Error("Failed to fetch roles");
-      return await resp.json();
-    },
-    enabled: !!guildId,
-  });
-
+  const { data: roles, isPending: isLoadingRoles } =
+    useQuery(roleQueries.getGuildRoles(guildId));
 
   return (
     <div className="space-y-6 p-6">
@@ -40,22 +27,16 @@ export function LevelingSettings({ guildId }: { guildId: string }) {
           <FaTrophy className="w-5 h-5 text-yellow-500" />
           <span>{t("leaderboard.title")}</span>
         </Link>
-        <RoleSearch searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ExpBlockControl
-          guildId={guildId}
-          roles={roles}
-          isLoadingRoles={isLoadingRoles}
-          searchTerm={searchTerm}
-        />
-        <SetLevelRole
-          guildId={guildId}
-          roles={roles}
-        />
-      </div>
-      <LevelUpMessageSettings guildId={guildId} />
+      <RoleSearch searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       <CurrentLevelRoles
+        guildId={guildId}
+        roles={roles}
+        isLoadingRoles={isLoadingRoles}
+        searchTerm={searchTerm}
+      />
+      <LevelUpMessageSettings guildId={guildId} />
+      <ExpBlockControl
         guildId={guildId}
         roles={roles}
         isLoadingRoles={isLoadingRoles}

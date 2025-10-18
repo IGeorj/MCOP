@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
+import { roleQueries } from "@/api/roles";
 
 export function ExpBlockControl({
   guildId,
@@ -33,7 +34,9 @@ export function ExpBlockControl({
       if (!resp.ok) throw new Error("Failed to toggle exp block");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["guildRoles", guildId] });
+      queryClient.invalidateQueries({
+        queryKey: roleQueries.getGuildRoles(guildId).queryKey
+      });
     },
   });
 
@@ -55,7 +58,7 @@ export function ExpBlockControl({
             ))}
           </div>
         ) : (
-          <ScrollArea className="h-[400px] pr-2">
+          <ScrollArea className="h-[300px] pr-2">
             <div className="space-y-2">
               {filteredRoles.map((role) => (
                 <div key={role.id} className="flex items-center justify-between p-2 rounded hover:bg-accent dark:hover:bg-accent/50">

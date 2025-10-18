@@ -46,19 +46,21 @@ export const ChannelSelectPopover: React.FC<ChannelSelectPopoverProps> = ({ chan
             />
           </div>
           <ScrollArea className="bg-navbar h-80 px-4 py-2">
-            <CommandItem
-              className="cursor-pointer"
-              key="none"
-              value={t("common.none")}
-              onSelect={() => {
-                onChannelSelect(null);
-                setOpen(false);
-              }}
-            >
-              <div className="flex items-center">
-                {t("common.none")}
-              </div>
-            </CommandItem>
+            {isDefaultNone && (
+              <CommandItem
+                className="cursor-pointer"
+                key="none"
+                value={t("common.none")}
+                onSelect={() => {
+                  onChannelSelect(null);
+                  setOpen(false);
+                }}
+              >
+                <div className="flex items-center">
+                  {t("common.none")}
+                </div>
+              </CommandItem>
+            )}
             {channels.length === 0 ? (
               <CommandEmpty>{t("common.none")}</CommandEmpty>
             ) : (

@@ -37,9 +37,9 @@
     "actions": "Действия",
     "levelUpMessageSettings": "Настройки сообщений о повышении уровня",
     "enableMessages": "Включить сообщения",
-    "templateHelp": "Используйте {user}, {role}, {level} для отображения соответствующих значений",
-    "templatePlaceholder": "например, {user} достиг уровня {level} и получил роль {role}!",
-    "messageTemplate": "Шаблон сообщения"
+    "templateHelp": "Сообщение по умолчанию. Используйте {user}, {role}, {level} для отображения соответствующих значений",
+    "templatePlaceholder": "Например: {user} достиг уровня {level} и получил роль {role}!",
+    "messageTemplate": "Сообщение при достижении уровня"
   },
   "nsfw": {
     "title": "Nsfw",
@@ -51,7 +51,12 @@
     "none": "Отсутствует",
     "update": "Обновить",
     "save": "Сохранить",
-    "cancel": "Отменить"
+    "cancel": "Отменить",
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "clickToEdit": "Нажми для редактирования",
+    "add": "Добавить",
+    "unsavedChanges": "Несохраненные изменения"
   },
   "settings": {
     "title": "Настройки",

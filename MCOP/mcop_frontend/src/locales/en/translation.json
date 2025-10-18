@@ -37,9 +37,9 @@
     "actions": "Actions",
     "levelUpMessageSettings": "Level-up message settings",
     "enableMessages": "Enable messages",
-    "templateHelp": "Use {user}, {role}, {level} to display correspondent values",
-    "templatePlaceholder": "e.g. {user} reached level {level} and got role {role}!",
-    "messageTemplate": "Message Template"
+    "templateHelp": "Default Message. Use {user}, {role}, {level} to display correspondent values",
+    "templatePlaceholder": "Example: {user} reached level {level} and got role {role}!",
+    "messageTemplate": "Message when leved reached"
   },
   "nsfw": {
     "title": "Nsfw",
@@ -51,7 +51,12 @@
     "none": "None",
     "update": "Update",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "clickToEdit": "Click to edit",
+    "add": "Add",
+    "unsavedChanges": "Unsaved changes"
   },
   "settings": {
     "title": "Settings",
