@@ -17,7 +17,7 @@ namespace MCOP.Core.Services.Scoped
         public Task ToggleBlockedRoleAsync(ulong guildId, ulong roleId);
         public Task SetRoleLevelAsync(ulong guildId, ulong roleId, int? level = null);
         public Task SetRoleLevelUpMessageTemplateAsync(ulong guildId, ulong roleId, string? template);
-        public Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel);
+        public Task ApplyLevelingRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel);
     }
 
     public sealed class GuildRoleService : IGuildRoleService
@@ -151,13 +151,13 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task UpdateLevelRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel)
+        public async Task ApplyLevelingRolesAsync(ulong guildId, ulong channelId, ulong userId, int oldLevel, int newLevel)
         {
             if (oldLevel == newLevel) return;
 
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var guildRoles = await context.GuildRoles
                     .Where(g => g.GuildId == guildId && g.LevelToGetRole != null)

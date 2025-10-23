@@ -18,16 +18,18 @@ namespace MCOP.Core.Services.Scoped
 
     public class ImageVerificationChannelService : IImageVerificationChannelService
     {
-        private readonly McopDbContext _dbContext;
-    
-        public ImageVerificationChannelService(McopDbContext dbContext)
+        private readonly IDbContextFactory<McopDbContext> _contextFactory;
+
+        public ImageVerificationChannelService(IDbContextFactory<McopDbContext> contextFactory)
         {
-            _dbContext = dbContext;
+            _contextFactory = contextFactory;
         }
     
         public async Task<List<ulong>> GetVerificationChannelsAsync(ulong guildId)
         {
-            return await _dbContext.ImageVerificationChannels
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
+            return await context.ImageVerificationChannels
                 .Where(c => c.GuildId == guildId)
                 .Select(c => c.ChannelId)
                 .ToListAsync();
@@ -35,43 +37,56 @@ namespace MCOP.Core.Services.Scoped
     
         public async Task<ImageVerificationChannel?> GetVerificationChannelAsync(ulong guildId, ulong channelId)
         {
-            return await _dbContext.ImageVerificationChannels
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
+            return await context.ImageVerificationChannels
                 .FirstOrDefaultAsync(c => c.GuildId == guildId && c.ChannelId == channelId);
         }
     
         public async Task AddVerificationChannelAsync(ulong guildId, ulong channelId)
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
             var channel = new ImageVerificationChannel
             {
                 GuildId = guildId,
                 ChannelId = channelId
             };
-            _dbContext.ImageVerificationChannels.Add(channel);
-            await _dbContext.SaveChangesAsync();
+
+            context.ImageVerificationChannels.Add(channel);
+
+            await context.SaveChangesAsync();
         }
     
         public async Task RemoveVerificationChannelAsync(ulong guildId, ulong channelId)
         {
-            var channel = await _dbContext.ImageVerificationChannels
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
+            var channel = await context.ImageVerificationChannels
                 .FirstOrDefaultAsync(c => c.GuildId == guildId && c.ChannelId == channelId);
+
             if (channel != null)
             {
-                _dbContext.ImageVerificationChannels.Remove(channel);
-                await _dbContext.SaveChangesAsync();
+                context.ImageVerificationChannels.Remove(channel);
+                await context.SaveChangesAsync();
             }
         }
     
         public async Task<bool> IsVerificationChannelAsync(ulong guildId, ulong channelId)
         {
-            return await _dbContext.ImageVerificationChannels
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
+            return await context.ImageVerificationChannels
                 .AnyAsync(c => c.GuildId == guildId && c.ChannelId == channelId);
         }
     
         public async Task<List<ulong>> GetImageVerificationChannelsAsync(ulong guildId)
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
             try
             {
-                var channels = await _dbContext.ImageVerificationChannels
+                var channels = await context.ImageVerificationChannels
                     .Where(ivc => ivc.GuildId == guildId)
                     .Select(ivc => ivc.ChannelId)
                     .ToListAsync();
@@ -87,6 +102,8 @@ namespace MCOP.Core.Services.Scoped
     
         public async Task AddImageVerificationChannelAsync(ulong guildId, ulong channelId)
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
             try
             {
                 var imageVerificationChannel = new ImageVerificationChannel
@@ -94,8 +111,11 @@ namespace MCOP.Core.Services.Scoped
                     GuildId = guildId,
                     ChannelId = channelId
                 };
-                _dbContext.ImageVerificationChannels.Add(imageVerificationChannel);
-                await _dbContext.SaveChangesAsync();
+
+                context.ImageVerificationChannels.Add(imageVerificationChannel);
+
+                await context.SaveChangesAsync();
+
                 Log.Information("AddImageVerificationChannelAsync guildId: {guildId}, channelId: {channelId}", guildId, channelId);
             }
             catch (Exception ex)
@@ -107,14 +127,16 @@ namespace MCOP.Core.Services.Scoped
     
         public async Task RemoveImageVerificationChannelAsync(ulong guildId, ulong channelId)
         {
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
             try
             {
-                var imageVerificationChannel = await _dbContext.ImageVerificationChannels
+                var imageVerificationChannel = await context.ImageVerificationChannels
                     .FirstOrDefaultAsync(ivc => ivc.GuildId == guildId && ivc.ChannelId == channelId);
                 if (imageVerificationChannel != null)
                 {
-                    _dbContext.ImageVerificationChannels.Remove(imageVerificationChannel);
-                    await _dbContext.SaveChangesAsync();
+                    context.ImageVerificationChannels.Remove(imageVerificationChannel);
+                    await context.SaveChangesAsync();
                     Log.Information("RemoveImageVerificationChannelAsync guildId: {guildId}, channelId: {channelId}", guildId, channelId);
                 }
                 else

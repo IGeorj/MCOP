@@ -58,6 +58,7 @@ Log.Information("Initializing services...");
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(Log.Logger, dispose: true);
 builder.Services
+    .AddMemoryCache()
     .AddSingleton(config)
     .AddSingleton(Log.Logger)
     .AddDbContextFactory<McopDbContext>(options => options.UseSqlite($"Data Source={config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
@@ -147,7 +148,8 @@ builder.Services.AddHostedService<BotBackgroundService>();
 builder.Services.AddHostedService<PeriodicTasksBackgroundService>();
 
 builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options => {
+    .AddJwtBearer("Bearer", options =>
+    {
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidIssuer = config.CurrentConfiguration.JwtConfig.Issuer,
@@ -158,7 +160,8 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 
-builder.WebHost.ConfigureKestrel(serverOptions => {
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
     if (builder.Environment.IsDevelopment())
         serverOptions.ListenLocalhost(5000);
     else

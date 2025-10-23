@@ -25,7 +25,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var message = await GetOrCreateMessageInternalAsync(guildId, messageId, userId);
                 message.Likes++;
@@ -44,7 +44,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var message = await GetOrCreateMessageInternalAsync(guildId, messageId, userId);
                 if (message.Likes > 0)
@@ -62,7 +62,7 @@ namespace MCOP.Core.Services.Scoped
 
         private async Task<GuildMessage> GetOrCreateMessageInternalAsync(ulong guildId, ulong messageId, ulong userId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var message = await context.GuildMessages
                 .SingleOrDefaultAsync(m => m.GuildId == guildId && m.Id == messageId);
@@ -82,7 +82,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task RemoveMessageAsync(ulong guildId, ulong messageId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             try
             {

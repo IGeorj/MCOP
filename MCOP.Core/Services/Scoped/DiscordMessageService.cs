@@ -92,7 +92,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 var config = await context.GuildConfigs.FindAsync(guildId);
                 var roleEntity = await context.GuildRoles.FirstOrDefaultAsync(r => r.GuildId == guildId && r.Id == role.Id);
                 var template = !string.IsNullOrWhiteSpace(roleEntity?.LevelUpMessageTemplate)

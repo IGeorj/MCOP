@@ -83,60 +83,18 @@ namespace MCOP.Controllers
                 if (guild == null)
                     return NotFound("Guild not found or you don't have permissions");
 
-                return Ok(new
+                return Ok(new GuildResponse
                 {
-                    id = guild.Id,
-                    name = guild.Name,
-                    icon = guild.Icon,
-                    botPresent = botGuildsIds.Contains(guild.Id),
-                    isOwner = guild.Owner
+                    Id = guild.Id,
+                    Name = guild.Name,
+                    Icon = guild.Icon,
+                    BotPresent = botGuildsIds.Contains(guild.Id),
+                    IsOwner = guild.Owner
                 });
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error fetching guild {GuildId} for user", guildId);
-                return StatusCode(500, "Internal server error");
-            }
-        }
-
-        [Authorize]
-        [HttpGet("{guildId}/roles")]
-        public async Task<IActionResult> GetGuildRoles(string guildId)
-        {
-            try
-            {
-                var id = ulong.Parse(guildId);
-                var guild = await _discordClient.GetGuildAsync(id);
-                var roleSettings = await _guildRoleService.GetGuildRolesAsync(id);
-
-                // Создаем словарь для быстрого поиска настроек по ID роли
-                var roleSettingsDict = roleSettings.ToDictionary(x => x.Id, x => x);
-
-                var combinedRoles = guild.Roles.Values
-                    .Select(role =>
-                    {
-                        roleSettingsDict.TryGetValue(role.Id, out var settings);
-
-                        return new
-                        {
-                            id = role.Id.ToString(),
-                            name = role.Name,
-                            position = role.Position,
-                            color = role.Color.ToString(),
-                            iconUrl = role.IconUrl,
-                            levelToGetRole = settings?.LevelToGetRole,
-                            isGainExpBlocked = settings?.IsGainExpBlocked ?? false,
-                            levelUpMessageTemplate = settings?.LevelUpMessageTemplate
-                        };
-                    })
-                    .OrderByDescending(x => x.position)
-                    .ToList();
-
-                return Ok(combinedRoles);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error fetching roles for guild {GuildId}", guildId);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -195,8 +153,10 @@ namespace MCOP.Controllers
                             .ToList();
         }
 
-        private static List<GuildResponse> GetUserFilteredGuilds(DiscordPartialGuild[] userGuilds, IReadOnlyDictionary<ulong, DiscordGuild> botGuilds)
+        private static List<GuildResponse> GetUserFilteredGuilds(DiscordPartialGuild[]? userGuilds, IReadOnlyDictionary<ulong, DiscordGuild> botGuilds)
         {
+            if (userGuilds is null) return [];
+
             var botGuildIds = botGuilds.Keys.Select(x => x.ToString()).ToHashSet();
 
             return userGuilds

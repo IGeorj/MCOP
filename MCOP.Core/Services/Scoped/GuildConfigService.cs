@@ -29,7 +29,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 GuildConfig? config = await context.GuildConfigs.FindAsync(guildId);
                 if (config is null)
@@ -53,7 +53,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 Log.Information("GetGuildConfigsWithLewdChannelAsync");
 
@@ -74,7 +74,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
                 config.LewdChannelId = channelId;
@@ -97,7 +97,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
                 config.LogChannelId = channelId;
@@ -120,7 +120,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 var config = await context.GuildConfigs.FindAsync(guildId);
                 return config?.LevelUpMessagesEnabled ?? true;
             }
@@ -135,7 +135,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
                 config.LevelUpMessageTemplate = template;
@@ -156,7 +156,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
                 config.LevelUpMessagesEnabled = enabled;
@@ -178,7 +178,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 GuildConfig? config = await context.GuildConfigs.FindAsync(guildId);
                 if (config is null)

@@ -9,7 +9,7 @@ export function CurrentLevelRoles({
   guildId,
   roles,
   isLoadingRoles,
-  searchTerm
+  searchTerm,
 }: {
   guildId: string;
   roles: Role[] | undefined;
@@ -18,25 +18,18 @@ export function CurrentLevelRoles({
 }) {
   const { t } = useTranslation();
   const {
-    editingRoleId,
-    editingField,
+    editingRole,
     editTemplateValue,
     editLevelValue,
     isAddingRole,
-    newRoleId,
-    newRoleLevel,
-    newRoleTemplate,
-    isAdding,
+    newRole,
+    isAddingPending,
+    setNewRole,
     setEditTemplateValue,
     setEditLevelValue,
-    setNewRoleId,
-    setNewRoleLevel,
-    setNewRoleTemplate,
-    startEditTemplate,
-    startEditLevel,
+    commitEdit,
     cancelEdit,
-    commitEditTemplate,
-    commitEditLevel,
+    startEdit,
     startAddRole,
     cancelAddRole,
     submitAddRole,
@@ -47,17 +40,19 @@ export function CurrentLevelRoles({
     ignoreBlurRef,
   } = useLevelRoles(guildId);
 
-  const availableRoles = roles?.filter(role => 
-    role.levelToGetRole === null && 
-    role.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const availableRoles = roles?.filter(
+    (role) =>
+      role.levelToGetRole === null &&
+      role.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const filteredRoles = roles
-    ?.filter(role =>
-      role.levelToGetRole !== null &&
-      role.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ?.filter(
+      (role) =>
+        role.levelToGetRole !== null &&
+        role.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    ?.sort((a, b) => (a.levelToGetRole || 0) - (b.levelToGetRole || 0)) || [];
+    .sort((a, b) => (a.levelToGetRole || 0) - (b.levelToGetRole || 0)) || [];
 
   const renderSkeletons = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -80,32 +75,24 @@ export function CurrentLevelRoles({
       <AddLevelRoleCard
         availableRoles={availableRoles}
         isAddingRole={isAddingRole}
-        newRoleId={newRoleId}
-        newRoleLevel={newRoleLevel}
-        newRoleTemplate={newRoleTemplate}
-        isAdding={isAdding}
+        newRole={newRole}
+        isAddingPending={isAddingPending}
         onStartAddRole={startAddRole}
         onCancelAddRole={cancelAddRole}
         onSubmitAddRole={submitAddRole}
-        onSetNewRoleId={setNewRoleId}
-        onSetNewRoleLevel={setNewRoleLevel}
-        onSetNewRoleTemaplte={setNewRoleTemplate}
+        setNewRole={setNewRole}
       />
 
-      {/* Карточки ролей */}
       {filteredRoles.map((role) => (
         <LevelRoleCard
           key={role.id}
           role={role}
-          editingRoleId={editingRoleId}
-          editingField={editingField}
+          editingRole={editingRole}
           editTemplateValue={editTemplateValue}
           editLevelValue={editLevelValue}
-          onStartEditTemplate={startEditTemplate}
-          onStartEditLevel={startEditLevel}
+          onStartEdit={startEdit}
           onCancelEdit={cancelEdit}
-          onCommitEditTemplate={commitEditTemplate}
-          onCommitEditLevel={commitEditLevel}
+          onCommitEdit={commitEdit}
           onRemoveRole={removeLevelRole}
           onSetEditTemplateValue={setEditTemplateValue}
           onSetEditLevelValue={setEditLevelValue}
@@ -126,11 +113,7 @@ export function CurrentLevelRoles({
         </h4>
       </div>
 
-      {isLoadingRoles ? (
-        renderSkeletons()
-      ) : (
-        renderRolesGrid()
-      )}
+      {isLoadingRoles ? renderSkeletons() : renderRolesGrid()}
     </div>
   );
 }

@@ -32,7 +32,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 List<BotStatusDto> statuses = await context.BotStatuses.Select(s => new BotStatusDto(s.Id, s.Status, s.Activity)).ToListAsync();
 

@@ -96,6 +96,6 @@ namespace MCOP.Controllers
 
     public sealed class ImageVerificationChannelRequest
     {
-        public string ChannelId { get; set; }
+        public required string ChannelId { get; set; }
     }
 }

@@ -25,7 +25,7 @@ namespace MCOP.Core.Services.Scoped
             await _lock.WaitAsync();
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
                 var usage = await context.ApiUsages
                     .FirstOrDefaultAsync(u => u.Date == today);
@@ -52,7 +52,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<int> GetTodayUsageAsync()
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var today = DateTime.UtcNow.ToString("yyyy-MM-dd");
             return await context.ApiUsages

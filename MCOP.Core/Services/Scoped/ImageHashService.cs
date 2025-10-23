@@ -44,7 +44,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 return (await context.ImageHashes
                     .Where(x => x.GuildId == guildId)
@@ -63,7 +63,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 return (await context.ImageHashes
                     .Where(x => x.GuildId == guildId && x.GuildMessage.ChannelId == channelId)
@@ -82,7 +82,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 return (await context.ImageHashes
                     .Where(x => x.GuildId == guildId
@@ -105,7 +105,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 GuildMessage? message = await context.GuildMessages.FirstOrDefaultAsync(x => x.GuildId == guildId && x.ChannelId == channelId && x.Id == messageId);
                 if (message is null)
@@ -213,7 +213,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task RemoveHashes(ulong guildId, ulong channelId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var toRemove = await context.ImageHashes
                 .Where(x => x.GuildId == guildId && x.GuildMessage.ChannelId == channelId)
@@ -227,7 +227,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task RemoveHashes(ulong guildId, ulong channelId, ulong messageId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var toRemove = await context.ImageHashes
                 .Where(x => x.GuildId == guildId && x.GuildMessage.ChannelId == channelId && x.MessageId == messageId)

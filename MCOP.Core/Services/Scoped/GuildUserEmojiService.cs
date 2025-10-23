@@ -28,7 +28,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var userEmoji = await GetOrCreateUserEmojiAsync(context, guildId, userId, emojiId);
                 userEmoji.RecievedAmount += amount;
@@ -46,7 +46,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var userEmoji = await GetOrCreateUserEmojiAsync(context, guildId, userId, emojiId);
                 if (userEmoji.RecievedAmount >= amount)
@@ -87,7 +87,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 Log.Information("GetTopEmojisForUserAsync guildId: {guildId}, userId: {userId}", guildId, userId);
 
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 return await context.GuildUserEmojies
                     .Where(x => x.GuildId == guildId && x.UserId == userId)
@@ -105,7 +105,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task SetGuildUserEmojiCountAsync(ulong guildId, ulong userId, DiscordEmoji discordEmoji, int count)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             try
             {

@@ -10,36 +10,39 @@ import { Input } from "@/components/ui/input";
 interface AddLevelRoleCardProps {
     availableRoles: Role[];
     isAddingRole: boolean;
-    newRoleId: string;
-    newRoleLevel: number;
-    newRoleTemplate: string;
-    isAdding: boolean;
+    newRole: { roleId: string; level: number; template: string };
+    isAddingPending: boolean;
     onStartAddRole: () => void;
     onCancelAddRole: () => void;
     onSubmitAddRole: () => void;
-    onSetNewRoleId: (value: string) => void;
-    onSetNewRoleLevel: (value: number) => void;
-    onSetNewRoleTemaplte: (value: string) => void;
+    setNewRole: (role: { roleId: string; level: number; template: string }) => void;
 }
 
 export function AddLevelRoleCard({
     availableRoles,
     isAddingRole,
-    newRoleId,
-    newRoleLevel,
-    newRoleTemplate,
-    isAdding,
+    newRole,
+    isAddingPending,
     onStartAddRole,
     onCancelAddRole,
     onSubmitAddRole,
-    onSetNewRoleId,
-    onSetNewRoleLevel,
-    onSetNewRoleTemaplte
+    setNewRole,
 }: AddLevelRoleCardProps) {
     const { t } = useTranslation();
 
     const handleRoleSelect = (roleId: string) => {
-        onSetNewRoleId(roleId);
+        setNewRole({ ...newRole, roleId });
+    };
+
+    const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const level = Number(e.target.value);
+        if (!isNaN(level) && level >= 1) {
+            setNewRole({ ...newRole, level });
+        }
+    };
+
+    const handleTemplateChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setNewRole({ ...newRole, template: e.target.value });
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,39 +61,33 @@ export function AddLevelRoleCard({
         }
     }, [isAddingRole, onCancelAddRole]);
 
-    if (!isAddingRole) {
-        return (
-            <div
-                className="rounded-lg border border-border p-4 hover:bg-accent dark:hover:bg-accent/50 transition-colors cursor-pointer flex flex-col items-center justify-center text-center min-h-[140px] group"
-                onClick={onStartAddRole}
-                title={t("common.add")}
-            >
-                <div className="text-muted-foreground group-hover:text-primary transition-colors mb-2">
-                    <FiPlus className="w-6 h-6" />
-                </div>
-            </div>
-        );
-    }
-
-    return (
+    const renderStartAdding = () => (
         <div
-            className="rounded-lg border border-border p-4 hover:bg-accent dark:hover:bg-accent/50 transition-colors"
+            className="rounded-lg border border-border p-4 hover:bg-accent dark:hover:bg-accent/50 transition-colors cursor-pointer flex flex-col items-center justify-center text-center min-h-[140px] group"
+            onClick={onStartAddRole}
+            title={t("common.add")}
         >
+            <div className="text-muted-foreground group-hover:text-primary transition-colors mb-2">
+                <FiPlus className="w-6 h-6" />
+            </div>
+        </div>
+    );
+
+    const renderAddingForm = () => (
+        <div className="rounded-lg border border-border p-4 hover:bg-accent dark:hover:bg-accent/50 transition-colors">
             <div className="flex items-center justify-between mb-2 gap-3">
                 <div className="flex-1 min-w-0">
                     <RoleSelect
                         roles={availableRoles}
-                        selectedRole={newRoleId}
+                        selectedRole={newRole.roleId}
                         onRoleSelect={handleRoleSelect}
                         placeholder="leveling.selectRole"
                         searchPlaceholder="leveling.searchRoles"
                         emptyMessage="leveling.noAvailableRoles"
-                        disabled={isAdding}
+                        disabled={isAddingPending}
                         className="h-7 text-sm border-none shadow-none focus:ring-0 p-0 hover:bg-transparent w-full"
                     />
                 </div>
-
-                {/* Level Input - фиксированной ширины */}
                 <div className="flex items-center gap-1 flex-shrink-0">
                     <Input
                         autoFocus
@@ -98,9 +95,9 @@ export function AddLevelRoleCard({
                         min="1"
                         placeholder={t("leveling.level")}
                         className="h-6 w-12 px-2 py-1 text-center text-sm font-medium"
-                        value={newRoleLevel}
-                        onChange={(e) => onSetNewRoleLevel(Number(e.target.value))}
-                        disabled={isAdding}
+                        value={newRole.level.toString()}
+                        onChange={handleLevelChange}
+                        disabled={isAddingPending}
                     />
                 </div>
             </div>
@@ -112,10 +109,10 @@ export function AddLevelRoleCard({
                 <Textarea
                     autoFocus
                     className="w-full bg-background min-h-[80px] resize-none"
-                    value={newRoleTemplate}
-                    onChange={(e) => onSetNewRoleTemaplte(e.target.value)}
+                    value={newRole.template}
+                    onChange={handleTemplateChange}
                     placeholder={t("leveling.templatePlaceholder")}
-                    disabled={isAdding}
+                    disabled={isAddingPending}
                 />
             </div>
 
@@ -125,7 +122,7 @@ export function AddLevelRoleCard({
                     size="sm"
                     className="cursor-pointer h-8 w-8 p-0"
                     onClick={onCancelAddRole}
-                    disabled={isAdding}
+                    disabled={isAddingPending}
                     title={t("common.cancel") ?? "Cancel"}
                 >
                     <FiX className="w-4 h-4" />
@@ -135,12 +132,14 @@ export function AddLevelRoleCard({
                     size="sm"
                     className="cursor-pointer h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
                     onClick={onSubmitAddRole}
-                    disabled={!newRoleId || !newRoleLevel || isAdding}
-                    title={t("common.add")}
+                    disabled={!newRole.roleId || newRole.level < 1 || isAddingPending}
+                    title={t("common.add") ?? "Add"}
                 >
                     <FiCheck className="w-4 h-4" />
                 </Button>
             </div>
         </div>
     );
+
+    return isAddingRole ? renderAddingForm() : renderStartAdding();
 }

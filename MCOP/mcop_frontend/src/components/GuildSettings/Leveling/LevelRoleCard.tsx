@@ -7,15 +7,12 @@ import { Input } from "@/components/ui/input";
 
 interface LevelRoleCardProps {
     role: Role;
-    editingRoleId: string | null;
-    editingField: "level" | "template" | null;
+    editingRole: { roleId: string; field: "level" | "template" } | null;
     editTemplateValue: string;
     editLevelValue: string;
-    onStartEditTemplate: (role: Role) => void;
-    onStartEditLevel: (role: Role) => void;
+    onStartEdit: (role: Role, field: "level" | "template") => void;
     onCancelEdit: () => void;
-    onCommitEditTemplate: () => void;
-    onCommitEditLevel: () => void;
+    onCommitEdit: () => void;
     onRemoveRole: (roleId: string) => void;
     onSetEditTemplateValue: (value: string) => void;
     onSetEditLevelValue: (value: string) => void;
@@ -27,15 +24,12 @@ interface LevelRoleCardProps {
 
 export function LevelRoleCard({
     role,
-    editingRoleId,
-    editingField,
+    editingRole,
     editTemplateValue,
     editLevelValue,
-    onStartEditTemplate,
-    onStartEditLevel,
+    onStartEdit,
     onCancelEdit,
-    onCommitEditTemplate,
-    onCommitEditLevel,
+    onCommitEdit,
     onRemoveRole,
     onSetEditTemplateValue,
     onSetEditLevelValue,
@@ -46,9 +40,12 @@ export function LevelRoleCard({
 }: LevelRoleCardProps) {
     const { t } = useTranslation();
 
-    const isEditing = editingRoleId === role.id;
-    const isEditingTemplate = isEditing && editingField === "template";
-    const isEditingLevel = isEditing && editingField === "level";
+    const isEditing = editingRole?.roleId === role.id;
+    const isEditingTemplate = isEditing && editingRole?.field === "template";
+    const isEditingLevel = isEditing && editingRole?.field === "level";
+    const handleEditTemplate = () => onStartEdit(role, "template");
+    const handleEditLevel = () => onStartEdit(role, "level");
+    const handleCommitEdit = () => onCommitEdit();
 
     return (
         <div className="rounded-lg border border-border p-4 hover:bg-accent dark:hover:bg-accent/50 transition-colors">
@@ -75,12 +72,13 @@ export function LevelRoleCard({
                             value={editLevelValue}
                             onChange={(e) => onSetEditLevelValue(e.target.value)}
                             onBlur={onHandleLevelBlur}
-                            onKeyDown={(e) => onHandleKeyDown(e, onCommitEditLevel)}
+                            onKeyDown={(e) => onHandleKeyDown(e, handleCommitEdit)}
+                            disabled={isEditingTemplate}
                         />
                     ) : (
                         <div
                             className="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded cursor-pointer hover:bg-primary/20 transition-colors group flex items-center gap-1"
-                            onClick={() => onStartEditLevel(role)}
+                            onClick={handleEditLevel}
                             title={t("common.clickToEdit")}
                         >
                             {t("leveling.level")} {role.levelToGetRole}
@@ -97,18 +95,19 @@ export function LevelRoleCard({
                 {isEditingTemplate ? (
                     <Textarea
                         autoFocus
-                        className="w-full bg-background min-h-[80px] resize-none"
+                        className="w-full bg-background min-h-[80px]"
                         value={editTemplateValue}
                         onChange={(e) => onSetEditTemplateValue(e.target.value)}
                         onBlur={onHandleTemplateBlur}
-                        onKeyDown={(e) => onHandleKeyDown(e, onCommitEditTemplate)}
+                        onKeyDown={(e) => onHandleKeyDown(e, handleCommitEdit)}
                         placeholder={t("leveling.templatePlaceholder")}
+                        disabled={isEditingLevel}
                     />
                 ) : (
                     <div
                         className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background cursor-pointer hover:bg-background transition-colors"
                         title={role.levelUpMessageTemplate ?? ""}
-                        onClick={() => onStartEditTemplate(role)}
+                        onClick={handleEditTemplate}
                     >
                         <div className="break-words whitespace-pre-wrap">
                             {role.levelUpMessageTemplate || (
@@ -140,7 +139,7 @@ export function LevelRoleCard({
                             size="sm"
                             className="cursor-pointer"
                             onMouseDown={() => (ignoreBlurRef.current = true)}
-                            onClick={editingField === "template" ? onCommitEditTemplate : onCommitEditLevel}
+                            onClick={handleCommitEdit}
                             title={t("common.save")}
                         >
                             <FiCheck />

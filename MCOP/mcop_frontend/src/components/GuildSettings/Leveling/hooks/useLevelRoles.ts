@@ -4,24 +4,23 @@ import { roleMutations, roleQueries } from "@/api/roles";
 
 export function useLevelRoles(guildId: string) {
   const queryClient = useQueryClient();
-  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
-  const [editingField, setEditingField] = useState<"level" | "template" | null>(null);
+  const [editingRole, setEditingRole] = useState<{ roleId: string; field: "level" | "template" } | null>(null);
   const [editTemplateValue, setEditTemplateValue] = useState<string>("");
   const [editLevelValue, setEditLevelValue] = useState<string>("");
   const [isAddingRole, setIsAddingRole] = useState(false);
-  const [newRoleId, setNewRoleId] = useState<string>("");
-  const [newRoleLevel, setNewRoleLevel] = useState<number>(1);
-  const [newRoleTemplate, setNewRoleTemplate] = useState<string>("");
-  const ignoreBlurRef = useRef(false);
+  const [newRole, setNewRole] = useState<{ roleId: string; level: number; template: string }>({
+    roleId: "",
+    level: 1,
+    template: "",
+  });
+    const ignoreBlurRef = useRef(false);
 
-  // Мутации
   const invalidateRolesQuery = () => {
     queryClient.invalidateQueries({
       queryKey: roleQueries.getGuildRoles(guildId).queryKey
     });
   };
 
-  // Мутации
   const { mutate: removeLevelRole } = useMutation({
     ...roleMutations.removeLevelRole(guildId),
     onSuccess: invalidateRolesQuery,
@@ -37,8 +36,8 @@ export function useLevelRoles(guildId: string) {
     onSuccess: invalidateRolesQuery,
   });
 
-  const { mutate: submitAddRoleMutation, isPending: isAdding } = useMutation({
-    mutationFn: async ({ roleId, level, template }: { roleId: string; level: number, template: string }) => {
+  const { mutate: submitAddRoleMutation, isPending: isAddingPending } = useMutation({
+    mutationFn: async ({ roleId, level, template }: { roleId: string; level: number; template: string }) => {
       await roleMutations.addOrUpdateLevelRole(guildId).mutationFn({ roleId, level });
       await roleMutations.updateRoleTemplate(guildId).mutationFn({ roleId, template });
     },
@@ -48,68 +47,53 @@ export function useLevelRoles(guildId: string) {
     },
   });
 
-  // Методы для редактирования
-  const startEditTemplate = (role: Role) => {
-    setEditingRoleId(role.id);
-    setEditingField("template");
+  const startEdit = (role: Role, field: "level" | "template") => {
+    setEditingRole({ roleId: role.id, field });
     setEditTemplateValue(role.levelUpMessageTemplate ?? "");
-  };
-
-  const startEditLevel = (role: Role) => {
-    setEditingRoleId(role.id);
-    setEditingField("level");
     setEditLevelValue(role.levelToGetRole?.toString() ?? "");
   };
 
   const cancelEdit = () => {
-    setEditingRoleId(null);
-    setEditingField(null);
+    setEditingRole(null);
     setEditTemplateValue("");
     setEditLevelValue("");
     ignoreBlurRef.current = false;
   };
 
-  const commitEditTemplate = () => {
-    if (!editingRoleId || editingField !== "template") return;
-    const value = editTemplateValue.trim() === "" ? null : editTemplateValue;
-    updateRoleTemplate({ roleId: editingRoleId, template: value });
-    cancelEdit();
-  };
+  const commitEdit = () => {
+    if (!editingRole) return;
 
-  const commitEditLevel = () => {
-    if (!editingRoleId || editingField !== "level") return;
-    
-    const level = parseInt(editLevelValue);
-    if (isNaN(level) || level < 1) {
-      cancelEdit();
-      return;
+    switch (editingRole.field) {
+      case "template":
+        const templateValue = editTemplateValue.trim() === "" ? null : editTemplateValue;
+        updateRoleTemplate({ roleId: editingRole.roleId, template: templateValue });
+        break;
+      case "level":
+        const levelValue = parseInt(editLevelValue.toString());
+        if (!isNaN(levelValue) && levelValue >= 1) { // Validate and check if value has changed
+          addOrUpdateLevelRole({ roleId: editingRole.roleId, level: levelValue });
+        }
+        break;
     }
 
-    addOrUpdateLevelRole({ roleId: editingRoleId, level });
     cancelEdit();
   };
 
-  // Методы для добавления
   const startAddRole = () => {
     setIsAddingRole(true);
-    setNewRoleId("");
-    setNewRoleLevel(1);
-    setNewRoleTemplate("");
+    setNewRole({ roleId: "", level: 1, template: "" });
   };
 
   const cancelAddRole = () => {
     setIsAddingRole(false);
-    setNewRoleId("");
-    setNewRoleLevel(1);
-    setNewRoleTemplate("");
+    setNewRole({ roleId: "", level: 1, template: "" });
   };
 
   const submitAddRole = () => {
-    if (!newRoleId || isNaN(newRoleLevel) || newRoleLevel < 1) return;
-        submitAddRoleMutation({roleId: newRoleId, level: newRoleLevel, template: newRoleTemplate});
+    if (!newRole.roleId || newRole.level < 1) return;
+    submitAddRoleMutation({ roleId: newRole.roleId, level: newRole.level, template: newRole.template });
   };
 
-  // Вспомогательные методы
   const handleKeyDown = (e: React.KeyboardEvent, commitFunction: () => void) => {
     if (e.key === 'Enter') {
       commitFunction();
@@ -121,44 +105,37 @@ export function useLevelRoles(guildId: string) {
   const handleTemplateBlur = () => {
     if (ignoreBlurRef.current) {
       ignoreBlurRef.current = false;
-      return;
+    } else {
+      commitEdit();
     }
-    commitEditTemplate();
   };
 
   const handleLevelBlur = () => {
     if (ignoreBlurRef.current) {
       ignoreBlurRef.current = false;
-      return;
+    } else {
+      commitEdit();
     }
-    commitEditLevel();
   };
 
   return {
-    // Состояние
-    editingRoleId,
-    editingField,
+    // State
+    editingRole,
     editTemplateValue,
     editLevelValue,
     isAddingRole,
-    newRoleId,
-    newRoleLevel,
-    newRoleTemplate,
-    isAdding,
-    
-    // Сеттеры
+    newRole,
+    isAddingPending,
+
+    // Setters
     setEditTemplateValue,
     setEditLevelValue,
-    setNewRoleId,
-    setNewRoleLevel,
-    setNewRoleTemplate,
-    
-    // Методы
-    startEditTemplate,
-    startEditLevel,
+    setNewRole,
+
+    // Methods
+    startEdit,
     cancelEdit,
-    commitEditTemplate,
-    commitEditLevel,
+    commitEdit,
     startAddRole,
     cancelAddRole,
     submitAddRole,

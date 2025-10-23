@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using DSharpPlus;
+﻿using DSharpPlus;
+using MCOP.Controllers.Responses;
 using MCOP.Core.Services.Scoped;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MCOP.Controllers
 {
@@ -11,6 +12,7 @@ namespace MCOP.Controllers
     {
         private readonly IGuildRoleService _guildRoleService;
         private readonly Serilog.ILogger _logger;
+        private readonly DiscordClient _discordClient;
 
         public GuildsRolesController(
             DiscordClient discordClient,
@@ -19,13 +21,53 @@ namespace MCOP.Controllers
         {
             _guildRoleService = guildRoleService;
             _logger = logger;
+            _discordClient = discordClient;
+        }
+
+        [Authorize]
+        [HttpGet("{guildId}/roles")]
+        public async Task<IActionResult> GetGuildRoles(string guildId)
+        {
+            try
+            {
+                var id = ulong.Parse(guildId);
+                var guild = await _discordClient.GetGuildAsync(id);
+                var roleSettings = await _guildRoleService.GetGuildRolesAsync(id);
+
+                var roleSettingsDict = roleSettings.ToDictionary(x => x.Id, x => x);
+
+                var combinedRoles = guild.Roles.Values
+                    .Select(role =>
+                    {
+                        roleSettingsDict.TryGetValue(role.Id, out var settings);
+
+                        return new GuildRoleResponse
+                        {
+                            Id = role.Id.ToString(),
+                            Name = role.Name,
+                            Position = role.Position,
+                            Color = role.Color.ToString(),
+                            IconUrl = role.IconUrl,
+                            LevelToGetRole = settings?.LevelToGetRole,
+                            IsGainExpBlocked = settings?.IsGainExpBlocked ?? false,
+                            LevelUpMessageTemplate = settings?.LevelUpMessageTemplate
+                        };
+                    })
+                    .OrderByDescending(x => x.Position)
+                    .ToList();
+
+                return Ok(combinedRoles);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error fetching roles for guild {GuildId}", guildId);
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [Authorize]
         [HttpPost("{guildId}/level-roles")]
-        public async Task<IActionResult> AddOrUpdateLevelRole(
-            string guildId,
-            [FromBody] LevelRoleRequest request)
+        public async Task<IActionResult> AddOrUpdateLevelRole(string guildId, [FromBody] LevelRoleRequest request)
         {
             try
             {
@@ -55,9 +97,7 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpPost("{guildId}/level-roles/{roleId}/toggle-exp-block")]
-        public async Task<IActionResult> ToggleExpBlock(
-            string guildId,
-            string roleId)
+        public async Task<IActionResult> ToggleExpBlock(string guildId, string roleId)
         {
             try
             {
@@ -86,9 +126,7 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpDelete("{guildId}/level-roles/{roleId}")]
-        public async Task<IActionResult> RemoveLevelRole(
-            string guildId,
-            string roleId)
+        public async Task<IActionResult> RemoveLevelRole(string guildId, string roleId)
         {
             try
             {
@@ -117,10 +155,7 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpPost("{guildId}/level-roles/{roleId}/message-template")]
-        public async Task<IActionResult> SetRoleMessageTemplate(
-            string guildId,
-            string roleId,
-            [FromBody] RoleMessageTemplateRequest request)
+        public async Task<IActionResult> SetRoleMessageTemplate(string guildId,string roleId, [FromBody] RoleMessageTemplateRequest request)
         {
             try
             {

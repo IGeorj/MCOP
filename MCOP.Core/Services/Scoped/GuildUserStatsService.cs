@@ -6,6 +6,7 @@ using MCOP.Core.Services.Singletone;
 using MCOP.Data;
 using MCOP.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Serilog;
 
 namespace MCOP.Core.Services.Scoped
@@ -34,25 +35,27 @@ namespace MCOP.Core.Services.Scoped
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly ILockingService _lockingService;
         private readonly IGuildRoleService _guildRoleService;
+        private IMemoryCache cache;
         private readonly DiscordClient _discordClient;
 
         private const int ExpCooldownMinutes = 1;
         private const int MinRandomExp = 15;
         private const int MaxRandomExp = 26;
 
-        public GuildUserStatsService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService, IGuildRoleService guildRoleService, DiscordClient discordClient)
+        public GuildUserStatsService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService, IGuildRoleService guildRoleService, DiscordClient discordClient, IMemoryCache memoryCache)
         {
             _contextFactory = contextFactory;
             _lockingService = lockingService;
             _guildRoleService = guildRoleService;
             _discordClient = discordClient;
+            cache = memoryCache;
         }
 
         #region public
 
         public async Task<GuildUserStatsDto> GetGuildUserStatAsync(ulong guildId, ulong userId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             try
             {
@@ -108,7 +111,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 var guildIdStr = guildId.ToString();
 
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var query = context.GuildUserStats
                     .Where(x => x.GuildId == guildId)
@@ -167,7 +170,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var rank = await context.GuildUserStats
                     .AsNoTracking()
@@ -213,7 +216,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task AddMessageExpAsync(ulong guildId, ulong channelId, ulong userId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var userStats = await context.GuildUserStats
                 .SingleOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
@@ -318,7 +321,7 @@ namespace MCOP.Core.Services.Scoped
             {
                 try
                 {
-                    var member = await  guild.GetMemberAsync(ulong.Parse(user.UserId), false);
+                    var member = await guild.GetMemberAsync(ulong.Parse(user.UserId), false);
                     if (member is not null)
                     {
                         user.Username = member.DisplayName ?? user.Username;
@@ -355,10 +358,19 @@ namespace MCOP.Core.Services.Scoped
 
         private async Task<GuildUserStats> GetOrCreateUserStatsInternalAsync(McopDbContext context, ulong guildId, ulong userId)
         {
-            var userStats = await context.GuildUserStats
-                .SingleOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
+            GuildUserStats? userStats = null;
 
-            if (userStats == null)
+            if (!cache.TryGetValue((nameof(GuildUserStats), guildId, userId), out userStats))
+            {
+                userStats = await context.GuildUserStats
+                    .SingleOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
+            }
+            else if (userStats is not null)
+            {
+                context.GuildUserStats.Attach(userStats);
+            }
+
+            if (userStats is null)
             {
                 userStats = new GuildUserStats
                 {
@@ -384,7 +396,7 @@ namespace MCOP.Core.Services.Scoped
 
             using (await _lockingService.AcquireLockAsync(key))
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 try
                 {
@@ -397,6 +409,11 @@ namespace MCOP.Core.Services.Scoped
                     var updatedValues = LogHelper.GetClassProperties(userStats);
 
                     LogHelper.LogChangedProperties(originalValues, updatedValues, guildId, userId);
+
+                    cache.Set((nameof(GuildUserStats), guildId, userId), userStats, new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                    });
 
                     await context.SaveChangesAsync();
                 }
@@ -425,12 +442,12 @@ namespace MCOP.Core.Services.Scoped
             });
 
             if (oldLevel != newLevel)
-                await _guildRoleService.UpdateLevelRolesAsync(guildId, channelId, userId, oldLevel, newLevel);
+                await _guildRoleService.ApplyLevelingRolesAsync(guildId, channelId, userId, oldLevel, newLevel);
         }
 
         private async Task BatchUpdateUserInfoAsync(List<GuildUserStatsDto> usersToUpdate)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             foreach (var user in usersToUpdate)
             {
@@ -450,6 +467,5 @@ namespace MCOP.Core.Services.Scoped
         }
 
         #endregion private
-
     }
 }

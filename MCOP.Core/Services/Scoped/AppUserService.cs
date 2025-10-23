@@ -24,7 +24,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<string?> GetAccessTokenForUserAsync(string userId)
         {
-            var context = await _contextFactory.CreateDbContextAsync();
+            await using var context = await _contextFactory.CreateDbContextAsync();
             var user = await context.AppUsers.FindAsync(userId);
 
             if (user == null || string.IsNullOrEmpty(user.DiscordAccessToken))
@@ -51,7 +51,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task StoreTokensAsync(string userId, string accessToken, string refreshToken, DateTime expiresAt)
         {
-            var context = await _contextFactory.CreateDbContextAsync();
+            await using var context = await _contextFactory.CreateDbContextAsync();
             var user = await context.AppUsers.FindAsync(userId);
 
             if (user != null)
