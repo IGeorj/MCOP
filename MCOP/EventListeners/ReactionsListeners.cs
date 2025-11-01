@@ -1,6 +1,7 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using MCOP.Core.Models;
 using MCOP.Core.Services.Scoped;
 using Serilog;
 
@@ -8,76 +9,83 @@ namespace MCOP.EventListeners
 {
     public sealed class ReactionsListeners
     {
-        private const string HeartEmojiName = ":heart:";
+        private readonly IReactionService _reactionService;
+        private readonly IGuildConfigService guildConfigService;
 
-        private readonly IGuildUserEmojiService _userEmojiService;
-        private readonly ILikeService _likeService;
-
-        public ReactionsListeners(IGuildUserEmojiService userEmojiService, ILikeService likeService)
+        public ReactionsListeners(IReactionService reactionService, IGuildConfigService guildConfigService)
         {
-            _userEmojiService = userEmojiService;
-            _likeService = likeService;
+            _reactionService = reactionService;
+            this.guildConfigService = guildConfigService;
         }
 
         public async Task MessageReactionAddedEventHandler(DiscordClient client, MessageReactionAddedEventArgs e)
         {
-            var isChannelNull = e.Channel is null && e.Message.Channel is null;
-
-            if (e.Guild is null || isChannelNull || e.Message is null || e.User.IsBot)
+            if (e.Guild is null || (e.Channel is null && e.Message?.Channel is null) || e.Message is null || e.User.IsBot)
                 return;
 
-            await ChangeLikeAsync(client, e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, 1);
+            var channel = e.Channel ?? e.Message.Channel;
+            var guildId = e.Guild.Id;
 
+            var config = await guildConfigService.GetOrAddGuildConfigAsync(guildId);
+            if (!config.ReactionTrackingEnabled)
+                return;
 
-            if (!e.Emoji.IsManaged && e.Emoji.GetDiscordName() != HeartEmojiName && e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _))
-               await ChangeEmojiRecievedCount(client, e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, 1);
+            await HandleReactionAsync(e.Guild, channel!, e.Message, e.Emoji, e.User, 1, config);
         }
 
         public async Task MessageReactionRemovedEventHandler(DiscordClient client, MessageReactionRemovedEventArgs e)
         {
-            var isChannelNull = e.Channel is null && e.Message.Channel is null;
-
-            if (e.Guild is null || isChannelNull || e.Message is null || e.User.IsBot)
+            if (e.Guild is null || (e.Channel is null && e.Message?.Channel is null) || e.Message is null || e.User.IsBot)
                 return;
 
-            await ChangeLikeAsync(client, e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, -1);
+            var channel = e.Channel ?? e.Message.Channel;
+            var guildId = e.Guild.Id;
 
-            if (!e.Emoji.IsManaged && e.Emoji.GetDiscordName() != HeartEmojiName && e.Guild.Emojis.TryGetValue(e.Emoji.Id, out _))
-                await ChangeEmojiRecievedCount(client, e.Guild, e.Channel ?? e.Message.Channel, e.Message, e.Emoji, e.User, -1);
+            var config = await guildConfigService.GetOrAddGuildConfigAsync(guildId);
+            if (!config.ReactionTrackingEnabled)
+                return;
+
+            await HandleReactionAsync(e.Guild, channel!, e.Message, e.Emoji, e.User, -1, config);
         }
 
-        private async Task ChangeLikeAsync(DiscordClient client, DiscordGuild guild, DiscordChannel? channel, DiscordMessage msg, DiscordEmoji emoji, DiscordUser user, int count)
+        private async Task HandleReactionAsync(
+            DiscordGuild guild,
+            DiscordChannel channel,
+            DiscordMessage msg,
+            DiscordEmoji emoji,
+            DiscordUser user,
+            int delta,
+            GuildConfigDto config)
         {
-            if (emoji.GetDiscordName() != HeartEmojiName) return;
+            string emojiName = emoji.Name;
+            ulong emojiId = emoji.Id;
 
-            if (msg.Author is null && channel is not null)
+            if (msg.Author is null)
                 msg = await channel.GetMessageAsync(msg.Id);
 
             if (msg?.Author is null || msg.Author.Id == user.Id)
                 return;
 
-            Log.Information("User {Username} change {emoji} {count}", user.Username, emoji.GetDiscordName(), count);
+            bool isLikeEmoji = (emojiId == config.LikeEmojiId) || (config.LikeEmojiId == 0 && emojiName == config.LikeEmojiName);
 
-            if (count > 0)
-                await _likeService.AddLikeAsync(guild.Id, msg.Author.Id, msg.Id);
-            else
-                await _likeService.RemoveLikeAsync(guild.Id, msg.Author.Id, msg.Id);
-        }
+            if (isLikeEmoji)
+            {
+                Log.Information("User {Username} changed like {emoji} by {delta}", user.Username, emojiName, delta);
 
-        private async Task ChangeEmojiRecievedCount(DiscordClient client, DiscordGuild guild, DiscordChannel? channel, DiscordMessage msg, DiscordEmoji emoji, DiscordUser user, int count)
-        {
-            if (msg.Author is null && channel is not null)
-                msg = await channel.GetMessageAsync(msg.Id);
+                if (delta > 0)
+                    await _reactionService.AddDefaultReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName);
+                else
+                    await _reactionService.RemoveReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName, emojiId);
+            }
+            else if (!emoji.IsManaged && emojiId != 0 && guild.Emojis.ContainsKey(emojiId))
+            {
+                Log.Information("User {Username} changed reaction {emoji} by {delta}", user.Username, emojiName, delta);
 
-            if (msg?.Author is null || msg.Author.Id == user.Id)
-                return;
-
-            Log.Information("User {Username} change {emoji} {count}", user.Username, emoji.GetDiscordName(), count);
-
-            if (count > 0)
-                await _userEmojiService.AddRecievedAmountAsync(guild.Id, msg.Author.Id, emoji.Id, count);
-            else
-                await _userEmojiService.RemoveRecievedAmountAsync(guild.Id, msg.Author.Id, emoji.Id, count * -1);
+                if (delta > 0)
+                    await _reactionService.AddCustomReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName, emojiId);
+                else
+                    await _reactionService.RemoveReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName, emojiId);
+            }
         }
     }
 }

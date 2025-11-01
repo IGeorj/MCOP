@@ -58,38 +58,6 @@ namespace MCOP.Modules.User
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent($"[-> Полный список <-](<{LeaderboardUrl}{guild.Id}>)").AddFile("top10.jpg", sKData.AsStream()));
         }
 
-        [Command("set-emoji-count")]
-        [RequirePermissions(DiscordPermission.Administrator)]
-        [Description("Устанавливает кол-во емодзи для юзера")]
-        public async Task SetEmojiCountAsync(CommandContext ctx, DiscordUser user, string emojiName, int count)
-        {
-            await ctx.DeferEphemeralAsync();
-
-            if (ctx.Guild is null)
-            {
-                await ctx.EditResponseAsync("Only works on server!");
-                return;
-            }
-
-            if (!DiscordEmoji.TryFromName(ctx.Client, $":{emojiName}:", out var emoji))
-            {
-                await ctx.EditResponseAsync("Wrong emoji Name (should be without : :)");
-                return;
-            }
-
-            try
-            {
-                var emojiService = ctx.ServiceProvider.GetRequiredService<IGuildUserEmojiService>();
-                await emojiService.SetGuildUserEmojiCountAsync(ctx.Guild.Id, user.Id, emoji, count);
-                await ctx.EditResponseAsync("Success!");
-            }
-            catch
-            {
-                await ctx.EditResponseAsync("Error!");
-            }
-        }
-
-
         [Command("sync-mee6-stats")]
         [RequirePermissions(DiscordPermission.Administrator)]
         [Description("Устаналивает лвла, такие же как в mee6")]
@@ -115,17 +83,17 @@ namespace MCOP.Modules.User
 
         private async Task<string> BuildEmojiLeaderboardAsync(CommandContext ctx, DiscordGuild guild, ulong userId)
         {
-            var emojiService = ctx.ServiceProvider.GetRequiredService<IGuildUserEmojiService>();
-            var giftedEmojis = await emojiService.GetTopEmojisForUserAsync(guild.Id, userId);
+            var reactionService = ctx.ServiceProvider.GetRequiredService<IReactionService>();
+            var receivedReactions = await reactionService.GetUserTopReactionsAsync(guild.Id, userId);
 
-            if (giftedEmojis.Count == 0)
+            if (receivedReactions.Count == 0)
                 return DiscordEmoji.FromName(ctx.Client, ":jokerge:").ToString();
 
             var leaderboard = new StringBuilder();
-            foreach (var emojiStat in giftedEmojis)
+            foreach (var reaction in receivedReactions)
             {
-                var emoji = (await guild.GetEmojiAsync(emojiStat.EmojiId)).ToString();
-                leaderboard.Append($"{emoji} {emojiStat.RecievedAmount}  ");
+                var emoji = reaction.EmojiId != 0 ? (await guild.GetEmojiAsync(reaction.EmojiId)).ToString() : reaction.Emoji;
+                leaderboard.Append($"{emoji} {reaction.Count}  ");
             }
 
             return leaderboard.ToString();

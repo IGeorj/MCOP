@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MCOP.Data.Models
@@ -11,18 +12,23 @@ namespace MCOP.Data.Models
         [MaxLength(8)]
         public string Prefix { get; set; } = "!m";
 
-        public ulong? LogChannelId { get; set; }
 
         [NotMapped]
         public bool LoggingEnabled => LogChannelId != default;
+        public ulong? LogChannelId { get; set; }
 
-        public ulong? LewdChannelId { get; set; }
 
         [NotMapped]
         public bool LewdEnabled => LewdChannelId != default;
+        public ulong? LewdChannelId { get; set; }
+
 
         public string? LevelUpMessageTemplate { get; set; }
+        public bool LevelUpMessagesEnabled { get; set; } = false;
 
-        public bool LevelUpMessagesEnabled { get; set; } = true;
+        [DefaultValue("❤️")]
+        public string LikeEmojiName { get; set; } = "❤️";
+        public ulong LikeEmojiId { get; set; } = 0;    // 0 for Unicode, >0 for custom
+        public bool ReactionTrackingEnabled { get; set; } = false;
     }
 }

@@ -2,6 +2,7 @@
 using MCOP.Data;
 using MCOP.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Serilog;
 namespace MCOP.Core.Services.Scoped
 {
@@ -14,6 +15,9 @@ namespace MCOP.Core.Services.Scoped
         public Task SetLevelUpMessageTemplateAsync(ulong guildId, string? template);
         public Task<bool> IsLevelUpMessagesEnabledAsync(ulong guildId);
         public Task SetLevelUpMessagesEnabledAsync(ulong guildId, bool enabled);
+        public Task<bool> IsReactionTrackingEnabled(ulong guildId);
+        public Task SetGuildLikeEmojiAsync(ulong guildId, string emojiName, ulong emojiId);
+        public Task SetGuildReactionTrackingAsync(ulong guildId, bool enabled);
     }
 
     public sealed class GuildConfigService : IGuildConfigService
@@ -23,6 +27,25 @@ namespace MCOP.Core.Services.Scoped
         public GuildConfigService(IDbContextFactory<McopDbContext> contextFactory)
         {
             _contextFactory = contextFactory;
+        }
+
+        public async Task<bool> IsReactionTrackingEnabled(ulong guildId)
+        {
+            try
+            {
+                await using var context = await _contextFactory.CreateDbContextAsync();
+
+                GuildConfig? config = await context.GuildConfigs.FindAsync(guildId);
+                if (config is null)
+                    return false;
+
+                return config.ReactionTrackingEnabled;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error in IsReactionTrackingEnabled guildId: {guildId}", guildId);
+                throw;
+            }
         }
 
         public async Task<GuildConfigDto> GetOrAddGuildConfigAsync(ulong guildId)
@@ -40,7 +63,7 @@ namespace MCOP.Core.Services.Scoped
 
                 Log.Information("GetOrAddGuildConfigAsync guildId: {guildId}", guildId);
 
-                return new GuildConfigDto(config.GuildId, config.Prefix, config.LogChannelId, config.LoggingEnabled, config.LewdChannelId, config.LewdEnabled, config.LevelUpMessageTemplate, config.LevelUpMessagesEnabled);
+                return new GuildConfigDto(config.GuildId, config.Prefix, config.LogChannelId, config.LoggingEnabled, config.LewdChannelId, config.LewdEnabled, config.LevelUpMessageTemplate, config.LevelUpMessagesEnabled, config.LikeEmojiName, config.LikeEmojiId, config.ReactionTrackingEnabled);
             }
             catch (Exception ex)
             {
@@ -60,7 +83,7 @@ namespace MCOP.Core.Services.Scoped
                 return await context.GuildConfigs
                     .AsNoTracking()
                     .Where(x => x.LewdChannelId != null)
-                    .Select(c => new GuildConfigDto(c.GuildId, c.Prefix, c.LogChannelId, c.LoggingEnabled, c.LewdChannelId, c.LewdEnabled, c.LevelUpMessageTemplate, c.LevelUpMessagesEnabled))
+                    .Select(c => new GuildConfigDto(c.GuildId, c.Prefix, c.LogChannelId, c.LoggingEnabled, c.LewdChannelId, c.LewdEnabled, c.LevelUpMessageTemplate, c.LevelUpMessagesEnabled, c.LikeEmojiName, c.LikeEmojiId, c.ReactionTrackingEnabled))
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -173,6 +196,28 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
+        public async Task SetGuildLikeEmojiAsync(ulong guildId, string emojiName, ulong emojiId)
+        {
+            await using var context = _contextFactory.CreateDbContext();
+            GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
+
+            config.LikeEmojiName = emojiName;
+            config.LikeEmojiId = emojiId;
+
+            context.GuildConfigs.Update(config);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task SetGuildReactionTrackingAsync(ulong guildId, bool enabled)
+        {
+            await using var context = _contextFactory.CreateDbContext();
+            GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
+
+            config.ReactionTrackingEnabled = enabled;
+
+            context.GuildConfigs.Update(config);
+            await context.SaveChangesAsync();
+        }
 
         private async Task<GuildConfig> GetOrAddGuildConfigInternalAsync(ulong guildId)
         {

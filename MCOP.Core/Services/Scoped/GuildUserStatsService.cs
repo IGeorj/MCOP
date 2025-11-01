@@ -16,8 +16,6 @@ namespace MCOP.Core.Services.Scoped
         public Task<GuildUserStatsDto> GetGuildUserStatAsync(ulong guildId, ulong userId);
         public Task<(List<GuildUserStatsDto> stats, int totalCount)> GetGuildUserStatsAsync(ulong guildId, int page = 1, int pageSize = 20, string? sortBy = null, bool sortDescending = true);
         public Task<int> GetUserExpRankAsync(ulong guildId, ulong userId);
-        public Task AddLikeAsync(ulong guildId, ulong userId);
-        public Task RemoveLikeAsync(ulong guildId, ulong userId);
         public Task UpdateUserInfo(ulong guildId, ulong userId, string userName, string avatarHash);
         public Task AddMessageExpAsync(ulong guildId, ulong channelId, ulong userId);
         public Task AddExpAsync(ulong guildId, ulong channelId, ulong userId, int exp);
@@ -35,6 +33,7 @@ namespace MCOP.Core.Services.Scoped
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
         private readonly ILockingService _lockingService;
         private readonly IGuildRoleService _guildRoleService;
+        private readonly IReactionService _reactionService;
         private IMemoryCache cache;
         private readonly DiscordClient _discordClient;
 
@@ -42,25 +41,28 @@ namespace MCOP.Core.Services.Scoped
         private const int MinRandomExp = 15;
         private const int MaxRandomExp = 26;
 
-        public GuildUserStatsService(IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService, IGuildRoleService guildRoleService, DiscordClient discordClient, IMemoryCache memoryCache)
+        public GuildUserStatsService(
+            IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService,
+            IGuildRoleService guildRoleService, DiscordClient discordClient, IMemoryCache memoryCache,
+            IReactionService reactionService)
         {
             _contextFactory = contextFactory;
             _lockingService = lockingService;
             _guildRoleService = guildRoleService;
             _discordClient = discordClient;
             cache = memoryCache;
+            _reactionService = reactionService;
         }
 
         #region public
 
         public async Task<GuildUserStatsDto> GetGuildUserStatAsync(ulong guildId, ulong userId)
         {
-            await using var context = await _contextFactory.CreateDbContextAsync();
+            await using var context = _contextFactory.CreateDbContext();
 
             try
             {
                 var userStats = await context.GuildUserStats
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
 
                 if (userStats == null)
@@ -69,7 +71,6 @@ namespace MCOP.Core.Services.Scoped
                     {
                         GuildId = guildId,
                         UserId = userId,
-                        Likes = 0,
                         Exp = 0,
                         DuelWin = 0,
                         DuelLose = 0,
@@ -79,7 +80,9 @@ namespace MCOP.Core.Services.Scoped
                     await context.SaveChangesAsync();
                 }
 
-                Log.Information("GetGuildUserStatAsync: Retrieved stats for guildId: {guildId}, userId: {userId}", guildId, userId);
+                var likeCount = await _reactionService.GetUserReactionsCount(guildId, userId, "❤️");
+
+                Log.Information("GetGuildUserStatAsync: Retrieved (or created) stats for guildId: {guildId}, userId: {userId}", guildId, userId);
 
                 return new GuildUserStatsDto
                 {
@@ -89,8 +92,8 @@ namespace MCOP.Core.Services.Scoped
                     AvatarHash = userStats.AvatarHash,
                     DuelWin = userStats.DuelWin,
                     DuelLose = userStats.DuelLose,
-                    Likes = userStats.Likes,
                     Exp = userStats.Exp,
+                    Likes = likeCount + userStats.Likes
                 };
             }
             catch (Exception ex)
@@ -107,63 +110,66 @@ namespace MCOP.Core.Services.Scoped
             string? sortBy = null,
             bool sortDescending = true)
         {
-            try
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+
+            await using var context = await _contextFactory.CreateDbContextAsync();
+
+            var guildConfig = await context.GuildConfigs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(g => g.GuildId == guildId);
+
+            var likeEmoji = guildConfig?.LikeEmojiName ?? "❤️";
+            var likeEmojiId = guildConfig?.LikeEmojiId ?? 0UL;
+
+            var baseQuery = from stat in context.GuildUserStats
+                            where stat.GuildId == guildId
+                            select new
+                            {
+                                stat.GuildId,
+                                stat.UserId,
+                                stat.Username,
+                                stat.AvatarHash,
+                                stat.DuelWin,
+                                stat.DuelLose,
+                                stat.Exp,
+                                Likes = context.GuildMessageReactions
+                                    .Where(r => r.GuildId == guildId &&
+                                                r.Emoji == likeEmoji &&
+                                                r.EmojiId == likeEmojiId &&
+                                                r.Message.UserId == stat.UserId)
+                                    .Count() + stat.Likes
+                            };
+
+            var totalCount = await baseQuery.CountAsync();
+
+            var sorted = sortBy?.ToLowerInvariant() switch
             {
-                var guildIdStr = guildId.ToString();
+                "likes" => sortDescending ? baseQuery.OrderByDescending(x => x.Likes) : baseQuery.OrderBy(x => x.Likes),
+                "duelwin" => sortDescending ? baseQuery.OrderByDescending(x => x.DuelWin) : baseQuery.OrderBy(x => x.DuelWin),
+                "duellose" => sortDescending ? baseQuery.OrderByDescending(x => x.DuelLose) : baseQuery.OrderBy(x => x.DuelLose),
+                _ => sortDescending ? baseQuery.OrderByDescending(x => x.Exp) : baseQuery.OrderBy(x => x.Exp)
+            };
 
-                await using var context = await _contextFactory.CreateDbContextAsync();
-
-                var query = context.GuildUserStats
-                    .Where(x => x.GuildId == guildId)
-                    .AsQueryable();
-
-                var totalCount = await query.CountAsync();
-
-                query = (sortBy?.ToLower()) switch
+            var results = await sorted
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .Select(x => new GuildUserStatsDto
                 {
-                    "likes" => sortDescending
-                        ? query.OrderByDescending(x => x.Likes)
-                        : query.OrderBy(x => x.Likes),
-                    "duelwin" => sortDescending
-                        ? query.OrderByDescending(x => x.DuelWin)
-                        : query.OrderBy(x => x.DuelWin),
-                    "duellose" => sortDescending
-                        ? query.OrderByDescending(x => x.DuelLose)
-                        : query.OrderBy(x => x.DuelLose),
-                    _ => sortDescending
-                        ? query.OrderByDescending(x => x.Exp)
-                        : query.OrderBy(x => x.Exp),
-                };
+                    GuildId = x.GuildId.ToString(),
+                    UserId = x.UserId.ToString(),
+                    Username = x.Username ?? "Unknown",
+                    AvatarHash = x.AvatarHash,
+                    DuelWin = x.DuelWin,
+                    DuelLose = x.DuelLose,
+                    Exp = x.Exp,
+                    Likes = x.Likes
+                })
+                .ToListAsync();
 
-                var pagedQuery = query
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize);
-
-                var stats = await pagedQuery.AsNoTracking().ToListAsync();
-
-                var rankedStats = stats
-                    .Select((x, index) => new GuildUserStatsDto
-                    {
-                        GuildId = x.GuildId.ToString(),
-                        UserId = x.UserId.ToString(),
-                        Username = x.Username,
-                        AvatarHash = x.AvatarHash,
-                        DuelWin = x.DuelWin,
-                        DuelLose = x.DuelLose,
-                        Likes = x.Likes,
-                        Exp = x.Exp,
-                    })
-                    .ToList();
-
-                Log.Information("GetGuildUserStatsAsync for guildId: {guildId}, page: {page}, pageSize: {pageSize}, sortBy: {sortBy}, sortDescending: {sortDescending}", guildId, page, pageSize, sortBy ?? "exp", sortDescending);
-
-                return (rankedStats, totalCount);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error in GetGuildUserStatsAsync for guildId: {guildId}, page: {page}, pageSize: {pageSize}, sortBy: {sortBy}, sortDescending: {sortDescending}", guildId, page, pageSize, sortBy ?? "exp", sortDescending);
-                throw;
-            }
+            Log.Information("Fetched {Count} stats for guild {GuildId}, page {Page}", results.Count, guildId, page);
+            return (results, totalCount);
         }
 
         public async Task<int> GetUserExpRankAsync(ulong guildId, ulong userId)
@@ -191,20 +197,6 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task AddLikeAsync(ulong guildId, ulong userId)
-        {
-            await ModifyUserStatsAsync(guildId, userId, userStats => userStats.Likes++);
-        }
-
-        public async Task RemoveLikeAsync(ulong guildId, ulong userId)
-        {
-            await ModifyUserStatsAsync(guildId, userId, userStats =>
-            {
-                if (userStats.Likes > 0)
-                    userStats.Likes--;
-            });
-        }
-
         public async Task UpdateUserInfo(ulong guildId, ulong userId, string userName, string avatarHash)
         {
             await ModifyUserStatsAsync(guildId, userId, userStats =>
@@ -221,7 +213,7 @@ namespace MCOP.Core.Services.Scoped
             var userStats = await context.GuildUserStats
                 .SingleOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
 
-            if (userStats != null && userStats.IsWithinExpCooldown(userStats.LastExpAwardedAt, ExpCooldownMinutes))
+            if (userStats != null && userStats.IsWithinExpCooldown(ExpCooldownMinutes))
                 return;
 
             var blockedRoles = await _guildRoleService.GetBlockedExpGuildRolesAsync(guildId);
@@ -376,7 +368,6 @@ namespace MCOP.Core.Services.Scoped
                 {
                     GuildId = guildId,
                     UserId = userId,
-                    Likes = 0,
                     Exp = 0,
                     DuelWin = 0,
                     DuelLose = 0,

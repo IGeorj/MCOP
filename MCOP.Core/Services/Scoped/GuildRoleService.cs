@@ -1,5 +1,4 @@
 ﻿using DSharpPlus;
-using DSharpPlus.Entities;
 using MCOP.Core.Models;
 using MCOP.Data;
 using MCOP.Data.Models;
@@ -23,16 +22,12 @@ namespace MCOP.Core.Services.Scoped
     public sealed class GuildRoleService : IGuildRoleService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
-        private readonly IGuildConfigService _guildConfigService;
         private readonly IRoleApplicationService _roleApplicationService;
-        private readonly DiscordClient _discordClient;
 
         public GuildRoleService(IDbContextFactory<McopDbContext> contextFactory, IGuildConfigService guildConfigService, IRoleApplicationService roleApplicationService, DiscordClient discordClient)
         {
             _contextFactory = contextFactory;
-            _guildConfigService = guildConfigService;
             _roleApplicationService = roleApplicationService;
-            _discordClient = discordClient;
         }
 
         public async Task<List<GuildRoleDto>> GetGuildRolesAsync(ulong guildId)

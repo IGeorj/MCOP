@@ -9,6 +9,9 @@ namespace MCOP.Core.Models
         ulong? LewdChannelId,
         bool LewdEnabled,
         string? LevelUpMessageTemplate,
-        bool LevelUpMessagesEnabled
+        bool LevelUpMessagesEnabled,
+        string? LikeEmojiName,
+        ulong LikeEmojiId,
+        bool ReactionTrackingEnabled
     );
 }

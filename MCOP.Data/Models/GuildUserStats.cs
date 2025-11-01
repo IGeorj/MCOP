@@ -13,20 +13,15 @@ namespace MCOP.Data.Models
         public string? AvatarHash { get; set; }
 
 
-        [ConcurrencyCheck]
         public int DuelWin { get; set; } = 0;
-
-        [ConcurrencyCheck]
         public int DuelLose { get; set; } = 0;
 
-        [ConcurrencyCheck]
         public int Likes { get; set; } = 0;
 
-        [ConcurrencyCheck]
         public int Exp { get; set; } = 0;
 
         public DateTime LastExpAwardedAt { get; set; } = DateTime.MinValue;
 
-        public bool IsWithinExpCooldown(DateTime lastAwarded, int expCooldownMinutes) => (DateTime.UtcNow - lastAwarded).TotalMinutes < expCooldownMinutes;
+        public bool IsWithinExpCooldown(int expCooldownMinutes) => (DateTime.UtcNow - LastExpAwardedAt).TotalMinutes < expCooldownMinutes;
     }
 }
