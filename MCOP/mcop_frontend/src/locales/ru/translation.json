@@ -1,77 +1,77 @@
 {
-  "leaderboard": {
-    "error": "Не удалось загрузить данные. Попробуйте позже.",
-    "retry": "Повторить",
-    "title": "Таблица лидеров"
-  },
-  "theEnd": "Конец",
-  "likes": "Лайки",
-  "level": "Уровень",
-  "duelWin": "Победы",
-  "duelLose": "Поражения",
-  "loading": "Загрузка...",
-  "login": "Войти",
-  "logout": "Выйти",
-  "welcome": {
-    "title": "Добро пожаловать на сайт MCOP",
-    "subtitle": "Статистика пользователей, экономика сервера и игры - всё в одном месте.",
-    "login": "Добавить в Discord"
-  },
-  "guilds": {
-    "title": "Список серверов",
-    "settings": "Настройки",
-    "addBot": "Добавить",
-    "error": "Произошла ошибка при загрузке гильдий"
-  },
-  "leveling": {
-    "title": "Уровни",
-    "searchRoles": "Поиск ролей...",
-    "selectRole": "Выберите роль",
-    "loadingRoles": "Загрузка ролей..",
+    "leaderboard": {
+        "error": "Не удалось загрузить данные. Попробуйте позже.",
+        "retry": "Повторить",
+        "title": "Таблица лидеров"
+    },
+    "theEnd": "Конец",
+    "likes": "Лайки",
     "level": "Уровень",
-    "updateRoleLevel": "Обновить Уровень",
-    "blockExperienceGain": "Заблокировать Получение XP",
-    "currentLevelRoles": "Текущии Уровни",
-    "noLevelRoles": "Роли не найдены",
-    "role": "Роль",
-    "actions": "Действия",
-    "levelUpMessageSettings": "Настройки сообщений о повышении уровня",
-    "enableMessages": "Включить сообщения",
-    "templateHelp": "Сообщение по умолчанию. Используйте {user}, {role}, {level} для отображения соответствующих значений",
-    "templatePlaceholder": "Например: {user} достиг уровня {level} и получил роль {role}!",
-    "messageTemplate": "Сообщение при достижении уровня"
-  },
-  "nsfw": {
-    "title": "Nsfw",
-    "updateDailyNsfwChannel": "Обновить Ежедневный Nsfw Канал"
-  },
-  "common": {
-    "selectChannel": "Выбрать канал",
-    "searchRoles": "Поиск каналов...",
-    "none": "Отсутствует",
-    "update": "Обновить",
-    "save": "Сохранить",
-    "cancel": "Отменить",
-    "edit": "Изменить",
-    "delete": "Удалить",
-    "clickToEdit": "Нажми для редактирования",
-    "add": "Добавить",
-    "unsavedChanges": "Несохраненные изменения"
-  },
-  "settings": {
-    "title": "Настройки",
-    "error": "Ошибка"
-  },
-  "auth": {
-    "processing": "Обработка...",
-    "noCodeFound": "Код аутентификации не найден - пожалуйста, попробуйте войти снова",
-    "loginAlreadyProcessed": "Вход уже выполнен - перенаправление...",
-    "connectingToDiscord": "Подключение к Discord...",
-    "verifyingYourAccount": "Проверка вашего аккаунта...",
-    "loginSuccessful": "Вход выполнен успешно! Перенаправление...",
-    "loginFailed": "Ошибка входа. Пожалуйста, попробуйте снова.",
-    "authenticationFailed": "Ошибка аутентификации",
-    "authenticating": "Аутентификация...",
-    "returnToHome": "Вернуться на главную"
-  }
+    "duelWin": "Победы",
+    "duelLose": "Поражения",
+    "loading": "Загрузка...",
+    "login": "Войти",
+    "logout": "Выйти",
+    "welcome": {
+        "title": "Добро пожаловать на сайт MCOP",
+        "subtitle": "Статистика пользователей, экономика сервера и игры - всё в одном месте.",
+        "login": "Добавить в Discord"
+    },
+    "guilds": {
+        "title": "Список серверов",
+        "settings": "Настройки",
+        "addBot": "Добавить",
+        "error": "Произошла ошибка при загрузке гильдий"
+    },
+    "leveling": {
+        "title": "Уровни",
+        "searchRoles": "Поиск ролей...",
+        "selectRole": "Выберите роль",
+        "loadingRoles": "Загрузка ролей..",
+        "level": "Уровень",
+        "updateRoleLevel": "Обновить Уровень",
+        "blockExperienceGain": "Заблокировать Получение XP",
+        "currentLevelRoles": "Текущии Уровни",
+        "noLevelRoles": "Роли не найдены",
+        "role": "Роль",
+        "actions": "Действия",
+        "levelUpMessageSettings": "Настройки сообщений о повышении уровня",
+        "enableMessages": "Включить сообщения",
+        "templateHelp": "Сообщение по умолчанию. Используйте {user}, {role}, {level} для отображения соответствующих значений",
+        "templatePlaceholder": "Например: {user} достиг уровня {level} и получил роль {role}!",
+        "messageTemplate": "Сообщение при достижении уровня"
+    },
+    "nsfw": {
+        "title": "Nsfw",
+        "updateDailyNsfwChannel": "Обновить Ежедневный Nsfw Канал"
+    },
+    "common": {
+        "selectChannel": "Выбрать канал",
+        "searchRoles": "Поиск каналов...",
+        "none": "Отсутствует",
+        "update": "Обновить",
+        "save": "Сохранить",
+        "cancel": "Отменить",
+        "edit": "Изменить",
+        "delete": "Удалить",
+        "clickToEdit": "Нажми для редактирования",
+        "add": "Добавить",
+        "unsavedChanges": "Несохраненные изменения"
+    },
+    "settings": {
+        "title": "Настройки",
+        "error": "Ошибка"
+    },
+    "auth": {
+        "processing": "Обработка...",
+        "noCodeFound": "Код аутентификации не найден - пожалуйста, попробуйте войти снова",
+        "loginAlreadyProcessed": "Вход уже выполнен - перенаправление...",
+        "connectingToDiscord": "Подключение к Discord...",
+        "verifyingYourAccount": "Проверка вашего аккаунта...",
+        "loginSuccessful": "Вход выполнен успешно! Перенаправление...",
+        "loginFailed": "Ошибка входа. Пожалуйста, попробуйте снова.",
+        "authenticationFailed": "Ошибка аутентификации",
+        "authenticating": "Аутентификация...",
+        "returnToHome": "Вернуться на главную"
+    }
 }

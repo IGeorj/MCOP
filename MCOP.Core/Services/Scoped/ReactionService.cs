@@ -1,20 +1,21 @@
 ﻿using MCOP.Data;
 using MCOP.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 using static MCOP.Core.Services.Scoped.ReactionService;
 
 namespace MCOP.Core.Services.Scoped
 {
     public interface IReactionService
     {
-        Task<bool> AddDefaultReactionAsync(
-            ulong guildId, ulong channelId, ulong messageId, ulong userId, string emoji);
+        Task<bool> AddUnicodeReactionAsync(
+            ulong guildId, ulong channelId, ulong messageId, ulong createdbyUserId, ulong messageUserId, string emoji);
 
         Task<bool> AddCustomReactionAsync(
-            ulong guildId, ulong channelId, ulong messageId, ulong userId, string emojiName, ulong emojiId);
+            ulong guildId, ulong channelId, ulong messageId, ulong createdByUserId, ulong messageUserId, string emojiName, ulong emojiId);
 
         Task<bool> RemoveReactionAsync(
-            ulong guildId, ulong channelId, ulong messageId, ulong userId, string emoji, ulong emojiId = 0);
+            ulong guildId, ulong channelId, ulong messageId, ulong createdByUserId, string emoji, ulong emojiId = 0);
 
         Task<int> GetMessageReactionCountAsync(
             ulong guildId, ulong messageId, string emoji, ulong? emojiId = null);
@@ -32,36 +33,39 @@ namespace MCOP.Core.Services.Scoped
             ulong guildId, ulong userId, string emoji, ulong? emojiId = null);
 
         Task<List<UserReactionCount>> GetUserTopReactionsAsync(
-            ulong guildId, ulong userId, int limit = 5);
+            ulong guildId, ulong userId, int limit = 6);
     }
 
     public class ReactionService: IReactionService
     {
         private readonly IDbContextFactory<McopDbContext> _contextFactory;
+        private readonly IGuildConfigService _guildConfigService;
 
-
-        public ReactionService(IDbContextFactory<McopDbContext> contextFactory)
+        public ReactionService(
+            IDbContextFactory<McopDbContext> contextFactory,
+            IGuildConfigService guildConfigService)
         {
             _contextFactory = contextFactory;
+            _guildConfigService = guildConfigService;
         }
 
         public record EmojiInfo(string Emoji, ulong EmojiId);
         public record UserReactionCount(string Emoji, ulong EmojiId, int Count);
 
-        public async Task<bool> AddDefaultReactionAsync(
-            ulong guildId, ulong channelId, ulong messageId, ulong userId, string emoji)
+        public async Task<bool> AddUnicodeReactionAsync(
+            ulong guildId, ulong channelId, ulong messageId, ulong createdByUserId, ulong messageUserId, string emoji)
         {
-            await EnsureMessageExistsAsync(guildId, messageId, userId, channelId);
+            await EnsureMessageExistsAsync(guildId, messageId, messageUserId, channelId);
 
             var reaction = new GuildMessageReaction
-            {
-                GuildId = guildId,
-                MessageId = messageId,
-                Emoji = emoji,
-                EmojiId = 0,
-                CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = userId,
-            };
+                {
+                    GuildId = guildId,
+                    MessageId = messageId,
+                    Emoji = emoji,
+                    EmojiId = 0,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = createdByUserId,
+                };
 
             try
             {
@@ -78,19 +82,19 @@ namespace MCOP.Core.Services.Scoped
         }
 
         public async Task<bool> AddCustomReactionAsync(
-            ulong guildId, ulong channelId, ulong messageId, ulong userId, string emoji, ulong emojiId)
+            ulong guildId, ulong channelId, ulong messageId, ulong createdByUserId, ulong messageUserId, string emoji, ulong emojiId)
         {
-            await EnsureMessageExistsAsync(guildId, messageId, userId, channelId);
+            await EnsureMessageExistsAsync(guildId, messageId, messageUserId, channelId);
 
             var reaction = new GuildMessageReaction
-            {
-                GuildId = guildId,
-                MessageId = messageId,
-                Emoji = emoji,
-                EmojiId = emojiId,
-                CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = userId,
-            };
+                {
+                    GuildId = guildId,
+                    MessageId = messageId,
+                    Emoji = emoji,
+                    EmojiId = emojiId,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = createdByUserId,
+                };
 
             try
             {
@@ -224,24 +228,25 @@ namespace MCOP.Core.Services.Scoped
             }
         }
 
-        public async Task<List<UserReactionCount>> GetUserTopReactionsAsync(ulong guildId, ulong userId, int limit = 5)
+        public async Task<List<UserReactionCount>> GetUserTopReactionsAsync(ulong guildId, ulong userId, int limit = 6)
         {
             await using var context = _contextFactory.CreateDbContext();
 
-            var config = await context.GuildConfigs.FindAsync(guildId);
-            string likeEmojiName = config?.LikeEmojiName ?? "❤️";
-            ulong likeEmojiId = config?.LikeEmojiId ?? 0;
+            int historicalLikeCount = 0;
+            var userStats = await context.GuildUserStats
+                .AsNoTracking()
+                .FirstOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
+            if (userStats != null)
+                historicalLikeCount = userStats.Likes;
 
-            var query = context.GuildMessageReactions
+            var rawReactions = await context.GuildMessageReactions
+                .Where(r => r.GuildId == guildId)
                 .Join(
                     context.GuildMessages,
                     reaction => new { reaction.GuildId, reaction.MessageId },
                     message => new { message.GuildId, MessageId = message.Id },
-                    (reaction, message) => new { reaction, message })
-                .Where(x => x.reaction.GuildId == guildId && x.message.UserId == userId)
-                .Where(x => !(likeEmojiId != 0
-                    ? x.reaction.EmojiId == likeEmojiId
-                    : x.reaction.EmojiId == 0 && x.reaction.Emoji == likeEmojiName))
+                    (reaction, message) => new { reaction, message.UserId })
+                .Where(x => x.UserId == userId)
                 .GroupBy(x => new {
                     x.reaction.EmojiId,
                     EmojiGroup = x.reaction.EmojiId != 0 ? null : x.reaction.Emoji
@@ -250,15 +255,29 @@ namespace MCOP.Core.Services.Scoped
                 {
                     Emoji = g.First().reaction.EmojiId != 0 ? g.First().reaction.Emoji : g.Key.EmojiGroup!,
                     EmojiId = g.Key.EmojiId,
-                    Count = g.Count()
-                });
-
-            var results = await query
-                .OrderByDescending(x => x.Count)
-                .Take(limit)
+                    BaseCount = g.Count()
+                })
                 .ToListAsync();
 
-            return results.Select(r => new UserReactionCount(r.Emoji, r.EmojiId, r.Count)).ToList();
+            var allReactions = new List<UserReactionCount>();
+
+            foreach (var r in rawReactions)
+            {
+                int totalCount = r.BaseCount;
+
+                if (r.EmojiId == 0 && r.Emoji == "❤️")
+                    totalCount += historicalLikeCount;
+
+                allReactions.Add(new UserReactionCount(r.Emoji, r.EmojiId, totalCount));
+            }
+
+            if (historicalLikeCount > 0 && !allReactions.Any(rc => rc.EmojiId == 0 && rc.Emoji == "❤️"))
+                allReactions.Add(new UserReactionCount("❤️", 0, historicalLikeCount));
+
+            return allReactions
+                .OrderByDescending(rc => rc.Count)
+                .Take(limit)
+                .ToList();
         }
 
         private async Task EnsureMessageExistsAsync(ulong guildId, ulong messageId, ulong userId, ulong channelId)

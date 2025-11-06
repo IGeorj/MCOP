@@ -112,7 +112,7 @@ namespace MCOP.Services
             embed.WithThumbnail(member2.AvatarUrl);
             embed.AddField("Бойцы", $"{ctx.Member!.DisplayName} vs {member2.DisplayName}");
 
-            var duelMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton));
+            var duelMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddActionRowComponent(duelButton));
 
             var interactivityResult = await duelMessage.WaitForButtonAsync(member2, TimeSpan.FromMinutes(5));
             if (interactivityResult.TimedOut)
@@ -123,7 +123,7 @@ namespace MCOP.Services
 
             duelButton.Disable();
 
-            duelMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton));
+            duelMessage = await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddActionRowComponent(duelButton));
 
             await StartDuelAnimationAsync(ctx, ctx.Member, member2, duelMessage, timeoutMinutes, anomaly);
         }
@@ -137,14 +137,14 @@ namespace MCOP.Services
             embed.WithThumbnail(member2.AvatarUrl);
             duelButton = duelButton.Disable();
 
-            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton));
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed).AddActionRowComponent(duelButton));
 
             await TryTimeoutUserAsync(member2, timeoutMinutes, "Дуельный шизиод");
         }
 
         public async Task HandleOpenDuelAsync(CommandContext ctx, int timeoutMinutes, DiscordEmbedBuilder embed, DiscordButtonComponent duelButton, string anomaly = AnomalyProvider.Random)
         {
-            var webhookBuilder = new DiscordWebhookBuilder().AddEmbed(embed).AddComponents(duelButton);
+            var webhookBuilder = new DiscordWebhookBuilder().AddEmbed(embed).AddActionRowComponent(duelButton);
             var duelMessage = await ctx.EditResponseAsync(webhookBuilder);
 
             var interactivity = ctx.Client.ServiceProvider.GetRequiredService<InteractivityExtension>();

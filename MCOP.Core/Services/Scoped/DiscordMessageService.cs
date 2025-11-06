@@ -70,17 +70,24 @@ namespace MCOP.Core.Services.Scoped
 
             DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
                 .AddEmbed(embedBuilder)
-                .AddComponents(
-                [
-                    new DiscordLinkButtonComponent(message.JumpLink.ToString(), "Новое"),
-                    new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
-                    new DiscordButtonComponent(
-                        DiscordButtonStyle.Success,
-                        GlobalNames.Buttons.RemoveMessage + $"UID:{user.Id}",
-                        "Понял",
-                        false,
-                        new DiscordComponentEmoji(DiscordEmoji.FromName(_discordClient, ":heavy_check_mark:" ))),
-                ]);
+                .AddContainerComponent(
+                    new DiscordContainerComponent(
+                        [
+                            new DiscordActionRowComponent(
+                                [
+                                    new DiscordLinkButtonComponent(message.JumpLink.ToString(), "Новое"),
+                                    new DiscordLinkButtonComponent(messageFromHash.JumpLink.ToString(), "Прошлое"),
+                                    new DiscordButtonComponent(
+                                        DiscordButtonStyle.Success,
+                                        GlobalNames.Buttons.RemoveMessage + $"UID:{user.Id}",
+                                        "Понял",
+                                        false,
+                                        new DiscordComponentEmoji(DiscordEmoji.FromName(_discordClient, ":heavy_check_mark:" ))),
+                                ]
+                            )
+                        ]
+                    )
+                );
 
             await channel.SendMessageAsync(messageBuilder);
         }

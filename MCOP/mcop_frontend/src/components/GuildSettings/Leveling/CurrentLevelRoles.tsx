@@ -18,6 +18,7 @@ export function CurrentLevelRoles({
 }) {
   const { t } = useTranslation();
   const {
+    pendingRoleIds,
     editingRole,
     editTemplateValue,
     editLevelValue,
@@ -38,7 +39,7 @@ export function CurrentLevelRoles({
     handleTemplateBlur,
     handleLevelBlur,
     ignoreBlurRef,
-  } = useLevelRoles(guildId);
+  } = useLevelRoles(roles, guildId);
 
   const availableRoles = roles?.filter(
     (role) =>
@@ -90,10 +91,11 @@ export function CurrentLevelRoles({
           editingRole={editingRole}
           editTemplateValue={editTemplateValue}
           editLevelValue={editLevelValue}
+          pendingRoleIds={pendingRoleIds}
           onStartEdit={startEdit}
           onCancelEdit={cancelEdit}
           onCommitEdit={commitEdit}
-          onRemoveRole={removeLevelRole}
+          onRemoveRole={(roleId) => removeLevelRole.mutate(roleId)}
           onSetEditTemplateValue={setEditTemplateValue}
           onSetEditLevelValue={setEditLevelValue}
           onHandleKeyDown={handleKeyDown}

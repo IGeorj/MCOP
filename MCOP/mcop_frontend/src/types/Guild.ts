@@ -1,7 +1,7 @@
 export type Guild = {
-  id: string;
-  name: string;
-  icon: string | null;
-  botPresent: boolean;
-  isOwner: boolean;
+    id: string;
+    name: string;
+    icon: string | null;
+    botPresent: boolean;
+    isOwner: boolean;
 };

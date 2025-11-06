@@ -78,7 +78,7 @@ namespace MCOP.Modules.Nsfw
 
                     var repeatMessageBuilder = new DiscordMessageBuilder()
                         .WithContent($"**Теги**: {tags} **Кол-во**: {amount}")
-                        .AddComponents(nextButton, cancelButton);
+                        .AddActionRowComponent(nextButton, cancelButton);
 
                     var repeatMessage = await ctx.Channel.SendMessageAsync(repeatMessageBuilder);
 

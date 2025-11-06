@@ -66,25 +66,23 @@ namespace MCOP.EventListeners
             if (msg?.Author is null || msg.Author.Id == user.Id)
                 return;
 
-            bool isLikeEmoji = (emojiId == config.LikeEmojiId) || (config.LikeEmojiId == 0 && emojiName == config.LikeEmojiName);
-
-            if (isLikeEmoji)
+            if (emojiId != 0 && guild.Emojis.ContainsKey(emojiId))
             {
-                Log.Information("User {Username} changed like {emoji} by {delta}", user.Username, emojiName, delta);
+                Log.Information("User {Username} changed custom reaction {emoji} by {delta}", user.Username, emojiName, delta);
 
                 if (delta > 0)
-                    await _reactionService.AddDefaultReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName);
+                    await _reactionService.AddCustomReactionAsync(guild.Id, channel.Id, msg.Id, user.Id, msg.Author.Id, emojiName, emojiId);
                 else
-                    await _reactionService.RemoveReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName, emojiId);
+                    await _reactionService.RemoveReactionAsync(guild.Id, channel.Id, msg.Id, user.Id, emojiName, emojiId);
             }
-            else if (!emoji.IsManaged && emojiId != 0 && guild.Emojis.ContainsKey(emojiId))
+            else if(emojiId == 0 && !emoji.IsManaged)
             {
-                Log.Information("User {Username} changed reaction {emoji} by {delta}", user.Username, emojiName, delta);
+                Log.Information("User {Username} changed unicode reaction {emoji} by {delta}", user.Username, emojiName, delta);
 
                 if (delta > 0)
-                    await _reactionService.AddCustomReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName, emojiId);
+                    await _reactionService.AddUnicodeReactionAsync(guild.Id, channel.Id, msg.Id, user.Id, msg.Author.Id, emojiName);
                 else
-                    await _reactionService.RemoveReactionAsync(guild.Id, channel.Id, msg.Id, msg.Author.Id, emojiName, emojiId);
+                    await _reactionService.RemoveReactionAsync(guild.Id, channel.Id, msg.Id, user.Id, emojiName, emojiId);
             }
         }
     }

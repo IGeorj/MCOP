@@ -19,5 +19,7 @@ namespace MCOP.Core.Models
         public double WinRate => DuelWin + DuelLose > 0
             ? Math.Round((double)DuelWin / (DuelWin + DuelLose) * 100, 2)
             : 0;
+        public ulong CustomLikeEmojiId { get; set; } = 0;
+        public string CustomLikeEmojiName { get; set; } = "❤️";
     }
 }

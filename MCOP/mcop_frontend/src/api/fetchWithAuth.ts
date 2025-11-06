@@ -1,33 +1,33 @@
 interface FetchOptions extends RequestInit {
-  headers?: Record<string, string>;
+    headers?: Record<string, string>;
 }
 
 async function fetchWithAuth<T = any>(url: string, options: FetchOptions = {}): Promise<T> {
-  const token = localStorage.getItem('app_session');
-  
-  const headers: Record<string, string> = {
-    ...options.headers,
-  };
+    const token = localStorage.getItem('app_session');
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+    const headers: Record<string, string> = {
+        ...options.headers,
+    };
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
+    const response = await fetch(url, {
+        ...options,
+        headers,
+    });
 
-  const contentType = response.headers.get('content-type');
-  if (!contentType || !contentType.includes('application/json')) {
-    return null as T;
-  }
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  return response.json();
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        return null as T;
+    }
+
+    return response.json();
 }
 
 export default fetchWithAuth;

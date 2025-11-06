@@ -11,4 +11,4 @@ export interface GuildUserStats {
     nextLevelExp: number;
     winRate: number;
     level: number;
-  }
+}

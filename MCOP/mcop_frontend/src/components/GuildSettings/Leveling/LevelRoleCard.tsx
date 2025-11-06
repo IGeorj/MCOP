@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/common/Spinner";
 
 interface LevelRoleCardProps {
     role: Role;
     editingRole: { roleId: string; field: "level" | "template" } | null;
     editTemplateValue: string;
     editLevelValue: string;
+    pendingRoleIds?: Set<string>;
     onStartEdit: (role: Role, field: "level" | "template") => void;
     onCancelEdit: () => void;
     onCommitEdit: () => void;
@@ -27,6 +29,7 @@ export function LevelRoleCard({
     editingRole,
     editTemplateValue,
     editLevelValue,
+    pendingRoleIds,
     onStartEdit,
     onCancelEdit,
     onCommitEdit,
@@ -59,6 +62,7 @@ export function LevelRoleCard({
                     <span className="font-medium text-sm truncate" title={role.name}>
                         {role.name}
                     </span>
+                    {pendingRoleIds?.has(role.id) && <Spinner size="md" delay={200} />}
                 </div>
 
                 {/* Level Display/Edit */}
@@ -73,7 +77,7 @@ export function LevelRoleCard({
                             onChange={(e) => onSetEditLevelValue(e.target.value)}
                             onBlur={onHandleLevelBlur}
                             onKeyDown={(e) => onHandleKeyDown(e, handleCommitEdit)}
-                            disabled={isEditingTemplate}
+                            disabled={isEditingTemplate || pendingRoleIds?.has(role.id)}
                         />
                     ) : (
                         <div
@@ -101,7 +105,7 @@ export function LevelRoleCard({
                         onBlur={onHandleTemplateBlur}
                         onKeyDown={(e) => onHandleKeyDown(e, handleCommitEdit)}
                         placeholder={t("leveling.templatePlaceholder")}
-                        disabled={isEditingLevel}
+                        disabled={isEditingLevel || pendingRoleIds?.has(role.id)}
                     />
                 ) : (
                     <div

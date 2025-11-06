@@ -10,7 +10,7 @@ namespace MCOP.Core.Models
         bool LewdEnabled,
         string? LevelUpMessageTemplate,
         bool LevelUpMessagesEnabled,
-        string? LikeEmojiName,
+        string LikeEmojiName,
         ulong LikeEmojiId,
         bool ReactionTrackingEnabled
     );

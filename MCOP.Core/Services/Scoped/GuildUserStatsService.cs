@@ -28,30 +28,32 @@ namespace MCOP.Core.Services.Scoped
 
     public sealed class GuildUserStatsService : IGuildUserStatsService
     {
-        public readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
-
-        private readonly IDbContextFactory<McopDbContext> _contextFactory;
-        private readonly ILockingService _lockingService;
-        private readonly IGuildRoleService _guildRoleService;
-        private readonly IReactionService _reactionService;
-        private IMemoryCache cache;
-        private readonly DiscordClient _discordClient;
-
+        public static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
         private const int ExpCooldownMinutes = 1;
         private const int MinRandomExp = 15;
         private const int MaxRandomExp = 26;
 
+        private readonly IDbContextFactory<McopDbContext> _contextFactory;
+        private readonly ILockingService _lockingService;
+        private readonly IGuildRoleService _guildRoleService;
+        private readonly IGuildConfigService _guildConfigService;
+        private readonly IReactionService _reactionService;
+        private readonly IMemoryCache _cache;
+        private readonly DiscordClient _discordClient;
+
+
         public GuildUserStatsService(
             IDbContextFactory<McopDbContext> contextFactory, ILockingService lockingService,
             IGuildRoleService guildRoleService, DiscordClient discordClient, IMemoryCache memoryCache,
-            IReactionService reactionService)
+            IReactionService reactionService, IGuildConfigService guildConfigService)
         {
             _contextFactory = contextFactory;
             _lockingService = lockingService;
             _guildRoleService = guildRoleService;
             _discordClient = discordClient;
-            cache = memoryCache;
+            _cache = memoryCache;
             _reactionService = reactionService;
+            _guildConfigService = guildConfigService;
         }
 
         #region public
@@ -80,7 +82,11 @@ namespace MCOP.Core.Services.Scoped
                     await context.SaveChangesAsync();
                 }
 
-                var likeCount = await _reactionService.GetUserReactionsCount(guildId, userId, "❤️");
+                var guildConfig = await _guildConfigService.GetOrAddGuildConfigAsync(guildId);
+                var customLikeCount = await _reactionService.GetUserReactionsCount(guildId, userId, guildConfig.LikeEmojiName, guildConfig.LikeEmojiId);
+
+                if (guildConfig.LikeEmojiName == "❤️")
+                    customLikeCount += userStats.Likes;
 
                 Log.Information("GetGuildUserStatAsync: Retrieved (or created) stats for guildId: {guildId}, userId: {userId}", guildId, userId);
 
@@ -93,7 +99,9 @@ namespace MCOP.Core.Services.Scoped
                     DuelWin = userStats.DuelWin,
                     DuelLose = userStats.DuelLose,
                     Exp = userStats.Exp,
-                    Likes = likeCount + userStats.Likes
+                    Likes = customLikeCount,
+                    CustomLikeEmojiId = guildConfig.LikeEmojiId,
+                    CustomLikeEmojiName = guildConfig.LikeEmojiName
                 };
             }
             catch (Exception ex)
@@ -115,12 +123,10 @@ namespace MCOP.Core.Services.Scoped
 
             await using var context = await _contextFactory.CreateDbContextAsync();
 
-            var guildConfig = await context.GuildConfigs
-                .AsNoTracking()
-                .FirstOrDefaultAsync(g => g.GuildId == guildId);
+            var guildConfig = await _guildConfigService.GetOrAddGuildConfigAsync(guildId);
 
-            var likeEmoji = guildConfig?.LikeEmojiName ?? "❤️";
-            var likeEmojiId = guildConfig?.LikeEmojiId ?? 0UL;
+            var likeEmoji = guildConfig.LikeEmojiName;
+            var likeEmojiId = guildConfig.LikeEmojiId;
 
             var baseQuery = from stat in context.GuildUserStats
                             where stat.GuildId == guildId
@@ -138,7 +144,7 @@ namespace MCOP.Core.Services.Scoped
                                                 r.Emoji == likeEmoji &&
                                                 r.EmojiId == likeEmojiId &&
                                                 r.Message.UserId == stat.UserId)
-                                    .Count() + stat.Likes
+                                    .Count() + (likeEmoji == "❤️" ? stat.Likes : 0)
                             };
 
             var totalCount = await baseQuery.CountAsync();
@@ -352,7 +358,7 @@ namespace MCOP.Core.Services.Scoped
         {
             GuildUserStats? userStats = null;
 
-            if (!cache.TryGetValue((nameof(GuildUserStats), guildId, userId), out userStats))
+            if (!_cache.TryGetValue((nameof(GuildUserStats), guildId, userId), out userStats))
             {
                 userStats = await context.GuildUserStats
                     .SingleOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
@@ -401,7 +407,7 @@ namespace MCOP.Core.Services.Scoped
 
                     LogHelper.LogChangedProperties(originalValues, updatedValues, guildId, userId);
 
-                    cache.Set((nameof(GuildUserStats), guildId, userId), userStats, new MemoryCacheEntryOptions
+                    _cache.Set((nameof(GuildUserStats), guildId, userId), userStats, new MemoryCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
                     });

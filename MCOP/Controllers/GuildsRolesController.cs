@@ -46,7 +46,7 @@ namespace MCOP.Controllers
                             Id = role.Id.ToString(),
                             Name = role.Name,
                             Position = role.Position,
-                            Color = role.Color.ToString(),
+                            Color = role.Colors.PrimaryColor.ToString(),
                             IconUrl = role.IconUrl,
                             LevelToGetRole = settings?.LevelToGetRole,
                             IsGainExpBlocked = settings?.IsGainExpBlocked ?? false,
