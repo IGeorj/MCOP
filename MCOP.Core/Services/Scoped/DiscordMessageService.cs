@@ -61,18 +61,22 @@ namespace MCOP.Core.Services.Scoped
             double difference,
             string? attachmentUrl)
         {
-            DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
-                .WithTitle("Найдено совпадение")
-                .AddField("Новое", user.Username, true)
-                .AddField("Прошлое", messageFromHash.Author?.Username ?? "", true)
-                .AddField("Совпадение", $"{difference:0.00} %")
-                .WithThumbnail(attachmentUrl ?? "");
-
             DiscordMessageBuilder messageBuilder = new DiscordMessageBuilder()
-                .AddEmbed(embedBuilder)
+                .EnableV2Components()
                 .AddContainerComponent(
                     new DiscordContainerComponent(
                         [
+                            new DiscordSectionComponent(
+                                new DiscordTextDisplayComponent(
+                                    $"""
+                                    ## Найдено совпадение
+                                    **Новое**: {user.Username}
+                                    **Прошлое**: {messageFromHash.Author?.Username ?? ""}
+                                    **Совпадение:** {difference:0.00} %
+                                    """
+                                    ), 
+                                new DiscordThumbnailComponent(attachmentUrl ?? "")
+                            ),
                             new DiscordActionRowComponent(
                                 [
                                     new DiscordLinkButtonComponent(message.JumpLink.ToString(), "Новое"),

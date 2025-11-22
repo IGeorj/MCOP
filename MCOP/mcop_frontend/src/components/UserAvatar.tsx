@@ -1,3 +1,4 @@
+import React from "react";
 import { getDiscordAvatarUrl } from '../utils/avatarUtils';
 
 interface UserAvatarProps {

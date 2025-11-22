@@ -175,6 +175,7 @@ h1, h2, h3, h4 {
 .fill-navbar { fill: var(--color-navbar); }
 .fill-bg { fill: var(--color-bg); }
 .text-primary { color: var(--color-primary); }
+.text-default { color: var(--color-text); }
 .text-secondary { color: var(--color-secondary); }
 .selected { background-color: var(--color-selected); }
 .bg-hover:hover { background-color: var(--color-hover); }

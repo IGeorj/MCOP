@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaTrophy } from "react-icons/fa";
@@ -22,7 +23,7 @@ export function LevelingSettings({ guildId }: { guildId: string }) {
       <div className="flex flex-col gap-4 mb-4">
         <Link
           to={`/leaderboard/${guildId}`}
-          className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg font-semibold text-primary shadow-sm hover:bg-primary/20 transition"
+          className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg font-semibold text-primary shadow-sm hover:bg-primary/20 active:opacity-70 transition"
         >
           <FaTrophy className="w-5 h-5 text-yellow-500" />
           <span>{t("leaderboard.title")}</span>

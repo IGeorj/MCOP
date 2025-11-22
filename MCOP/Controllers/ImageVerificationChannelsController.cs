@@ -34,7 +34,7 @@ namespace MCOP.Controllers
                 if (forbiddenResult is not null)
                     return forbiddenResult;
 
-                var channels = await _imageVerificationChannelService.GetImageVerificationChannelsAsync(guildUlongId);
+                var channels = await _imageVerificationChannelService.GetImageVerificationChannelIdsAsync(guildUlongId);
                 return Ok(channels.Select(x => x.ToString()));
             }
             catch (Exception ex)

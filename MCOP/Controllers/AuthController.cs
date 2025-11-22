@@ -85,10 +85,10 @@ namespace MCOP.Controllers
 
             var claims = new[]
             {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim("avatarUrl", user.AvatarUrl)
-        };
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim("avatarUrl", user.AvatarUrl)
+            };
 
             var token = new JwtSecurityToken(
                 issuer: _config.CurrentConfiguration.JwtConfig.Issuer,

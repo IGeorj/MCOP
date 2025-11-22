@@ -225,7 +225,7 @@ public sealed class MessageListeners
 
     private async Task<bool> IsSpecialChannel(ulong guildId, ulong channelId)
     {
-        var channels = await _channelService.GetVerificationChannelsAsync(guildId);
+        var channels = await _channelService.GetImageVerificationChannelIdsAsync(guildId);
         return channels.Contains(channelId);
     }
 }

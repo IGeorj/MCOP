@@ -26,16 +26,14 @@
     "leveling": {
         "title": "Leveling",
         "searchRoles": "Search roles...",
-        "selectRole": "Select a role",
         "loadingRoles": "Loading roles..",
         "level": "Level",
-        "updateRoleLevel": "Update Role Level",
         "blockExperienceGain": "Block Experience Gain",
+        "blockExperienceTooltip": "Users with blocked roles won't earn experience",
         "currentLevelRoles": "Current Level Roles",
-        "noLevelRoles": "Roles not found",
         "role": "Role",
         "actions": "Actions",
-        "levelUpMessageSettings": "Level-up message settings",
+        "levelUpMessageSettings": "Level-up Message Settings",
         "enableMessages": "Enable messages",
         "templateHelp": "Default Message. Use {user}, {role}, {level} to display correspondent values",
         "templatePlaceholder": "Example: {user} reached level {level} and got role {role}!",
@@ -47,7 +45,9 @@
     },
     "common": {
         "selectChannel": "Select a channel",
-        "searchRoles": "Search channels...",
+        "searchChannels": "Search channels...",
+        "selectRole": "Select a role",
+        "searchRoles": "Search roles...",
         "none": "None",
         "update": "Update",
         "save": "Save",
@@ -56,7 +56,19 @@
         "delete": "Delete",
         "clickToEdit": "Click to edit",
         "add": "Add",
-        "unsavedChanges": "Unsaved changes"
+        "unsavedChanges": "Unsaved changes",
+        "new": "New",
+        "old": "Old",
+        "nothingFound": "Nothing found",
+        "blocked": "Blocked",
+        "total": "Total"
+
+    },
+    "imageVerification":{
+        "title": "Verify Image Duplication",
+        "matchFound": "Match found",
+        "match": "Match",
+        "understood": "Understood"
     },
     "settings": {
         "title": "Settings",

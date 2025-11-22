@@ -20,7 +20,7 @@ public sealed class AIService : IAIService
     private const int OpenRouterDailyLimit = 1000;
     private readonly IApiLimitService _apiLimit;
     private readonly DiscordClient _discordClient;
-    private readonly ChatClient? DeepSeekR170BClient;
+    private readonly ChatClient? Qwen25VL32BInstruct;
     private readonly ChatClient? DeepSeekV30324Client;
     private readonly ChatClient? DeepSeekV3_1;
 
@@ -50,16 +50,13 @@ public sealed class AIService : IAIService
         _apiLimit = apiLimit;
         _discordClient = discordClient;
 
-        if (string.IsNullOrEmpty(config.CurrentConfiguration.AIApiKey) || string.IsNullOrEmpty(config.CurrentConfiguration.OpenRounterApiKey))
+        if (string.IsNullOrEmpty(config.CurrentConfiguration.OpenRounterApiKey))
             return;
 
         var openRouterKey = new ApiKeyCredential(config.CurrentConfiguration.OpenRounterApiKey);
-        var togetherKey = new ApiKeyCredential(config.CurrentConfiguration.AIApiKey);
-        var togetherOptions = new OpenAIClientOptions { Endpoint = new Uri("https://api.together.xyz/v1") };
         var openRounterOptions = new OpenAIClientOptions { Endpoint = new Uri("https://openrouter.ai/api/v1") };
-        var togetherApi = new OpenAIClient(togetherKey, togetherOptions);
         var openRouterApi = new OpenAIClient(openRouterKey, openRounterOptions);
-        DeepSeekR170BClient = togetherApi.GetChatClient("deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free");
+        Qwen25VL32BInstruct = openRouterApi.GetChatClient("qwen/qwen2.5-vl-32b-instruct:free");
         DeepSeekV30324Client = openRouterApi.GetChatClient("deepseek/deepseek-chat-v3-0324:free");
         DeepSeekV3_1 = openRouterApi.GetChatClient("deepseek/deepseek-chat-v3.1:free");
     }
@@ -162,14 +159,14 @@ public sealed class AIService : IAIService
                 {
                     modeText = $"Mode: Тупой\n";
                     Log.Information("DeepSeekV3_1 failed");
-                    response = await DeepSeekR170BClient.CompleteChatAsync(chatRequest);
+                    response = await Qwen25VL32BInstruct!.CompleteChatAsync(chatRequest);
                 }
             }
         }
         else
         {
             modeText = $"Mode: Тупой\n";
-            response = await DeepSeekR170BClient.CompleteChatAsync(chatRequest);
+            response = await Qwen25VL32BInstruct!.CompleteChatAsync(chatRequest);
         }
 
         return (response, modeText);

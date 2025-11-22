@@ -26,13 +26,11 @@
     "leveling": {
         "title": "Уровни",
         "searchRoles": "Поиск ролей...",
-        "selectRole": "Выберите роль",
         "loadingRoles": "Загрузка ролей..",
         "level": "Уровень",
-        "updateRoleLevel": "Обновить Уровень",
-        "blockExperienceGain": "Заблокировать Получение XP",
-        "currentLevelRoles": "Текущии Уровни",
-        "noLevelRoles": "Роли не найдены",
+        "blockExperienceGain": "Заблокировать получение опыта",
+        "blockExperienceTooltip": "Пользователи с заблокированными ролями не будут получать опыт",
+        "currentLevelRoles": "Текущии уровни",
         "role": "Роль",
         "actions": "Действия",
         "levelUpMessageSettings": "Настройки сообщений о повышении уровня",
@@ -43,11 +41,13 @@
     },
     "nsfw": {
         "title": "Nsfw",
-        "updateDailyNsfwChannel": "Обновить Ежедневный Nsfw Канал"
+        "updateDailyNsfwChannel": "Обновить ежедневный nsfw канал"
     },
     "common": {
         "selectChannel": "Выбрать канал",
-        "searchRoles": "Поиск каналов...",
+        "searchChannels": "Поиск каналов...",
+        "selectRole": "Выберите роль",
+        "searchRoles": "Поиск ролей...",
         "none": "Отсутствует",
         "update": "Обновить",
         "save": "Сохранить",
@@ -56,7 +56,18 @@
         "delete": "Удалить",
         "clickToEdit": "Нажми для редактирования",
         "add": "Добавить",
-        "unsavedChanges": "Несохраненные изменения"
+        "unsavedChanges": "Несохраненные изменения",
+        "new": "Новое",
+        "old": "Прошлое",
+        "nothingFound": "Ничего не найдено",
+        "blocked": "Заблокировано",
+        "total": "Всего"
+    },
+    "imageVerification": {
+        "title": "Проверка дубликатов изображений",
+        "matchFound": "Найдено совпадение",
+        "match": "Совпадение",
+        "understood": "Понял"
     },
     "settings": {
         "title": "Настройки",

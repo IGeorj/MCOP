@@ -2,16 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { config } from "../config";
 import { useTranslation } from "react-i18next";
+import { AuthResponse } from "@/types/AuthResponse";
 
 interface Props {
-  onAuth: (data: any) => void;
+  onAuth: (data: AuthResponse | null) => void;
 }
 
 export default function OAuthCallbackHandler({ onAuth }: Props) {
   const { t } = useTranslation();
 
   const [searchParams] = useSearchParams();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [status, setStatus] = useState(t("auth.processing"));
   const [isError, setIsError] = useState(false);
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ export default function OAuthCallbackHandler({ onAuth }: Props) {
           throw new Error("Missing session in backend response");
         }
       } catch (e) {
+        console.error(e);
         setStatus(t("auth.loginFailed"));
         setIsError(true);
         onAuth(null);

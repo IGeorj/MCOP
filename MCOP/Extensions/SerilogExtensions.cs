@@ -10,15 +10,14 @@ internal static class LogExt
     public static Logger CreateLogger(BotConfiguration cfg)
     {
         string template = cfg.CustomLogTemplate
-            ?? "[{Timestamp:yyyy-MM-dd HH:mm:ss zzz}] [{Application}] [{Level:u3}] [T{ThreadId:d2}] ({ShardId}) {Message:l}{NewLine}{Exception}";
+            ?? "[{Timestamp:yyyy-MM-dd HH:mm:ss zzz}] [{Level:u3}] {Message:l}{NewLine}{Exception}";
 
         LoggerConfiguration lcfg = new LoggerConfiguration()
             .Enrich.FromLogContext()
-            .Enrich.With<Enrichers.ThreadIdEnricher>()
-            .Enrich.With<Enrichers.ApplicationNameEnricher>()
             .MinimumLevel.Is(cfg.LogLevel)
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+            .MinimumLevel.Override("System.Net.Http", LogEventLevel.Error)
             .WriteTo.Console(outputTemplate: template)
             ;
 
@@ -36,20 +35,5 @@ internal static class LogExt
         }
 
         return lcfg.CreateLogger();
-    }
-}
-
-internal sealed class Enrichers
-{
-    public sealed class ThreadIdEnricher : ILogEventEnricher
-    {
-        public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
-            => logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("ThreadId", Thread.CurrentThread.ManagedThreadId));
-    }
-
-    public sealed class ApplicationNameEnricher : ILogEventEnricher
-    {
-        public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
-            => logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("Application", "MCOP"));
     }
 }

@@ -1,3 +1,6 @@
+import React from "react";
+import { ImageInfo } from "@/types/ImageInfo";
+
 export const ImageInfoDisplay = ({ image, currentIndex, totalImages}: {
     image: ImageInfo;
     currentIndex: number;

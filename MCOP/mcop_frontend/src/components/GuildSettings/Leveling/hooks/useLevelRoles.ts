@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { roleMutations, roleQueries } from "@/api/roles";
 import { useSetState } from "@/hooks/useSetState";
+import { Role } from "@/types/Role";
 
 
 export function useLevelRoles(roles: Role[] | undefined, guildId: string) {

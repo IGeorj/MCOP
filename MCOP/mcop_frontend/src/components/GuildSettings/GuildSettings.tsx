@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FiMenu, FiAward, FiEyeOff, FiImage } from "react-icons/fi";
 import { cn } from "@/lib/utils";
 import { LevelingSettings } from "./Leveling/LevelingSettings";
@@ -103,7 +103,7 @@ export function GuildSettings({ activeCategory: initialActiveCategory = "levelin
   ];
 
   const guild = guilds.find(g => g.id === guildId);
-  const { data: fetchedGuild, isLoading, error } = useQuery({
+  const { data: fetchedGuild, isLoading } = useQuery({
     queryKey: ["guild", guildId],
     queryFn: async () => {
       const res = await fetch(`${config.API_URL}/guilds/${guildId}`, {

@@ -70,6 +70,10 @@ builder.Services
     .AddSingleton<DuelService>()
     .AddSingleton<ILockingService, LockingService>()
     .AddDiscordClient(config.CurrentConfiguration.Token, intents)
+    .Configure<DiscordConfiguration>(setup =>
+    {
+        setup.LogUnknownEvents = false;
+    })
     .AddScoped<IDiscordOAuthService, DiscordOAuthService>()
     .AddScoped<IAIService, AIService>()
     .AddScoped<IApiLimitService, ApiLimitService>()

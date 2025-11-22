@@ -170,7 +170,7 @@ namespace MCOP.Core.Common.Booru
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
-                Log.Information(HttpClient.BaseAddress + url);
+                Log.Information("Sankaku.SearchBaseAsync: " + HttpClient.BaseAddress + url);
 
                 var response = await HttpClient.SendAsync(request);
 

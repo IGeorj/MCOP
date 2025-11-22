@@ -1,10 +1,12 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { FiTrash2, FiEdit, FiCheck, FiX } from "react-icons/fi";
+import { FiTrash2, FiCheck, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/common/Spinner";
+import { Role } from "@/types/Role";
 
 interface LevelRoleCardProps {
     role: Role;
@@ -53,7 +55,7 @@ export function LevelRoleCard({
     return (
         <div className="rounded-lg border border-border p-4 hover:bg-accent dark:hover:bg-accent/50 transition-colors">
             {/* Role Header */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-wrap items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <span
                         className="h-3 w-3 rounded-full flex-shrink-0"

@@ -128,11 +128,11 @@ namespace MCOP.Core.Services.Booru
                             Log.Warning("Failed to send file: {MD5}, {Path}, {Path2}. Error:{ex}", post.MD5, post.LocalFilePath, post.LocalFilePathCompressed, ex.Message);
                         }
                     }
+
+                    Log.Information("Sankaku {name} {count1}/{count2}", nameof(SendDailyTopToChannelsAsync), messages.Count, searchResult.Count() * channels.Count);
                 }
 
                 searchResult.DeleteUnwantedFiles();
-
-                Log.Information("Sankaku {name} {count1}/{count2} finished.", nameof(SendDailyTopToChannelsAsync), messages.Count, searchResult.Count() * channels.Count);
 
                 return messages;
             }

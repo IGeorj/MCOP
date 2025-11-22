@@ -1,11 +1,13 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { FiPlus, FiCheck, FiX, FiAward } from "react-icons/fi";
+import { FiPlus, FiCheck, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import { RoleSelect } from "@/components/common/RoleSelect";
 import { useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Role } from "@/types/Role";
 
 interface AddLevelRoleCardProps {
     availableRoles: Role[];
@@ -81,9 +83,6 @@ export function AddLevelRoleCard({
                         roles={availableRoles}
                         selectedRole={newRole.roleId}
                         onRoleSelect={handleRoleSelect}
-                        placeholder="leveling.selectRole"
-                        searchPlaceholder="leveling.searchRoles"
-                        emptyMessage="leveling.noAvailableRoles"
                         disabled={isAddingPending}
                         className="h-7 text-sm border-none shadow-none focus:ring-0 p-0 hover:bg-transparent w-full"
                     />

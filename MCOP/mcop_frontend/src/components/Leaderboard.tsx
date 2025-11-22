@@ -23,7 +23,7 @@ const SORT_OPTIONS: SortOption[] = [
   { key: "likes", label: "likes" },
 ];
 
-function mapDtoToGuildUserStats(dto: any): GuildUserStats {
+function mapDtoToGuildUserStats(dto: GuildUserStats): GuildUserStats {
   return {
     guildId: dto.guildId,
     userId: dto.userId,
@@ -36,11 +36,7 @@ function mapDtoToGuildUserStats(dto: any): GuildUserStats {
     currentLevelExp: dto.currentLevelExp ?? 0,
     nextLevelExp: dto.nextLevelExp ?? 0,
     level: dto.level ?? 0,
-    winRate: "winRate" in dto
-      ? dto.winRate
-      : (dto.duelWin + dto.duelLose > 0
-        ? Math.round((dto.duelWin / (dto.duelWin + dto.duelLose)) * 10000) / 100
-        : 0),
+    winRate: dto.winRate ?? 0
   };
 }
 
@@ -67,7 +63,7 @@ const Leaderboard: React.FC = () => {
     queryKey: ["leaderboard", guildId, sortKey, sortDescending],
     queryFn: ({ pageParam }) => fetchLeaderboard(pageParam),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, _pages) => lastPage.nextPage,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled: !!guildId,
     retry: 1,
     staleTime: 1 * 60 * 1000, // cache for 1 minutes
@@ -203,7 +199,7 @@ const Leaderboard: React.FC = () => {
           <button
             key={opt.key}
             onClick={() => handleSortClick(opt.key)}
-            className={`px-3 py-1 items-center rounded text-primary cursor-pointer bg-secondary bg-hover ${sortKey === opt.key ? "border-primary border-1" : ""}`}
+            className={`px-3 py-1 items-center rounded text-primary cursor-pointer bg-secondary bg-hover active:opacity-90 ${sortKey === opt.key ? "border-primary border-1" : ""}`}
             disabled={isFetching || isFetchingNextPage}
             style={{ display: "flex", alignItems: "center" }}
             aria-pressed={sortKey === opt.key}

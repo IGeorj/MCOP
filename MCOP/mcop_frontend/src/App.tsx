@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import React from "react";
 import { Navbar } from "./components/Navbar";
 import Leaderboard from './components/Leaderboard';
@@ -92,12 +92,11 @@ export function AuthApp() {
                                         <SlideShow />
                                     </FullScreenLayout>
                                 } />
-                                <Route
-                                    path="/oauth/callback"
-                                    element={
-                                        <OAuthCallbackHandler onAuth={handleAuthResult} />
-                                    }
+                                <Route path="/oauth/callback" element={
+                                    <OAuthCallbackHandler onAuth={handleAuthResult} />
+                                }
                                 />
+                                <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                         </div>
                     </GuildListProvider>

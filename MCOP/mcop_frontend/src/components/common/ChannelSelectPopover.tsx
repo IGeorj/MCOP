@@ -3,9 +3,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover
 import { Channel } from "@/types/Channel";
 import { Button } from "../ui/button";
 import { FiChevronDown } from "react-icons/fi";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Command, CommandEmpty, CommandInput, CommandItem } from "../ui/command";
 import { ScrollArea } from "../ui/scroll-area";
-import { t } from "i18next";
+import { useTranslation } from 'react-i18next';
 
 interface ChannelSelectPopoverProps {
   channels: Channel[];
@@ -18,6 +18,8 @@ export const ChannelSelectPopover: React.FC<ChannelSelectPopoverProps> = ({ chan
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const { t } = useTranslation();
+  
   const selectedChannelName =
     selectedChannel === null && isDefaultNone
       ? t("common.none")
@@ -40,7 +42,7 @@ export const ChannelSelectPopover: React.FC<ChannelSelectPopoverProps> = ({ chan
         <Command>
           <div className="flex items-center px-3 bg-navbar">
             <CommandInput
-              placeholder={t("common.searchRoles")}
+              placeholder={t("common.searchChannels")}
               value={searchTerm}
               onValueChange={setSearchTerm}
             />

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FaPlay, FaStop, FaAngleRight, FaAngleLeft, FaTrashAlt } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -9,6 +9,7 @@ import { FullscreenButton } from "../buttons/FullscreenButton";
 import { ImageInfoDisplay } from "./ImageInfoDisplay";
 import { IntervalControl } from "./IntervalControl";
 import { useSlideshow } from "@/hooks/useSlideshow";
+import { ImageInfo } from "@/types/ImageInfo";
 
 export const SlideShow = () => {
     const [intervalSec, setIntervalSec] = useState(5);

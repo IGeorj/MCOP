@@ -60,9 +60,6 @@ public sealed class BotConfiguration
     [JsonProperty("gelbooru-restricted-tags")]
     public string? GelbooruRestrictegTags { get; set; }
 
-    [JsonProperty("ai-api-key")]
-    public string? AIApiKey { get; set; }
-
     [JsonProperty("openrounter-api-key")]
     public string? OpenRounterApiKey { get; set; }
 

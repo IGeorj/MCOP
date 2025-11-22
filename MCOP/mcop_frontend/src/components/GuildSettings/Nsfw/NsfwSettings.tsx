@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SetNsfwRole } from "./SetNsfwRole";
 import { channelQueries } from "@/api/channels";

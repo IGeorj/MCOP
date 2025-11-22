@@ -1,18 +1,17 @@
+import React from "react";
 import { FiChevronDown } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { Role } from "@/types/Role";
 
 interface RoleSelectProps {
     roles: Role[];
     selectedRole: string | null;
     onRoleSelect: (roleId: string) => void;
-    placeholder?: string;
-    searchPlaceholder?: string;
-    emptyMessage?: string;
     disabled?: boolean;
     className?: string;
 }
@@ -21,9 +20,6 @@ export function RoleSelect({
     roles,
     selectedRole,
     onRoleSelect,
-    placeholder = "Select role...",
-    searchPlaceholder = "Search roles...",
-    emptyMessage = "No roles found",
     disabled = false,
     className = ""
 }: RoleSelectProps) {
@@ -45,7 +41,7 @@ export function RoleSelect({
             <span className="truncate">{selectedRoleData.name}</span>
         </div>
     ) : (
-        t(placeholder) || placeholder
+        t("common.selectRole")
     );
 
     return (
@@ -66,14 +62,14 @@ export function RoleSelect({
                 <Command>
                     <div className="flex items-center px-3 bg-navbar">
                         <CommandInput
-                            placeholder={t(searchPlaceholder) || searchPlaceholder}
+                            placeholder={t("common.searchRoles")}
                             value={searchTerm}
                             onValueChange={setSearchTerm}
                         />
                     </div>
                     <ScrollArea className="bg-navbar h-80 px-4 py-2">
                         {filteredRoles.length === 0 ? (
-                            <CommandEmpty>{t("leveling.noLevelRoles")}</CommandEmpty>
+                            <CommandEmpty>{t("common.none")}</CommandEmpty>
                         ) : (
                             filteredRoles.map(role => (
                                 <CommandItem
