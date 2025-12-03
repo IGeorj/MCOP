@@ -230,7 +230,7 @@ const Leaderboard: React.FC = () => {
           loader={<h4 style={{ textAlign: 'center' }}>{t("loading")}</h4>}
           endMessage={
             <p style={{ textAlign: 'center' }}>
-              <b>{t("theEnd")}</b>
+              <b>{isFetching ? t("loading") : t("theEnd")}</b>
             </p>
           }
         >

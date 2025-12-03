@@ -60,8 +60,14 @@ namespace MCOP.Modules.Nsfw
                 {
                     foreach (var post in posts.GetRange(i, Math.Min(amount, posts.Count - i)))
                     {
-                        var booruMessage = await Sankaku.SendBooruPostAsync(ctx.Channel, post);
-                        _ = CreateDeleteReactionAsync(ctx, booruMessage);
+                        try
+                        {
+                            var booruMessage = await Sankaku.SendBooruPostAsync(ctx.Channel, post);
+                            _ = CreateDeleteReactionAsync(ctx, booruMessage);
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
 
                     var nextButton = new DiscordButtonComponent(

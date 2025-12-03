@@ -97,7 +97,12 @@ namespace MCOP.Core.Common.Booru
                 File.Delete(LocalFilePathCompressed);
             }
 
-            var containsUnwantedToSaveTags = Tags.Any(p => p.Name == "3d");
+            var containsUnwantedToSaveTags = Tags.Any(p => 
+                p.Name == "3d" 
+                || p.Name == "censored" 
+                || p.Name.Contains("goblin_male", StringComparison.InvariantCultureIgnoreCase)
+                || p.Name.Contains("pregnant", StringComparison.InvariantCultureIgnoreCase));
+
             if (LocalFilePath is not null && containsUnwantedToSaveTags)
             {
                 string? directoryPath = Path.GetDirectoryName(LocalFilePath);

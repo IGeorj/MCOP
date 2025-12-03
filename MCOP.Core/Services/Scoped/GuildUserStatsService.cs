@@ -8,6 +8,7 @@ using MCOP.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Serilog;
+using System.Data;
 
 namespace MCOP.Core.Services.Scoped
 {
@@ -120,59 +121,73 @@ namespace MCOP.Core.Services.Scoped
         {
             page = Math.Max(1, page);
             pageSize = Math.Clamp(pageSize, 1, 100);
+            var offset = (page - 1) * pageSize;
+            var sort = sortBy?.ToLowerInvariant() switch
+            {
+                "likes" => "Likes",
+                "duelwin" => "DuelWin",
+                "duellose" => "DuelLose",
+                _ => "Exp"
+            };
+
+            var orderDir = sortDescending ? "DESC" : "ASC";
 
             await using var context = await _contextFactory.CreateDbContextAsync();
-
             var guildConfig = await _guildConfigService.GetOrAddGuildConfigAsync(guildId);
 
             var likeEmoji = guildConfig.LikeEmojiName;
             var likeEmojiId = guildConfig.LikeEmojiId;
 
-            var baseQuery = from stat in context.GuildUserStats
-                            where stat.GuildId == guildId
-                            select new
-                            {
-                                stat.GuildId,
-                                stat.UserId,
-                                stat.Username,
-                                stat.AvatarHash,
-                                stat.DuelWin,
-                                stat.DuelLose,
-                                stat.Exp,
-                                Likes = context.GuildMessageReactions
-                                    .Where(r => r.GuildId == guildId &&
-                                                r.Emoji == likeEmoji &&
-                                                r.EmojiId == likeEmojiId &&
-                                                r.Message.UserId == stat.UserId)
-                                    .Count() + (likeEmoji == "❤️" ? stat.Likes : 0)
-                            };
+            var totalCount = await context.GuildUserStats
+                .CountAsync(s => s.GuildId == guildId);
 
-            var totalCount = await baseQuery.CountAsync();
+            var orderByClause = $"ORDER BY {sort} {orderDir}";
 
-            var sorted = sortBy?.ToLowerInvariant() switch
-            {
-                "likes" => sortDescending ? baseQuery.OrderByDescending(x => x.Likes) : baseQuery.OrderBy(x => x.Likes),
-                "duelwin" => sortDescending ? baseQuery.OrderByDescending(x => x.DuelWin) : baseQuery.OrderBy(x => x.DuelWin),
-                "duellose" => sortDescending ? baseQuery.OrderByDescending(x => x.DuelLose) : baseQuery.OrderBy(x => x.DuelLose),
-                _ => sortDescending ? baseQuery.OrderByDescending(x => x.Exp) : baseQuery.OrderBy(x => x.Exp)
-            };
+            var sql = $@"
+                SELECT 
+                    s.GuildId,
+                    s.UserId,
+                    s.Username,
+                    s.AvatarHash,
+                    s.DuelWin,
+                    s.DuelLose,
+                    s.Exp,
+                    (COALESCE(r.ReactionCount, 0) + 
+                        CASE WHEN {{0}} = '❤️' THEN s.Likes ELSE 0 END
+                    ) AS Likes
+                FROM GuildUserStats s
+                LEFT JOIN (
+                    SELECT 
+                        m.UserId,
+                        COUNT(*) AS ReactionCount
+                    FROM GuildMessageReactions r
+                    INNER JOIN GuildMessages m ON r.MessageId = m.Id
+                    WHERE 
+                        r.GuildId = {{1}} 
+                        AND r.Emoji = {{2}} 
+                        AND r.EmojiId = {{3}}
+                    GROUP BY m.UserId
+                ) r ON r.UserId = s.UserId
+                WHERE s.GuildId = {{1}}
+                {orderByClause}
+                LIMIT {{4}} OFFSET {{5}}";
 
-            var results = await sorted
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+            var projections = await context.Set<GuildUserStatsProjection>()
+                .FromSqlRaw(sql, likeEmoji, guildId, likeEmoji, likeEmojiId, pageSize, offset)
                 .AsNoTracking()
-                .Select(x => new GuildUserStatsDto
-                {
-                    GuildId = x.GuildId.ToString(),
-                    UserId = x.UserId.ToString(),
-                    Username = x.Username ?? "Unknown",
-                    AvatarHash = x.AvatarHash,
-                    DuelWin = x.DuelWin,
-                    DuelLose = x.DuelLose,
-                    Exp = x.Exp,
-                    Likes = x.Likes
-                })
                 .ToListAsync();
+
+            var results = projections.Select(p => new GuildUserStatsDto
+            {
+                GuildId = p.GuildId.ToString(),
+                UserId = p.UserId.ToString(),
+                Username = p.Username ?? "Unknown",
+                AvatarHash = p.AvatarHash,
+                DuelWin = p.DuelWin,
+                DuelLose = p.DuelLose,
+                Exp = p.Exp,
+                Likes = p.Likes
+            }).ToList();
 
             Log.Information("Fetched {Count} stats for guild {GuildId}, page {Page}", results.Count, guildId, page);
             return (results, totalCount);

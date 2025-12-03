@@ -84,6 +84,10 @@ namespace MCOP.Core.Services.Booru
                 searchResult.Sort();
                 return searchResult;
             }
+            catch (McopException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 throw new McopException(ex, ex.Message);
@@ -98,7 +102,13 @@ namespace MCOP.Core.Services.Booru
             {
                 await post.DownloadAsJpgAsync(_sankaku.HttpClient, authToken);
 
+                TagValidator.ValidateTags(post);
+
                 return await SendPostAsync(channel, post, post.LocalFilePathCompressed ?? "");
+            }
+            catch (McopException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -135,6 +145,10 @@ namespace MCOP.Core.Services.Booru
                 searchResult.DeleteUnwantedFiles();
 
                 return messages;
+            }
+            catch (McopException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

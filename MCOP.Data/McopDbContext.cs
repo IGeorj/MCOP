@@ -28,5 +28,14 @@ namespace MCOP.Data
             BotConfiguration config = asyncExecution.Execute(configurationService.LoadConfigAsync());
             optionsBuilder.UseSqlite($"Data Source={config.DatabaseConfig.DatabaseName}.db;");
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<GuildUserStatsProjection>(eb =>
+            {
+                eb.HasNoKey();
+                eb.ToView(null); // Not tied to a real table/view
+            });
+        }
     }
 }
