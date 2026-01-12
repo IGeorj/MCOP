@@ -38,7 +38,7 @@ export const LanguageSwitcher = () => {
           <DropdownMenuItem
             key={lang.code}
             onClick={() => i18n.changeLanguage(lang.code)}
-            className="flex justify-between "
+            className="flex justify-between"
           >
             <span>{lang.label}</span>
           </DropdownMenuItem>

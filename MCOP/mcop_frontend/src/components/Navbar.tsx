@@ -69,7 +69,7 @@ export const Navbar = ({
             <DropdownMenuContent className="w-48 hidden md:flex" align="end">
               <DropdownMenuItem
                 onClick={onLogout}
-                className="flex items-center gap-2 cursor-pointer"
+                className="flex items-center gap-2 cursor-pointer w-full"
               >
                 <LogOut className="h-4 w-4" />
                 {t("logout")}
@@ -104,7 +104,7 @@ export const Navbar = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 md:hidden" align="end">
               <div className="px-4 py-1.5 flex items-center gap-2">
-                <p className="text-base font-bold">{username}</p>
+                <p className="text-primary text-base font-bold">{username}</p>
               </div>
 
               <DropdownMenuSeparator />

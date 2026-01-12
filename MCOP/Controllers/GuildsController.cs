@@ -60,6 +60,7 @@ namespace MCOP.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
         [Authorize]
         [HttpGet("{guildId}")]
         public async Task<IActionResult> GetGuild(string guildId)

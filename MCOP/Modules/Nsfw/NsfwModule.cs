@@ -6,6 +6,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
+using MCOP.Common;
 using MCOP.Common.Autocomplete;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Booru;
@@ -187,9 +188,7 @@ namespace MCOP.Modules.Nsfw
 
         private static async Task CreateDeleteReactionAsync(CommandContext ctx, DiscordMessage message)
         {
-            var removeEmoji = DiscordEmoji.FromName(ctx.Client, ":no_entry_sign:");
-
-            await message.CreateReactionAsync(removeEmoji);
+            await message.CreateReactionAsync(Emojis.NoEntry);
 
             var interactivity = ctx.Client.ServiceProvider.GetRequiredService<InteractivityExtension>();
 
@@ -199,7 +198,7 @@ namespace MCOP.Modules.Nsfw
                     if (e.User.IsBot || e.Message != message)
                         return false;
 
-                    if ((e.User.Id == ctx.User.Id || e.Guild.GetMemberAsync(e.User.Id).GetAwaiter().GetResult().IsAdmin()) && (e.Emoji == removeEmoji))
+                    if ((e.User.Id == ctx.User.Id || e.Guild.GetMemberAsync(e.User.Id).GetAwaiter().GetResult().IsAdmin()) && (e.Emoji == Emojis.NoEntry))
                     {
                         return true;
                     }
@@ -211,11 +210,11 @@ namespace MCOP.Modules.Nsfw
 
             if (res.TimedOut)
             {
-                await message.DeleteReactionsEmojiAsync(removeEmoji);
+                await message.DeleteReactionsEmojiAsync(Emojis.NoEntry);
                 return;
             }
 
-            if (res.Result.Emoji == removeEmoji)
+            if (res.Result.Emoji == Emojis.NoEntry)
             {
                 await message.DeleteSilentAsync();
             }

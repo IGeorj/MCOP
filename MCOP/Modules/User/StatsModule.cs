@@ -84,7 +84,9 @@ namespace MCOP.Modules.User
         private async Task<string> BuildEmojiLeaderboardAsync(CommandContext ctx, DiscordGuild guild, ulong userId)
         {
             var reactionService = ctx.ServiceProvider.GetRequiredService<IReactionService>();
+            var configService = ctx.ServiceProvider.GetRequiredService<IGuildConfigService>();
             var receivedReactions = await reactionService.GetUserTopReactionsAsync(guild.Id, userId);
+            var config = await configService.GetOrAddGuildConfigAsync(guild.Id);
 
             if (receivedReactions.Count == 0)
                 return DiscordEmoji.FromName(ctx.Client, ":jokerge:").ToString();
@@ -92,6 +94,8 @@ namespace MCOP.Modules.User
             var leaderboard = new StringBuilder();
             foreach (var reaction in receivedReactions)
             {
+                if (config.LikeEmojiName == reaction.Emoji || config.LikeEmojiId == reaction.EmojiId) continue;
+
                 var emoji = reaction.EmojiId != 0 ? (await guild.GetEmojiAsync(reaction.EmojiId)).ToString() : reaction.Emoji;
                 leaderboard.Append($"{emoji} {reaction.Count}  ");
             }

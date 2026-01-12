@@ -74,7 +74,7 @@ public sealed class MessageListeners
         await MessageHelper.CheckEveryoneAsync(client, e);
         await MessageHelper.CheckDulyaAsync(client, e);
 
-        await _aiService.GenerateAIResponseOnMentionAsync(e);
+        // await _aiService.GenerateAIResponseOnMentionAsync(e);
         await _levelingService.AddMessageExpAsync(e.Guild.Id, e.Channel.Id, e.Author.Id);
 
         if (await ShouldReactWithHeart(e))

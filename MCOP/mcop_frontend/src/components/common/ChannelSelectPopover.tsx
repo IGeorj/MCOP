@@ -32,10 +32,10 @@ export const ChannelSelectPopover: React.FC<ChannelSelectPopoverProps> = ({ chan
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between bg-navbar cursor-pointer text-primary-reversed"
         >
           {selectedChannelName}
-          <FiChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <FiChevronDown className="text-default ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">

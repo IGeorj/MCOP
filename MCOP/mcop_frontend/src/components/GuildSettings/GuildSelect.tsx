@@ -15,14 +15,14 @@ export const GuildSelect = ({ guilds, currentGuild, onSelect }: {
   onSelect: (value: string) => void;
 }) => (
   <Select value={currentGuild.id} onValueChange={onSelect}>
-    <SelectTrigger className="w-full border-0 bg-navbar cursor-pointer !h-full">
+    <SelectTrigger className="text-primary-reversed w-full border-0 bg-navbar cursor-pointer h-full!">
       <SelectValue>
         <GuildItem guild={currentGuild} size="md" />
       </SelectValue>
     </SelectTrigger>
-    <SelectContent className="bg-navbar">
+    <SelectContent className="bg-navbar rounded-none">
       {guilds.map((g) => (
-        <SelectItem value={g.id} key={g.id} className="cursor-pointer">
+        <SelectItem value={g.id} key={g.id} className="text-primary-reversed cursor-pointer rounded-none">
           <GuildItem guild={g} size="sm" />
         </SelectItem>
       ))}
