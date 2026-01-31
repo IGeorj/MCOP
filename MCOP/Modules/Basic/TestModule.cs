@@ -33,7 +33,7 @@ namespace MCOP.Modules.Basic
             {
                 try
                 {
-                    Thread.Sleep(400);
+                    await Task.Delay(400);
                     var channel = await ctx.Guild.GetChannelAsync(msg.ChannelId);
                     var message = await channel.GetMessageAsync(msg.Id);
 
