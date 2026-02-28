@@ -14,6 +14,7 @@ import { GuildSettings } from "./components/GuildSettings/GuildSettings";
 import { GuildListProvider } from "./contexts/GuildListContext";
 import useTheme from "@/hooks/useTheme";
 import { GuildLayout } from "./components/GuildSettings/GuildSettingsLayout";
+import VideoBrowser from './components/Video/VideoBrowser';
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,11 @@ export function AuthApp() {
                                     <OAuthCallbackHandler onAuth={handleAuthResult} />
                                 }
                                 />
+                                <Route path="/videos" element={
+                                    <FullScreenLayout>
+                                        <VideoBrowser />
+                                    </FullScreenLayout>
+                                } />
                                 <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                         </div>

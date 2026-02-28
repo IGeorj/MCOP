@@ -66,4 +66,7 @@ public sealed class BotConfiguration
     [JsonProperty("shared-files-path")]
     public string? SharedFilesPath { get; set; }
 
+    [JsonProperty("shared-videos-path")]
+    public string? SharedVideosPath { get; set; }
+
 }

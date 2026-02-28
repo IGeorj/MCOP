@@ -41,7 +41,6 @@ namespace MCOP.Core.Services.Scoped.OAuth
             var content = new FormUrlEncodedContent(values);
             var response = await client.PostAsync("https://discord.com/api/oauth2/token", content);
             var payload = await response.Content.ReadAsStringAsync();
-
             if (!response.IsSuccessStatusCode)
             {
                 _logger.Warning("Discord Token Exchange Failed: {0}", payload);

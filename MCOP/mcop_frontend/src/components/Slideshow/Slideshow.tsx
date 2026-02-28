@@ -102,7 +102,7 @@ export const SlideShow = () => {
                         currentIndex={currentIndex}
                         totalImages={loadedImages.length}
                     />
-                    <div className="flex-shrink-0 flex items-center gap-2 md:gap-4">
+                    <div className="shrink-0 flex items-center gap-2 md:gap-4">
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button

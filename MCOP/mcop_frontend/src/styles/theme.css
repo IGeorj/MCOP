@@ -175,6 +175,7 @@ h1, h2, h3, h4 {
 .fill-navbar { fill: var(--color-navbar); }
 .fill-bg { fill: var(--color-bg); }
 .text-primary { color: var(--color-primary); }
+.accent-color-primary { accent-color: var(--color-primary); }
 .text-primary:hover { color: var(--color-accent-foreground); }
 .text-default { color: var(--color-text); }
 .text-primary-reversed { color: var(--color-text); }

@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-using System.Security.Claims;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
+using MCOP.Core.Services.Scoped;
 using MCOP.Core.Services.Scoped.OAuth;
 using MCOP.Utils;
 using Microsoft.AspNetCore.Authorization;
-using MCOP.Core.Services.Scoped;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace MCOP.Controllers
 {
@@ -45,6 +45,8 @@ namespace MCOP.Controllers
 
                 await _appUserService.StoreTokensAsync(user.Id.ToString(), tokenResponse.AccessToken, tokenResponse.RefreshToken, tokenResponse.ExpiresAt);
 
+                SetAuthCookies(sessionToken, user.Id.ToString());
+
                 return Ok(new
                 {
                     session = sessionToken,
@@ -57,6 +59,19 @@ namespace MCOP.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
+        }
+
+        private void SetAuthCookies(string sessionToken, string userId)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(7),
+            };
+
+            Response.Cookies.Append("access_token", sessionToken, cookieOptions);
         }
 
         [Authorize]

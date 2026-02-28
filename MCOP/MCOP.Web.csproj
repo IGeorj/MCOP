@@ -56,4 +56,10 @@
     <ProjectReference Include="..\MCOP.Core\MCOP.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="resources\config.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

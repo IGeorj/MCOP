@@ -59,5 +59,13 @@ namespace MCOP.Modules.Basic
             context.GuildMessages.UpdateRange(messages);
             context.SaveChanges();
         }
+
+        [Command("t")]
+        public async Task T(CommandContext ctx)
+        {
+            await ctx.DeferResponseAsync();
+
+            await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Test"));
+        }
     }
 }

@@ -1,27 +1,28 @@
-﻿using DSharpPlus.Commands.Processors.SlashCommands;
-using DSharpPlus.Commands.Processors.TextCommands;
-using DSharpPlus;
-using MCOP.Utils;
-using Serilog;
-using MCOP.Core.Common.Booru;
-using MCOP.Core.Services.Singletone;
-using MCOP.Data;
-using MCOP.Services;
-using Microsoft.EntityFrameworkCore;
-using Polly.Extensions.Http;
-using Polly;
-using MCOP.Extensions;
-using DSharpPlus.Commands.Processors.TextCommands.Parsing;
+﻿using DSharpPlus;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands;
+using DSharpPlus.Commands.Processors.TextCommands;
+using DSharpPlus.Commands.Processors.TextCommands.Parsing;
+using DSharpPlus.Extensions;
+using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
-using DSharpPlus.Interactivity;
+using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Background;
-using DSharpPlus.Extensions;
-using MCOP.EventListeners;
-using MCOP.Core.Services.Scoped.AI;
 using MCOP.Core.Services.Scoped;
+using MCOP.Core.Services.Scoped.AI;
 using MCOP.Core.Services.Scoped.OAuth;
+using MCOP.Core.Services.Singletone;
+using MCOP.Data;
+using MCOP.EventListeners;
+using MCOP.Extensions;
+using MCOP.Services;
+using MCOP.Utils;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Polly;
+using Polly.Extensions.Http;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -161,6 +162,19 @@ builder.Services.AddAuthentication("Bearer")
                 System.Text.Encoding.UTF8.GetBytes(config.CurrentConfiguration.JwtConfig.Key!)
             )
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Query.ContainsKey("token"))
+                    context.Token = context.Request.Query["token"];
+                else if (context.Request.Cookies.ContainsKey("access_token"))
+                    context.Token = context.Request.Cookies["access_token"];
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -179,7 +193,6 @@ app.UseCors(builder =>
            .AllowAnyMethod()
            .AllowCredentials());
 
-// Миграции базы данных
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<McopDbContext>>();

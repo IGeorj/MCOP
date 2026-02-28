@@ -38,6 +38,7 @@ export default function OAuthCallbackHandler({ onAuth }: Props) {
         setStatus(t("auth.connectingToDiscord"));
         const res = await fetch(config.API_URL + "/auth/discord/callback", {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ code }),
         });
