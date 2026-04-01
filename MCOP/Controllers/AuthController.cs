@@ -74,6 +74,13 @@ namespace MCOP.Controllers
             Response.Cookies.Append("access_token", sessionToken, cookieOptions);
         }
 
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("access_token");
+            return Ok(new { message = "Logged out successfully" });
+        }
+
         [Authorize]
         [HttpGet("me")]
         public IActionResult Me()

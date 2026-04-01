@@ -31,6 +31,16 @@
     <meta name="MCOP" content="MCOP discord bot" />
     <link rel="manifest" href="/manifest.json" />
     <title>MCOP</title>
+    <script>
+        (function () {
+            var THEME_KEY = "mcop-site-theme";
+            var stored = localStorage.getItem(THEME_KEY);
+            var theme = stored === "dark" || stored === "light" ? stored : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+            if (theme === "dark") {
+                document.documentElement.classList.add("dark");
+            }
+        })();
+    </script>
 </head>
 
 <body>

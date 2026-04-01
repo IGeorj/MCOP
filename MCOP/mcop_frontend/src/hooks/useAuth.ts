@@ -15,7 +15,7 @@ type AuthResult = {
     avatarUrl: string;
 };
 
-export function useAuth() {
+export function useAuth(onLogout?: () => void) {
     const queryClient = useQueryClient();
 
     const {
@@ -50,8 +50,18 @@ export function useAuth() {
 
     const { mutate: handleLogout } = useMutation({
         mutationFn: async () => {
-            localStorage.removeItem("app_session");
-            queryClient.setQueryData(["auth", "current_user"], null);
+            try {
+                await fetch(`${config.API_URL}/auth/logout`, {
+                    method: "POST",
+                    credentials: "include",
+                });
+            } catch (error) {
+                console.error("Logout failed:", error);
+            } finally {
+                localStorage.removeItem("app_session");
+                queryClient.setQueryData(["auth", "current_user"], null);
+                onLogout?.();
+            }
         },
     });
 
