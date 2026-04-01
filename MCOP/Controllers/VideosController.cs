@@ -72,44 +72,14 @@ namespace MCOP.Controllers
                 var safePath = Path.GetFullPath(Path.Combine(_rootPath, videoPath.TrimStart('/', '\\')));
 
                 if (!safePath.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
-                {
                     return BadRequest("Invalid path.");
-                }
 
                 if (!System.IO.File.Exists(safePath))
                     return NotFound();
 
-                var fileInfo = new FileInfo(safePath);
                 var mimeType = GetMimeType(safePath);
 
-                var rangeHeader = Request.Headers.Range.ToString();
-                if (string.IsNullOrEmpty(rangeHeader))
-                    return PhysicalFile(safePath, mimeType, enableRangeProcessing: true);
-
-                var match = Regex.Match(rangeHeader, @"bytes=(\d*)-(\d*)");
-                if (!match.Success)
-                    return PhysicalFile(safePath, mimeType, enableRangeProcessing: true);
-
-                long start = 0;
-                long end = fileInfo.Length - 1;
-
-                if (!string.IsNullOrEmpty(match.Groups[1].Value))
-                    start = long.Parse(match.Groups[1].Value);
-
-                if (!string.IsNullOrEmpty(match.Groups[2].Value))
-                    end = long.Parse(match.Groups[2].Value);
-
-                if (start > end || start < 0 || end >= fileInfo.Length)
-                    return StatusCode(416);
-
-                var length = end - start + 1;
-                var stream = new FileStream(safePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                stream.Position = start;
-
-                Response.StatusCode = 206; // Partial Content
-                Response.Headers.AcceptRanges = "bytes";
-                Response.Headers.ContentRange = $"bytes {start}-{end}/{fileInfo.Length}";
-                return File(stream, mimeType, enableRangeProcessing: false, fileDownloadName: null, lastModified: fileInfo.LastWriteTimeUtc, entityTag: null);
+                return PhysicalFile(safePath, mimeType, enableRangeProcessing: true);
             }
             catch (Exception ex)
             {

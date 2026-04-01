@@ -114,7 +114,7 @@ namespace MCOP.Modules.User
                 .WithThumbnail(member.AvatarUrl)
                 .WithDescription(LevelingHelper.GenerateLevelString(stats.Level, stats.Exp, rank))
                 .AddField("Лайки", $":heart: {stats.Likes}", true)
-                .AddField("Дуели", $":crossed_swords: {stats.DuelWin} - {stats.DuelLose}", true)
+                .AddField("Дуэли", $":crossed_swords: {stats.DuelWin} - {stats.DuelLose}", true)
                 .AddField("Медали за отвагу", emojiLeaderboard)
                 .Build();
         }

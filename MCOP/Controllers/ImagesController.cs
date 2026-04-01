@@ -80,7 +80,8 @@ namespace MCOP.Controllers
                     return NotFound();
 
                 var mimeType = GetMimeType(safePath);
-                return PhysicalFile(safePath, mimeType);
+
+                return PhysicalFile(safePath, mimeType, enableRangeProcessing: true);
             }
             catch (Exception ex)
             {

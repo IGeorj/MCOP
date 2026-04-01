@@ -225,7 +225,7 @@ namespace MCOP.Services
             catch (Exception ex)
             {
                 duel.DuelMessage = null;
-                Log.Error(ex, "Не удалось модифицировать сообщение дуели");
+                Log.Error(ex, "Не удалось модифицировать сообщение дуэли");
                 return null;
             }
         }
@@ -329,8 +329,8 @@ namespace MCOP.Services
                 await statsService.AddDuelLoseAsync(ctx.Guild.Id, duel.DuelMember1.Member.Id);
                 await statsService.AddDuelLoseAsync(ctx.Guild.Id, duel.DuelMember2.Member.Id);
 
-                await TryTimeoutUserAsync(duel.DuelMember1.Member, timeoutMinutes, "Ничья в дуели");
-                await TryTimeoutUserAsync(duel.DuelMember2.Member, timeoutMinutes, "Ничья в дуели");
+                await TryTimeoutUserAsync(duel.DuelMember1.Member, timeoutMinutes, "Ничья в дуэли");
+                await TryTimeoutUserAsync(duel.DuelMember2.Member, timeoutMinutes, "Ничья в дуэли");
             }
         }
 
