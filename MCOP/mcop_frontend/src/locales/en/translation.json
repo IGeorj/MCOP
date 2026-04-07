@@ -37,7 +37,7 @@
         "enableMessages": "Enable messages",
         "templateHelp": "Default Message. Use {user}, {role}, {level} to display correspondent values",
         "templatePlaceholder": "Example: {user} reached level {level} and got role {role}!",
-        "messageTemplate": "Message when leved reached"
+        "messageTemplate": "Message when level reached"
     },
     "nsfw": {
         "title": "Nsfw",
