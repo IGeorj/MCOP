@@ -77,8 +77,7 @@ public sealed class ClientListeners
 
     public async Task GuildMemberUpdatedHandler(DiscordClient client, GuildMemberUpdatedEventArgs e)
     {
-        if (e.AvatarHashAfter != e.AvatarHashBefore || e.MemberBefore.DisplayName != e.MemberAfter.DisplayName)
-            await _guildUserStatsService.UpdateUserInfo(e.Guild.Id, e.Member.Id, e.MemberAfter.DisplayName, e.AvatarHashAfter);
+        await _guildUserStatsService.UpdateUserInfo(e.Guild.Id, e.Member.Id, e.MemberAfter.DisplayName, e.AvatarHashAfter);
     }
 
     public async Task GuildMemberAddedHandler(DiscordClient client, GuildMemberAddedEventArgs e)
