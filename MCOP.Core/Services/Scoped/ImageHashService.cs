@@ -47,6 +47,7 @@ namespace MCOP.Core.Services.Scoped
                 await using var context = await _contextFactory.CreateDbContextAsync();
 
                 return (await context.ImageHashes
+                    .AsNoTracking()
                     .Where(x => x.GuildId == guildId)
                     .ToListAsync())
                     .OrderByDescending(x => x.Id)
@@ -66,6 +67,7 @@ namespace MCOP.Core.Services.Scoped
                 await using var context = await _contextFactory.CreateDbContextAsync();
 
                 return (await context.ImageHashes
+                    .AsNoTracking()
                     .Where(x => x.GuildId == guildId && x.GuildMessage.ChannelId == channelId)
                     .ToListAsync())
                     .OrderByDescending(x => x.Id)
@@ -85,6 +87,7 @@ namespace MCOP.Core.Services.Scoped
                 await using var context = await _contextFactory.CreateDbContextAsync();
 
                 return (await context.ImageHashes
+                    .AsNoTracking()
                     .Where(x => x.GuildId == guildId
                         && x.GuildMessage.ChannelId == channelId
                         && (messageId == null || x.GuildMessage.Id == messageId)

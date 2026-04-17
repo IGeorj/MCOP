@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState, useMemo, useCallback} from 'react';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { FaPlay, FaPause, FaExpand, FaVolumeUp, FaVolumeMute, FaTimes } from 'react-icons/fa';
 import { useFullscreen } from '@/hooks/useFullscreen';
@@ -23,7 +24,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ path, className, onClo
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<HTMLDivElement | null>(null);
-  const timelineRef = useRef<HTMLInputElement | null>(null);
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -65,7 +65,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ path, className, onClo
       v.removeEventListener('play', onPlay);
       v.removeEventListener('pause', onPause);
     };
-  }, [path]);
+  }, [path, volume, muted]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -90,7 +90,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ path, className, onClo
     try {
       const ctx = cnv.getContext('2d');
       if (!ctx) return;
-      // Fixed preview size
       cnv.width = 160;
       cnv.height = 90;
       ctx.clearRect(0, 0, cnv.width, cnv.height);
@@ -121,12 +120,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ path, className, onClo
     if (v.paused) v.play(); else v.pause();
   }, []);
 
-  const onSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = videoRef.current;
-    if (!v) return;
-    const value = Number(e.target.value);
-    v.currentTime = value;
-  }, []);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.code === 'Space') {
@@ -145,46 +138,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ path, className, onClo
 
   const toggleMute = useCallback(() => {
     setMuted(!muted);
-  }, []);
-
-  const onChangeVolume = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = Math.max(0, Math.min(1, Number(e.target.value) / 100));
-    setVolume(v);
-    if (v === 0) setMuted(true);
-    else if (muted) setMuted(false);
   }, [muted]);
 
-  const handleTimelineMouseMove = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
-    const timeline = timelineRef.current;
-    if (!timeline) return;
 
-    const rect = timeline.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, x / rect.width));
-
-    const dur = Number.isFinite(duration) && duration > 0 ? duration : 0;
-    const epsilon = 0.25;
-    const tRaw = dur * ratio;
-    const t = dur > 0 ? Math.max(0, Math.min(dur - epsilon, tRaw)) : 0;
-    setHoverTime(t);
-
-    const popupHalf = 80;
-    const desiredLeft = x;
-    const clampedLeft = Math.max(popupHalf, Math.min(rect.width - popupHalf, desiredLeft));
-    setPreviewLeft(clampedLeft);
-
-    setPreviewVisible(true);
-    const pv = previewVideoRef.current;
-    if (pv && !isNaN(t)) {
-      try { pv.currentTime = t; } catch {
-        //ignore 
-      }
-    }
-  }, [duration]);
-
-  const handleTimelineMouseLeave = useCallback(() => {
-    setPreviewVisible(false);
-  }, []);
 
   return (
     <div ref={containerRef} className={`relative w-full h-full bg-black ${className || ''}`} onKeyDown={onKeyDown} tabIndex={0}>
@@ -215,8 +171,43 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ path, className, onClo
       <canvas ref={previewCanvasRef} style={{ display: 'none' }} />
 
       {/* Controls */}
-      <div ref={controlsRef} className={`absolute bottom-0 left-0 right-0 bg-navbar px-3 py-2 md:px-4 md:py-3 transition-opacity duration-300 ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="flex items-center gap-3 w-full">
+      <div ref={controlsRef} className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2 md:px-4 md:py-3 transition-opacity duration-300 ${isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {/* Timeline */}
+        <div className="cursor-pointer relative w-full mb-3 group" onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const ratio = Math.max(0, Math.min(1, x / rect.width));
+          const t = (duration || 0) * ratio;
+          setHoverTime(t);
+          setPreviewLeft(x);
+          setPreviewVisible(true);
+          const pv = previewVideoRef.current;
+          if (pv && !isNaN(t)) { try { pv.currentTime = t; } catch (e) { console.error(e); } }
+        }} onMouseLeave={() => setPreviewVisible(false)}>
+          <Slider
+            value={[Math.min(currentTime, duration || 0)]}
+            max={duration || 0}
+            step={0.1}
+            onValueChange={(val: number[]) => {
+              const v = videoRef.current;
+              if (v) v.currentTime = val[0];
+            }}
+            className="w-full h-6"
+          />
+          {previewVisible && previewUrl && (
+            <div
+              className="absolute bottom-7 -translate-x-1/2 pointer-events-none"
+              style={{ left: previewLeft }}
+            >
+              <div className="rounded bg-background shadow p-1 text-center">
+                <img src={previewUrl} alt="preview" className="min-w-40 h-24 object-cover rounded" />
+                <div className="text-xs text-muted-foreground tabular-nums">{formatTime(hoverTime)}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between w-full">
           {/* Left controls */}
           <div className="flex items-center gap-2 shrink-0">
             <Tooltip>
@@ -237,51 +228,19 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ path, className, onClo
               <TooltipContent>{(muted || volume === 0) ? 'Unmute' : 'Mute'}</TooltipContent>
             </Tooltip>
 
-            <div className="h-6 flex items-center">
-              <input
-                type="range"
-                min={0}
+            <div className="cursor-pointer h-6 flex items-center w-20">
+              <Slider
+                value={[(muted ? 0 : Math.round(volume * 100))]}
                 max={100}
                 step={1}
-                value={(muted ? 0 : Math.round(volume * 100))}
-                onChange={onChangeVolume}
-                className="w-28 h-1.5 accent-color-primary"
+                onValueChange={(val: number[]) => {
+                  const v = Math.max(0, Math.min(1, val[0] / 100));
+                  setVolume(v);
+                  if (v === 0) setMuted(true);
+                  else if (muted) setMuted(false);
+                }}
+                className="w-full h-6"
               />
-            </div>
-          </div>
-
-          {/* Middle timeline */}
-          <div className="flex-1 flex items-center gap-2 min-w-0">
-            <div className="text-xs text-muted-foreground w-16 text-right tabular-nums">
-              {formatTime(currentTime)}
-            </div>
-            <div className="relative flex-1 h-6">
-              <input
-                ref={timelineRef}
-                type="range"
-                min={0}
-                max={duration || 0}
-                step={0.1}
-                value={Math.min(currentTime, duration || 0)}
-                onChange={onSeek}
-                onMouseMove={handleTimelineMouseMove}
-                onMouseLeave={handleTimelineMouseLeave}
-                className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full accent-color-primary"
-              />
-              {previewVisible && previewUrl && (
-                <div
-                  className="absolute bottom-7 -translate-x-1/2 pointer-events-none"
-                  style={{ left: previewLeft }}
-                >
-                  <div className="rounded bg-background shadow p-1 text-center">
-                    <img src={previewUrl} alt="preview" className="min-w-40 h-24 object-cover rounded" />
-                    <div className="text-xs text-muted-foreground tabular-nums">{formatTime(hoverTime)}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground w-16 tabular-nums">
-              {formatTime(duration)}
             </div>
           </div>
 

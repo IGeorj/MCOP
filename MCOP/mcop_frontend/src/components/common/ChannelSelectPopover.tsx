@@ -47,7 +47,7 @@ export const ChannelSelectPopover: React.FC<ChannelSelectPopoverProps> = ({ chan
               onValueChange={setSearchTerm}
             />
           </div>
-          <ScrollArea className="bg-navbar h-80 px-4 py-2">
+          <ScrollArea className="bg-navbar flex max-h-80 flex-col overflow-y-auto px-4 py-2">
             {isDefaultNone && (
               <CommandItem
                 className="cursor-pointer"
