@@ -6,7 +6,7 @@ import enTranslation from "./locales/en/translation.json";
 import ruTranslation from "./locales/ru/translation.json";
 
 i18n
-    .use(LanguageDetector) // 👈 Add this!
+    .use(LanguageDetector)
     .use(initReactI18next)
     .init({
         resources: {

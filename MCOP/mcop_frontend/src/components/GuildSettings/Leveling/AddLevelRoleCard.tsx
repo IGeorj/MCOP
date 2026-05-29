@@ -47,13 +47,13 @@ export function AddLevelRoleCard({
         setNewRole({ ...newRole, template: e.target.value });
     };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-            onCancelAddRole();
-        }
-    };
-
     useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onCancelAddRole();
+            }
+        };
+
         if (isAddingRole) {
             document.addEventListener('keydown', handleKeyDown);
 
@@ -61,7 +61,7 @@ export function AddLevelRoleCard({
                 document.removeEventListener('keydown', handleKeyDown);
             };
         }
-    }, [isAddingRole, onCancelAddRole]);
+    }, [isAddingRole]);
 
     const renderStartAdding = () => (
         <div
@@ -89,7 +89,6 @@ export function AddLevelRoleCard({
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                     <Input
-                        autoFocus
                         type="number"
                         min="1"
                         placeholder={t("leveling.level")}

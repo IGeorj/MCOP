@@ -12,30 +12,34 @@ export default function OAuthCallbackHandler({ onAuth }: Props) {
   const { t } = useTranslation();
 
   const [searchParams] = useSearchParams();
-  const [, setLoading] = useState(true);
   const [status, setStatus] = useState(t("auth.processing"));
   const [isError, setIsError] = useState(false);
   const navigate = useNavigate();
 
+  const code = searchParams.get("code");
+  const hasNoCode = !code;
+  const codeAlreadyHandled = code !== null && window.localStorage.getItem("oauth_code_handled") === code;
+
   useEffect(() => {
-    const code = searchParams.get("code");
-    if (!code) {
-      setStatus(t("auth.noCodeFound"));
+      if (hasNoCode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsError(true);
-      setLoading(false);
+      setStatus(t("auth.noCodeFound"));
       return;
     }
 
-    if (window.localStorage.getItem("oauth_code_handled") === code) {
-      setStatus(t("auth.loginAlreadyProcessed"));
-      setLoading(false);
+    if (codeAlreadyHandled) {
       navigate("/");
       return;
     }
 
+    let cancelled = false;
+
     (async () => {
       try {
+        
         setStatus(t("auth.connectingToDiscord"));
+
         const res = await fetch(config.API_URL + "/auth/discord/callback", {
           method: "POST",
           credentials: "include",
@@ -50,30 +54,37 @@ export default function OAuthCallbackHandler({ onAuth }: Props) {
 
         if (data.session) {
           window.localStorage.setItem("app_session", data.session);
-          window.localStorage.setItem("oauth_code_handled", code);
+          window.localStorage.setItem("oauth_code_handled", code!);
+
           onAuth({
             session: data.session,
             id: data.id || "",
             username: data.username || "",
             avatarUrl: data.avatarUrl || "",
           });
+
           setStatus(t("auth.loginSuccessful"));
           window.history.replaceState({}, document.title, "/");
+
           setTimeout(() => navigate("/"), 1000);
         } else {
           throw new Error("Missing session in backend response");
         }
       } catch (e) {
+        if (cancelled) return;
+
         console.error(e);
+        
         setStatus(t("auth.loginFailed"));
         setIsError(true);
+
         onAuth(null);
         setTimeout(() => navigate("/"), 2000);
-      } finally {
-        setLoading(false);
       }
     })();
-  }, [searchParams, onAuth, navigate]);
+
+    return () => { cancelled = true; };
+  }, [hasNoCode, codeAlreadyHandled, code, onAuth, navigate, t]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-navbar">
