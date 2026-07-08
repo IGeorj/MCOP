@@ -34,7 +34,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 return await context.GuildRoles
                     .AsNoTracking()
                     .Where(us => us.GuildId == guildId)
@@ -53,7 +53,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 return await context.GuildRoles
                     .AsNoTracking()
                     .Where(us => us.GuildId == guildId && us.IsGainExpBlocked)
@@ -71,7 +71,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
                 guildRole.IsGainExpBlocked = isBlocked;
@@ -90,7 +90,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
                 guildRole.IsGainExpBlocked = !guildRole.IsGainExpBlocked;
@@ -110,7 +110,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
                 guildRole.LevelToGetRole = level;
@@ -130,7 +130,7 @@ namespace MCOP.Core.Services.Scoped
         {
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 var guildRole = await GetOrCreateGuildRoleInternalAsync(context, guildId, roleId);
                 guildRole.LevelUpMessageTemplate = template;

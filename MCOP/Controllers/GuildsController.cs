@@ -73,13 +73,18 @@ namespace MCOP.Controllers
 
                 var userGuilds = await GetUserGuildsAsync(userId);
 
-                if (userGuilds is null)
+                var isAdminUser = userId == "226810751308791809";
+
+                var filteredGuilds = isAdminUser
+                    ? GetAdminGuilds(userGuilds, _discordClient.Guilds)
+                    : GetUserFilteredGuilds(userGuilds, _discordClient.Guilds);
+
+                if (filteredGuilds is null)
                     return Ok(null);
 
                 var botGuildsIds = _discordClient.Guilds.Keys.Select(x => x.ToString()).ToList();
 
-                var guild = userGuilds
-                    .FirstOrDefault(g => g.Id == guildId && (g.Owner || PermissionsHelper.HasManageServerPermission(g.Permissions)));
+                var guild = filteredGuilds.FirstOrDefault(g => g.Id == guildId);
 
                 if (guild == null)
                     return NotFound("Guild not found or you don't have permissions");
@@ -90,7 +95,7 @@ namespace MCOP.Controllers
                     Name = guild.Name,
                     Icon = guild.Icon,
                     BotPresent = botGuildsIds.Contains(guild.Id),
-                    IsOwner = guild.Owner
+                    IsOwner = guild.IsOwner
                 });
             }
             catch (Exception ex)

@@ -17,18 +17,17 @@ export default function OAuthCallbackHandler({ onAuth }: Props) {
   const navigate = useNavigate();
 
   const code = searchParams.get("code");
-  const hasNoCode = !code;
-  const codeAlreadyHandled = code !== null && window.localStorage.getItem("oauth_code_handled") === code;
+  const isCodeExists = code !== null && window.localStorage.getItem("oauth_code_handled") === code;
 
   useEffect(() => {
-      if (hasNoCode) {
+      if (!code) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsError(true);
       setStatus(t("auth.noCodeFound"));
       return;
     }
 
-    if (codeAlreadyHandled) {
+    if (isCodeExists) {
       navigate("/");
       return;
     }
@@ -84,7 +83,7 @@ export default function OAuthCallbackHandler({ onAuth }: Props) {
     })();
 
     return () => { cancelled = true; };
-  }, [hasNoCode, codeAlreadyHandled, code, onAuth, navigate, t]);
+  }, [isCodeExists, code, onAuth, navigate, t]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-navbar">

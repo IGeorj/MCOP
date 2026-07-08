@@ -69,7 +69,7 @@ namespace MCOP.Core.Services.Scoped
 
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 context.GuildMessageReactions.Add(reaction);
                 await context.SaveChangesAsync();
@@ -98,7 +98,7 @@ namespace MCOP.Core.Services.Scoped
 
             try
             {
-                await using var context = _contextFactory.CreateDbContext();
+                await using var context = await _contextFactory.CreateDbContextAsync();
 
                 context.GuildMessageReactions.Add(reaction);
                 await context.SaveChangesAsync();
@@ -112,7 +112,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<bool> RemoveReactionAsync(ulong guildId, ulong channelId, ulong messageId, ulong userId, string emoji, ulong emojiId = 0)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var reaction = await context.GuildMessageReactions
                 .FirstOrDefaultAsync(r => r.GuildId == guildId &&
@@ -134,7 +134,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<int> GetMessageReactionCountAsync(ulong guildId, ulong messageId, string emoji, ulong? emojiId = null)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             if (emojiId.HasValue)
             {
@@ -155,7 +155,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<int> GetMessageTotalReactionCountAsync(ulong guildId, ulong messageId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             return await context.GuildMessageReactions
                 .CountAsync(r => r.GuildId == guildId && r.MessageId == messageId);
@@ -163,7 +163,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<List<ulong>> GetMessageReactorsAsync(ulong guildId, ulong messageId, string emoji, ulong? emojiId = null)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             if (emojiId.HasValue)
             {
@@ -190,7 +190,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<List<EmojiInfo>> GetMessageEmojisAsync(ulong guildId, ulong messageId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var emojiData = await context.GuildMessageReactions
                 .Where(r => r.GuildId == guildId && r.MessageId == messageId)
@@ -207,7 +207,7 @@ namespace MCOP.Core.Services.Scoped
             string emoji,
             ulong? emojiId = null)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             if (emojiId.HasValue)
             {
@@ -230,7 +230,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<List<UserReactionCount>> GetUserTopReactionsAsync(ulong guildId, ulong userId, int limit = 6)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             int historicalLikeCount = 0;
             var userStats = await context.GuildUserStats
@@ -282,7 +282,7 @@ namespace MCOP.Core.Services.Scoped
 
         private async Task EnsureMessageExistsAsync(ulong guildId, ulong messageId, ulong userId, ulong channelId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             var existing = await context.GuildMessages
                 .AnyAsync(m => m.GuildId == guildId && m.Id == messageId);

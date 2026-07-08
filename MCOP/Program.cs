@@ -126,6 +126,13 @@ builder.Services.AddHttpClient("gelbooru", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
 }).AddPolicyHandler(retryPolicy);
 
+builder.Services.AddHttpClient("discord-oauth", client =>
+{
+    client.BaseAddress = new Uri("https://discord.com/api/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("MCOP/1.0 (by georj)");
+}).AddPolicyHandler(retryPolicy); 
+
 builder.Services.AddSingleton(provider =>
 {
     var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
@@ -156,6 +163,7 @@ builder.Services.AddAuthentication("Bearer")
     {
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
+            ValidateLifetime = true,
             ValidIssuer = config.CurrentConfiguration.JwtConfig.Issuer,
             ValidAudience = config.CurrentConfiguration.JwtConfig.Audience,
             IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(

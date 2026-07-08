@@ -55,13 +55,14 @@ function AuthAppContent() {
                                     onLogin={handleDiscordLogin}
                                     onLogout={handleLogout}
                                 />
-                                <main className="container mx-auto px-3 py-7">
-                                    {!isAuthenticated ? (
-                                        <WelcomePage onLogin={handleDiscordLogin} />
-                                    ) : (
+                                {!isAuthenticated ? (
+                                    <WelcomePage onLogin={handleDiscordLogin} />
+                                ) : (
+                                    <main className="container mx-auto px-3 py-7">
                                         <DiscordGuildList />
-                                    )}
-                                </main>
+                                    </main>
+                                )}
+
                             </>
                         } />
                         <Route path="/leaderboard/:guildId" element={
@@ -79,10 +80,8 @@ function AuthAppContent() {
                             </>
                         } />
                         <Route path="/guilds/:guildId" element={<GuildLayout />}>
-                            <Route index element={<GuildSettings />} />
-                            <Route path="leveling" element={<GuildSettings activeCategory="leveling" />} />
-                            <Route path="nsfw" element={<GuildSettings activeCategory="nsfw" />} />
-                            <Route path="image" element={<GuildSettings activeCategory="image" />} />
+                            <Route index element={<Navigate to="leveling" replace />} />
+                            <Route path=":category" element={<GuildSettings />} />
                         </Route>
                         <Route path="/slideshow" element={
                             <FullScreenLayout>

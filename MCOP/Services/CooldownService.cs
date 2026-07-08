@@ -1,10 +1,11 @@
-﻿using DSharpPlus.Entities;
+﻿using System.Collections.Concurrent;
+using DSharpPlus.Entities;
 
 namespace MCOP.Services
 {
     public sealed class CooldownService
     {
-        private static readonly Dictionary<(ulong UserId, string CommandName), (DateTime LastUsed, TimeSpan CooldownDuration)> _cooldowns = new();
+        private static readonly ConcurrentDictionary<(ulong UserId, string CommandName), (DateTime LastUsed, TimeSpan CooldownDuration)> _cooldowns = new();
 
         public bool IsOnCooldown(DiscordUser user, string commandName)
         {

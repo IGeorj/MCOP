@@ -15,7 +15,25 @@
     "welcome": {
         "title": "Welcome to MCOP site",
         "subtitle": "User statistics, server economy and games - all in one place.",
-        "login": "Add to Discord"
+        "login": "Add to Discord",
+        "features": {
+            "stats": {
+                "title": "Statistics",
+                "description": "Track user activity, server metrics, and detailed analytics."
+            },
+            "economy": {
+                "title": "Economy",
+                "description": "Manage server economy with balances, shops, and transactions."
+            },
+            "games": {
+                "title": "Games",
+                "description": "Enjoy a variety of mini-games and challenges with your community."
+            },
+            "leveling": {
+                "title": "Leveling",
+                "description": "Engage your members with XP, levels, and custom role rewards."
+            }
+        }
     },
     "guilds": {
         "title": "Your Servers",

@@ -198,7 +198,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task SetGuildLikeEmojiAsync(ulong guildId, string emojiName, ulong emojiId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
             GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
 
             config.LikeEmojiName = emojiName;
@@ -210,7 +210,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task SetGuildReactionTrackingAsync(ulong guildId, bool enabled)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
             GuildConfig config = await GetOrAddGuildConfigInternalAsync(guildId);
 
             config.ReactionTrackingEnabled = enabled;

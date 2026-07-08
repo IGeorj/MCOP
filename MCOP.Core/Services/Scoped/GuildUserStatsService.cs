@@ -61,7 +61,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task<GuildUserStatsDto> GetGuildUserStatAsync(ulong guildId, ulong userId)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             try
             {
@@ -273,7 +273,7 @@ namespace MCOP.Core.Services.Scoped
 
         public async Task SetUsersExperienceAsync(ulong guildId, Dictionary<ulong, int> userIdExp)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = await _contextFactory.CreateDbContextAsync();
 
             try
             {

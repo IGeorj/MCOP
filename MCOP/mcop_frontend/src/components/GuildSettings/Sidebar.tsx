@@ -4,15 +4,15 @@ import { Link } from "react-router-dom";
 import { SettingsCategory } from "@/types/SettingsCategory";
 import { Dispatch, SetStateAction } from "react";
 import { FaAngleRight } from "react-icons/fa";
+
+
 export function Sidebar({
     categories,
     activeCategory,
-    setActiveCategory,
     setMobileMenuOpen
 }: {
     categories: SettingsCategory[]
     activeCategory: string,
-    setActiveCategory: Dispatch<SetStateAction<string>>,
     setMobileMenuOpen: Dispatch<SetStateAction<boolean>>
 }) {
     return (
@@ -25,7 +25,6 @@ export function Sidebar({
                     key={category.name}
                     to={category.link}
                     onClick={() => {
-                        setActiveCategory(category.id);
                         setMobileMenuOpen(false);
                     }}
                     className={cn(
