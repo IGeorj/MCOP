@@ -10,7 +10,6 @@ using DSharpPlus.Interactivity.Extensions;
 using MCOP.Core.Common.Booru;
 using MCOP.Core.Services.Background;
 using MCOP.Core.Services.Scoped;
-using MCOP.Core.Services.Scoped.AI;
 using MCOP.Core.Services.Scoped.OAuth;
 using MCOP.Core.Services.Singletone;
 using MCOP.Data;
@@ -76,7 +75,6 @@ builder.Services
         setup.LogUnknownEvents = false;
     })
     .AddScoped<IDiscordOAuthService, DiscordOAuthService>()
-    .AddScoped<IAIService, AIService>()
     .AddScoped<IApiLimitService, ApiLimitService>()
     .AddScoped<IBotStatusesService, BotStatusesService>()
     .AddScoped<IGuildConfigService, GuildConfigService>()

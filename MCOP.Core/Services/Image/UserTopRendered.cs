@@ -10,13 +10,12 @@ namespace MCOP.Core.Services.Image
         private const int CellPadding = 8;
         private const int RowSpacing = 12;
 
-        private readonly SKColor BackgroundColor = new SKColor(0x1E, 0x1F, 0x22);
-        private readonly SKColor SecondaryColor = new SKColor(0x2B, 0x2D, 0x31);
+        private readonly SKColor BackgroundColor = new(0x1E, 0x1F, 0x22);
+        private readonly SKColor SecondaryColor = new(0x2B, 0x2D, 0x31);
         private readonly SKColor TextColor = SKColors.White;
-        private readonly SKColor ProgressBackground = new SKColor(0x3E, 0x41, 0x48);
-        private readonly SKColor ProgressFill = new SKColor(0x58, 0x65, 0xD2);
+        private readonly SKColor ProgressBackground = new(0x3E, 0x41, 0x48);
 
-        private readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient = new();
         private readonly SKTypeface _typeface;
         private readonly SKTypeface _emojiTypeface;
 
@@ -59,70 +58,80 @@ namespace MCOP.Core.Services.Image
 
         private void RenderUserRow(SKCanvas canvas, GuildUserStatsDto user, float y, float width)
         {
+            // ---- Calculate column widths (unchanged) ----
             float fixedWidths = (AvatarSize + CellPadding * 2) + 200 + 100 + 100 + 100 + 16;
             float progressWidth = width - fixedWidths - (CellPadding * 2);
 
             float[] columnWidths = [
-                AvatarSize + CellPadding * 2, // Avatar
+                AvatarSize + CellPadding * 2, // Avatar column
                 200,                         // Username
                 progressWidth,               // Level progress (dynamic)
-                100,                        // Duel wins
-                100,                        // Duel loses
-                100                         // Likes
+                100,                         // Duel wins
+                100,                         // Duel loses
+                100                          // Likes
             ];
 
-            float x = 16f;
+            // ---- Define the row rectangle ----
+            float leftMargin = 16f;
+            float totalWidth = columnWidths.Sum();
+            var rowRect = new SKRect(leftMargin, y, leftMargin + totalWidth, y + RowHeight);
 
+            // ---- Clip to rounded rectangle and draw row ----
+            canvas.Save();
+            using (var path = new SKPath())
+            {
+                float radius = 16f;
+                path.AddRoundRect(rowRect, radius, radius);
+                canvas.ClipPath(path, SKClipOperation.Intersect, true);
+            }
+
+            // Draw the row background (single rounded rect)
+            using (var paint = new SKPaint { Color = SecondaryColor, IsAntialias = true })
+            {
+                canvas.DrawRect(rowRect, paint); // Fills the whole row, clipped to the rounded shape
+            }
+
+            // ---- Draw each cell’s content (without drawing cell backgrounds) ----
+            float currentX = leftMargin;
             for (int i = 0; i < columnWidths.Length; i++)
             {
-                var isFirst = i == 0;
-                var isLast = i == columnWidths.Length - 1;
+                var cellRect = new SKRect(currentX, y, currentX + columnWidths[i], y + RowHeight);
 
-                using (var path = new SKPath())
+                switch (i)
                 {
-                    var rect = new SKRect(x, y, x + columnWidths[i], y + RowHeight);
-
-                    path.AddRoundRect(new SKRoundRect(rect));
-
-                    using (var paint = new SKPaint { Color = SecondaryColor })
-                    {
-                        canvas.DrawPath(path, paint);
-                    }
-
-                    // Draw cell content
-                    switch (i)
-                    {
-                        case 0: // Avatar
-                            RenderAvatar(canvas, user, rect);
-                            break;
-                        case 1: // Username
-                            RenderText(canvas, user.Username, rect, SKTextAlign.Left);
-                            break;
-                        case 2: // Level progress
-                            RenderLevelProgress(canvas, user, rect);
-                            break;
-                        case 3: // Duel wins
-                            RenderWithEmoji(canvas, "🎖️", user.DuelWin.ToString(), rect);
-                            break;
-                        case 4: // Duel loses
-                            RenderWithEmoji(canvas, "☠️", user.DuelLose.ToString(), rect);
-                            break;
-                        case 5: // Likes
-                            RenderWithEmoji(canvas, "❤️", user.Likes.ToString(), rect);
-                            break;
-                    }
+                    case 0: // Avatar
+                        RenderAvatar(canvas, user, cellRect);
+                        break;
+                    case 1: // Username
+                        RenderText(canvas, user.Username ?? "", cellRect, SKTextAlign.Left);
+                        break;
+                    case 2: // Level progress
+                        RenderLevelProgress(canvas, user, cellRect);
+                        break;
+                    case 3: // Duel wins
+                        RenderWithEmoji(canvas, "🎖️", user.DuelWin.ToString(), cellRect);
+                        break;
+                    case 4: // Duel loses
+                        RenderWithEmoji(canvas, "☠️", user.DuelLose.ToString(), cellRect);
+                        break;
+                    case 5: // Likes
+                        RenderWithEmoji(canvas, "❤️", user.Likes.ToString(), cellRect);
+                        break;
                 }
 
-                x += columnWidths[i];
+                currentX += columnWidths[i];
             }
+
+            // Restore canvas (removes the clip)
+            canvas.Restore();
         }
 
         private void RenderAvatar(SKCanvas canvas, GuildUserStatsDto user, SKRect rect)
         {
             try
             {
-                var avatarUrl = GetDiscordAvatarUrl(user.UserId, user.AvatarHash);
-                using (var imageStream = _httpClient.GetStreamAsync(avatarUrl).Result)
+                var avatarUrl = GetDiscordAvatarUrl(user.UserId, user.AvatarHash ?? "");
+                using (var imageStream = _httpClient.GetStreamAsync(avatarUrl).GetAwaiter().GetResult())
                 using (var image = SKImage.FromEncodedData(SKData.Create(imageStream)))
                 {
                     var avatarRect = new SKRect(
@@ -132,7 +141,16 @@ namespace MCOP.Core.Services.Image
                         rect.MidY + AvatarSize / 2
                     );
 
+                    canvas.Save();
+
+                    using (var path = new SKPath())
+                    {
+                        path.AddCircle(rect.MidX, rect.MidY, AvatarSize / 2);
+                        canvas.ClipPath(path, SKClipOperation.Intersect, true);
+                    }
+
                     canvas.DrawImage(image, avatarRect);
+                    canvas.Restore();
                 }
             }
             catch
@@ -149,14 +167,11 @@ namespace MCOP.Core.Services.Image
             using (var paint = new SKPaint
             {
                 Color = TextColor,
-                Typeface = _typeface,
-                TextSize = 14,
                 IsAntialias = true,
-                TextAlign = align
             })
             {
-                var textBounds = new SKRect();
-                paint.MeasureText(text, ref textBounds);
+                var skFont = new SKFont(_typeface, size: 14);
+                skFont.MeasureText(text, out SKRect textBounds, paint);
 
                 float x = align == SKTextAlign.Left ?
                     rect.Left + CellPadding :
@@ -166,14 +181,12 @@ namespace MCOP.Core.Services.Image
 
                 float y = rect.MidY + textBounds.Height / 2;
 
-                canvas.DrawText(text, x, y, paint);
+                canvas.DrawText(text, x, y, align, skFont, paint);
             }
         }
 
         private void RenderLevelProgress(SKCanvas canvas, GuildUserStatsDto user, SKRect rect)
         {
-            RenderText(canvas, $"Level {user.Level}", rect, SKTextAlign.Center);
-
             var progressHeight = 6;
             var progressRect = new SKRect(
                 rect.Left + 100,
@@ -182,7 +195,15 @@ namespace MCOP.Core.Services.Image
                 rect.Bottom - CellPadding
             );
 
-            using (var paint = new SKPaint { Color = ProgressBackground })
+            var textRect = new SKRect(
+                progressRect.Left,
+                rect.Top,
+                progressRect.Right,
+                rect.Bottom
+            );
+            RenderText(canvas, $"Level {user.Level}", textRect, SKTextAlign.Center);
+
+            using (var paint = new SKPaint { Color = ProgressBackground, IsAntialias = true })
             {
                 canvas.DrawRoundRect(progressRect, progressHeight / 2, progressHeight / 2, paint);
             }
@@ -197,9 +218,26 @@ namespace MCOP.Core.Services.Image
                 progressRect.Bottom
             );
 
-            using (var paint = new SKPaint { Color = ProgressFill })
+            if (fillRect.Width > 0)
             {
-                canvas.DrawRoundRect(fillRect, progressHeight / 2, progressHeight / 2, paint);
+                var startColor = new SKColor(0x63, 0x66, 0xF1); // rgb(99,102,241)
+                var endColor = new SKColor(0x06, 0xB6, 0xD4); // rgb(6,182,212)
+
+                // Create a horizontal gradient (left → right)
+                using (var shader = SKShader.CreateLinearGradient(
+                    new SKPoint(fillRect.Left, fillRect.Top),
+                    new SKPoint(fillRect.Right, fillRect.Top),
+                    [startColor, endColor],
+                    null,
+                    SKShaderTileMode.Clamp))
+                using (var paint = new SKPaint
+                {
+                    Shader = shader,
+                    IsAntialias = true
+                })
+                {
+                    canvas.DrawRoundRect(fillRect, progressHeight / 2, progressHeight / 2, paint);
+                }
             }
         }
 
@@ -208,16 +246,12 @@ namespace MCOP.Core.Services.Image
             using (var paint = new SKPaint
             {
                 Color = TextColor,
-                Typeface = _emojiTypeface,
-                TextSize = 14,
                 IsAntialias = true,
-                TextAlign = SKTextAlign.Left
             })
             {
-                float y = rect.MidY + paint.TextSize / 2;
-                canvas.DrawText(emoji, rect.Left + CellPadding, y, paint);
+                float y = rect.MidY + 14 / 2;
+                canvas.DrawText(emoji, rect.Left + CellPadding, y, SKTextAlign.Left, new SKFont(_emojiTypeface, size: 14), paint);
             }
-
             RenderText(canvas, text, new SKRect(rect.Left + 24, rect.Top, rect.Right, rect.Bottom), SKTextAlign.Left);
         }
 

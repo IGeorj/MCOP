@@ -7,7 +7,6 @@ using MCOP.Common.Helpers;
 using MCOP.Core.Common;
 using MCOP.Core.Services.Image;
 using MCOP.Core.Services.Scoped;
-using MCOP.Core.Services.Scoped.AI;
 using MCOP.Core.ViewModels;
 using MCOP.Extensions;
 using Serilog;
@@ -17,7 +16,6 @@ public sealed class MessageListeners
 {
 
     private readonly IImageHashService _imageHashService;
-    private readonly IAIService _aiService;
     private readonly IGuildUserStatsService _levelingService;
     private readonly IGuildMessageService _messageService;
     private readonly IDiscordMessageService _discordMessageService;
@@ -25,14 +23,12 @@ public sealed class MessageListeners
 
     public MessageListeners(
         IImageHashService hashService,
-        IAIService aiService,
         IGuildUserStatsService levelingService,
         IGuildMessageService messageService,
         IDiscordMessageService discordMessageService,
         IImageVerificationChannelService channelService)
     {
         _imageHashService = hashService;
-        _aiService = aiService;
         _levelingService = levelingService;
         _messageService = messageService;
         _discordMessageService = discordMessageService;
