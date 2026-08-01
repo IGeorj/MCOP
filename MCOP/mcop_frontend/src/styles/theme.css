@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" rel="stylesheet');
+@layer scalar-base, scalar-theme, scalar-config, theme, base, components, utilities, app;
 @import "tailwindcss";
 @import "tw-animate-css";
 @custom-variant dark (&:where(.dark, .dark *));
@@ -148,63 +149,62 @@ body, html {
   color: var(--color-text);
   transition: background 0.3s, color 0.3s;
 }
-
-.card, .section {
+#app-content .card, #app-content .section {
   box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
   border-radius: 0.75rem;
   background-color: #fff;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
-.dark .card, .dark .section {
+#app-content .dark .card, #app-content .dark .section {
   background-color: #23232a;
   box-shadow: 0 2px 8px rgba(20, 20, 36, 0.13);
 }
 
-.navbar { border-radius: 1rem; }
-.btn { border-radius: 0.5rem; transition: background 0.2s; }
-h1, h2, h3, h4 {
+#app-content .navbar { border-radius: 1rem; }
+#app-content .btn { border-radius: 0.5rem; transition: background 0.2s; }
+#app-content h1, h2, h3, h4 {
   letter-spacing: 0.02em;
   font-weight: 600;
 }
 
-.bg-primary { background-color: var(--color-bg); }
-.bg-color-primary { background-color: var(--color-primary); }
-.border-primary { border-color: var(--color-primary); }
-.bg-secondary { background-color: var(--color-secondary); }
-.bg-navbar { background-color: var(--color-navbar); }
-.fill-navbar { fill: var(--color-navbar); }
-.fill-bg { fill: var(--color-bg); }
-.text-primary { color: var(--color-primary); }
-.accent-color-primary { accent-color: var(--color-primary); }
-.text-primary:hover { color: var(--color-accent-foreground); }
-.text-default { color: var(--color-text); }
-.text-primary-reversed { color: var(--color-text); }
-.text-primary-reversed:hover { color: var(--color-primary); }
-.text-secondary { color: var(--color-secondary); }
-.selected { background-color: var(--color-selected); }
-.bg-hover:hover { background-color: var(--color-hover); }
+#app-content .bg-primary { background-color: var(--color-bg); }
+#app-content .bg-color-primary { background-color: var(--color-primary); }
+#app-content .border-primary { border-color: var(--color-primary); }
+#app-content .bg-secondary { background-color: var(--color-secondary); }
+#app-content .bg-navbar { background-color: var(--color-navbar); }
+#app-content .fill-navbar { fill: var(--color-navbar); }
+#app-content .fill-bg { fill: var(--color-bg); }
+#app-content .text-primary { color: var(--color-primary); }
+#app-content .accent-color-primary { accent-color: var(--color-primary); }
+#app-content .text-primary:hover { color: var(--color-accent-foreground); }
+#app-content .text-default { color: var(--color-text); }
+#app-content .text-primary-reversed { color: var(--color-text); }
+#app-content .text-primary-reversed:hover { color: var(--color-primary); }
+#app-content .text-secondary { color: var(--color-secondary); }
+#app-content .selected { background-color: var(--color-selected); }
+#app-content .bg-hover:hover { background-color: var(--color-hover); }
 
-th, td {
+#app-content th, #app-content td {
   padding: 0.75rem 1rem;
   text-align: left;
 }
 
-th {
+#app-content th {
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
-tr.group:hover td {
+#app-content tr.group:hover td {
   background-color: var(--color-hover);
 }
 
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
+#app-content input::-webkit-outer-spin-button,
+#app-content input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-input[type=number]{
+#app-content input[type=number]{
     -moz-appearance: textfield;
 }

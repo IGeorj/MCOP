@@ -25,6 +25,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpPost("{guildId}/daily-nsfw-channel")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> AddOrUpdateLevelRole(
             string guildId,
             [FromBody] DailyNsfwRequest request)
@@ -56,6 +60,8 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpGet("{guildId}/channels")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetGuildChannels(string guildId)
         {
             try

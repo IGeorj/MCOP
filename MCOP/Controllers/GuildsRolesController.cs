@@ -26,6 +26,8 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpGet("{guildId}/roles")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetGuildRoles(string guildId)
         {
             try
@@ -67,6 +69,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpPost("{guildId}/level-roles")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> AddOrUpdateLevelRole(string guildId, [FromBody] LevelRoleRequest request)
         {
             try
@@ -97,6 +103,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpPost("{guildId}/level-roles/{roleId}/toggle-exp-block")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ToggleExpBlock(string guildId, string roleId)
         {
             try
@@ -126,6 +136,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpDelete("{guildId}/level-roles/{roleId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RemoveLevelRole(string guildId, string roleId)
         {
             try
@@ -155,6 +169,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpPost("{guildId}/level-roles/{roleId}/message-template")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> SetRoleMessageTemplate(string guildId,string roleId, [FromBody] RoleMessageTemplateRequest request)
         {
             try

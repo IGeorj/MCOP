@@ -33,6 +33,9 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetGuilds()
         {
             try
@@ -63,6 +66,9 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpGet("{guildId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetGuild(string guildId)
         {
             try

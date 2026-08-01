@@ -77,7 +77,7 @@ namespace MCOP.Core.Services.Scoped
                         Exp = 0,
                         DuelWin = 0,
                         DuelLose = 0,
-                        LastExpAwardedAt = DateTime.MinValue
+                        LastExpAwardedAt = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc)
                     };
                     context.GuildUserStats.Add(userStats);
                     await context.SaveChangesAsync();
@@ -145,31 +145,31 @@ namespace MCOP.Core.Services.Scoped
 
             var sql = $@"
                 SELECT 
-                    s.GuildId,
-                    s.UserId,
-                    s.Username,
-                    s.AvatarHash,
-                    s.DuelWin,
-                    s.DuelLose,
-                    s.Exp,
-                    (COALESCE(r.ReactionCount, 0) + 
-                        CASE WHEN {{0}} = '❤️' THEN s.Likes ELSE 0 END
-                    ) AS Likes
-                FROM GuildUserStats s
+                    s.""GuildId"",
+                    s.""UserId"",
+                    s.""Username"",
+                    s.""AvatarHash"",
+                    s.""DuelWin"",
+                    s.""DuelLose"",
+                    s.""Exp"",
+                    (COALESCE(r.""ReactionCount"", 0) + 
+                        CASE WHEN {{0}} = '❤️' THEN s.""Likes"" ELSE 0 END
+                    ) AS ""Likes""
+                FROM ""GuildUserStats"" s
                 LEFT JOIN (
                     SELECT 
-                        m.UserId,
-                        COUNT(*) AS ReactionCount
-                    FROM GuildMessageReactions r
-                    INNER JOIN GuildMessages m ON r.MessageId = m.Id
+                        m.""UserId"",
+                        COUNT(*) AS ""ReactionCount""
+                    FROM ""GuildMessageReactions"" r
+                    INNER JOIN ""GuildMessages"" m ON r.""MessageId"" = m.""Id""
                     WHERE 
-                        r.GuildId = {{1}} 
-                        AND r.Emoji = {{2}} 
-                        AND r.EmojiId = {{3}}
-                    GROUP BY m.UserId
-                ) r ON r.UserId = s.UserId
-                WHERE s.GuildId = {{1}}
-                {orderByClause}
+                        r.""GuildId"" = {{1}} 
+                        AND r.""Emoji"" = {{2}} 
+                        AND r.""EmojiId"" = {{3}}
+                    GROUP BY m.""UserId""
+                ) r ON r.""UserId"" = s.""UserId""
+                WHERE s.""GuildId"" = {{1}}
+                ORDER BY ""{sort}"" {orderDir}
                 LIMIT {{4}} OFFSET {{5}}";
 
             var projections = await context.Set<GuildUserStatsProjection>()
@@ -295,7 +295,7 @@ namespace MCOP.Core.Services.Scoped
                             GuildId = guildId,
                             UserId = userId,
                             Exp = exp,
-                            LastExpAwardedAt = DateTime.UtcNow
+                            LastExpAwardedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
                         });
                     }
                     else
@@ -392,7 +392,7 @@ namespace MCOP.Core.Services.Scoped
                     Exp = 0,
                     DuelWin = 0,
                     DuelLose = 0,
-                    LastExpAwardedAt = DateTime.MinValue,
+                    LastExpAwardedAt = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc),
                     Username = string.Empty,
                     AvatarHash = string.Empty
                 };
@@ -448,7 +448,7 @@ namespace MCOP.Core.Services.Scoped
                 userStats.Exp = Math.Max(0, userStats.Exp + expChange);
 
                 if (updateLastAwarded)
-                    userStats.LastExpAwardedAt = DateTime.UtcNow;
+                    userStats.LastExpAwardedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
                 newLevel = LevelingHelper.GetLevelFromTotalExp(userStats.Exp);
             });

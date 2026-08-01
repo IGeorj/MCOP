@@ -15,6 +15,8 @@ import { GuildListProvider } from "./contexts/GuildListContext";
 import useTheme from "@/hooks/useTheme";
 import { GuildLayout } from "./components/GuildSettings/GuildSettingsLayout";
 import VideoBrowser from './components/Video/VideoBrowser';
+import { ApiReferenceReact } from '@scalar/api-reference-react';
+import { config } from "./config";
 
 const queryClient = new QueryClient();
 
@@ -47,7 +49,7 @@ function AuthAppContent() {
                 <div className="h-screen flex flex-col transition-all">
                     <Routes>
                         <Route path="/" element={
-                            <>
+                            <div id="app-content" className="h-screen flex flex-col transition-all">
                                 <Navbar
                                     isLoggedIn={isAuthenticated}
                                     username={user?.username}
@@ -62,11 +64,10 @@ function AuthAppContent() {
                                         <DiscordGuildList />
                                     </main>
                                 )}
-
-                            </>
+                            </div>
                         } />
                         <Route path="/leaderboard/:guildId" element={
-                            <>
+                            <div id="app-content" className="h-screen flex flex-col transition-all">
                                 <Navbar
                                     isLoggedIn={isAuthenticated}
                                     username={user?.username}
@@ -77,25 +78,50 @@ function AuthAppContent() {
                                 <main className="flex-1 flex flex-col container mx-auto px-3 py-7">
                                     <Leaderboard />
                                 </main>
-                            </>
+                            </div>
                         } />
-                        <Route path="/guilds/:guildId" element={<GuildLayout />}>
-                            <Route index element={<Navigate to="leveling" replace />} />
-                            <Route path=":category" element={<GuildSettings />} />
+                        <Route path="/guilds/:guildId" element={
+                            <div id="app-content" className="h-screen flex flex-col transition-all">
+                                <GuildLayout />
+                            </div>
+                        }>
+                            <Route index element={
+                                <div id="app-content" className="h-screen flex flex-col transition-all">
+                                    <Navigate to="leveling" replace />
+                                </div>
+                            } />
+                            <Route path=":category" element={
+                                <div id="app-content" className="h-screen flex flex-col transition-all">
+                                    <GuildSettings />
+                                </div>
+                            } />
                         </Route>
                         <Route path="/slideshow" element={
-                            <FullScreenLayout>
-                                <SlideShow />
-                            </FullScreenLayout>
+                            <div id="app-content" className="h-screen flex flex-col transition-all">
+                                <FullScreenLayout>
+                                    <SlideShow />
+                                </FullScreenLayout>
+                            </div>
                         } />
                         <Route path="/oauth/callback" element={
-                            <OAuthCallbackHandler onAuth={handleAuthResult} />
+                            <div id="app-content" className="h-screen flex flex-col transition-all">
+                                <OAuthCallbackHandler onAuth={handleAuthResult} />
+                            </div>
                         }
                         />
                         <Route path="/videos" element={
-                            <FullScreenLayout>
-                                <VideoBrowser />
-                            </FullScreenLayout>
+                            <div id="app-content" className="h-screen flex flex-col transition-all">
+                                <FullScreenLayout>
+                                    <VideoBrowser />
+                                </FullScreenLayout>
+                            </div>
+                        } />
+                        <Route path="/api-v1" element={
+                            <ApiReferenceReact
+                                configuration={{
+                                    url: `${config.API_URL}/openapi/v1.json`
+                                }}
+                            />
                         } />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>

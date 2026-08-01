@@ -26,7 +26,10 @@ namespace MCOP.Controllers
             _appUserService = appUserService;
         }
 
+        [AllowAnonymous]
         [HttpPost("discord/callback")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> DiscordCallback([FromBody] AuthRequest model)
         {
             try
@@ -74,7 +77,9 @@ namespace MCOP.Controllers
             Response.Cookies.Append("access_token", sessionToken, cookieOptions);
         }
 
+        [AllowAnonymous]
         [HttpPost("logout")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult Logout()
         {
             Response.Cookies.Delete("access_token");
@@ -83,6 +88,8 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpGet("me")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public IActionResult Me()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

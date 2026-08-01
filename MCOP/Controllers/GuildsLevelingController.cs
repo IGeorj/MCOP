@@ -23,6 +23,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpGet("{guildId}/leveling/message-settings")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetMessageSettings(string guildId)
         {
             try
@@ -49,7 +53,11 @@ namespace MCOP.Controllers
         }
 
         [Authorize]
-        [HttpPost("{guildId}/leveling/message-settings")]
+        [HttpPatch("{guildId}/leveling/message-settings")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateMessageSettings(string guildId, [FromBody] GuildLevelingMessageSettingsRequest request)
         {
             try
@@ -66,7 +74,7 @@ namespace MCOP.Controllers
 
                 if (request.Enabled.HasValue)
                     await _guildConfigService.SetLevelUpMessagesEnabledAsync(guildUlongId, request.Enabled.Value);
-                if (request.TemplateProvided)
+                if (request.Template != null)
                     await _guildConfigService.SetLevelUpMessageTemplateAsync(guildUlongId, request.Template);
 
                 return Ok();
@@ -83,8 +91,5 @@ namespace MCOP.Controllers
     {
         public string? Template { get; set; }
         public bool? Enabled { get; set; }
-
-        // This flag allows clearing the template explicitly by sending Template = null and TemplateProvided = true
-        public bool TemplateProvided { get; set; }
     }
 }

@@ -6,6 +6,7 @@ namespace MCOP.Controllers
 {
     [ApiController]
     [Route("api/images")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public sealed class ImagesController : ControllerBase
     {
         private readonly string? _rootPath;
@@ -17,6 +18,9 @@ namespace MCOP.Controllers
 
         [HttpGet("random")]
         [AuthorizeUserId(226810751308791809)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult GetRandomImages([FromQuery] int count = 10)
         {
             if (string.IsNullOrEmpty(_rootPath)) return NotFound();
@@ -55,6 +59,11 @@ namespace MCOP.Controllers
 
         [HttpGet("content/{*imagePath}")]
         [AuthorizeUserId(226810751308791809)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult GetImageContent(string imagePath)  
         {
             if (string.IsNullOrEmpty(_rootPath)) return NotFound();

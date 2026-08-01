@@ -23,6 +23,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpGet("{guildId}/image-verification-channels")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetImageVerificationChannels(string guildId)
         {
             try
@@ -46,6 +50,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpPost("{guildId}/image-verification-channels")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> AddImageVerificationChannel(string guildId, [FromBody] ImageVerificationChannelRequest request)
         {
             try
@@ -72,6 +80,10 @@ namespace MCOP.Controllers
 
         [Authorize]
         [HttpDelete("{guildId}/image-verification-channels/{channelId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> RemoveImageVerificationChannel(string guildId, string channelId)
         {
             try

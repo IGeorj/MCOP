@@ -17,9 +17,12 @@ using MCOP.EventListeners;
 using MCOP.Extensions;
 using MCOP.Services;
 using MCOP.Utils;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
 using Polly;
 using Polly.Extensions.Http;
 using Serilog;
@@ -185,6 +188,12 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer<AuthOperationTransformer>();
+});
+
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     if (builder.Environment.IsDevelopment())
@@ -207,6 +216,64 @@ using (var scope = app.Services.CreateScope())
     await db.CreateDbContext().Database.MigrateAsync();
 }
 
+app.MapOpenApi("/api/openapi/{documentName}.json");
 app.MapControllers();
-app.MapGet("/", () => "MCOP Bot is running!");
+app.MapGet("/test", () => "MCOP Bot is running!").AllowAnonymous();
 app.Run();
+
+internal sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvider authenticationSchemeProvider) : IOpenApiDocumentTransformer
+{
+    public async Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
+    {
+        document.Servers = new List<OpenApiServer>
+        {
+            new() { Url = "https://mistercop.top", Description = "Production server" },
+        };
+
+        var authenticationSchemes = await authenticationSchemeProvider.GetAllSchemesAsync();
+        if (authenticationSchemes.Any(authScheme => authScheme.Name == "Bearer"))
+        {
+            var securitySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+            {
+                ["Bearer"] = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    In = ParameterLocation.Header,
+                    BearerFormat = "Json Web Token"
+                }
+            };
+            document.Components ??= new OpenApiComponents();
+            document.Components.SecuritySchemes = securitySchemes;
+        }
+    }
+}
+
+internal sealed class AuthOperationTransformer : IOpenApiOperationTransformer
+{
+    public Task TransformAsync(
+        OpenApiOperation operation,
+        OpenApiOperationTransformerContext context,
+        CancellationToken cancellationToken)
+    {
+        var hasAllowAnonymous = context.Description.ActionDescriptor.EndpointMetadata
+            .OfType<AllowAnonymousAttribute>()
+            .Any();
+
+        if (hasAllowAnonymous)
+        {
+            return Task.CompletedTask;
+        }
+
+        operation.Security ??= new List<OpenApiSecurityRequirement>();
+
+        var schemeRef = new OpenApiSecuritySchemeReference("Bearer", context.Document);
+
+        operation.Security.Add(new OpenApiSecurityRequirement
+        {
+            [schemeRef] = []
+        });
+
+        return Task.CompletedTask;
+    }
+}

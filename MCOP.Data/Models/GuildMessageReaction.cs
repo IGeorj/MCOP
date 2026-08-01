@@ -11,7 +11,7 @@ namespace MCOP.Data.Models
         public ulong EmojiId { get; set; } = 0;
         public string Emoji { get; set; } = string.Empty;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
         public ulong CreatedByUserId { get; set; }  // 0 for historical/unknown users
 
         public int HistoricalIndex { get; set; } = 0; // 0 for new reactions, >0 for historical/unknown users

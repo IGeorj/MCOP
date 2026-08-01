@@ -20,7 +20,7 @@ namespace MCOP.Data.Models
 
         public int Exp { get; set; } = 0;
 
-        public DateTime LastExpAwardedAt { get; set; } = DateTime.MinValue;
+        public DateTime LastExpAwardedAt { get; set; } = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
 
         public bool IsWithinExpCooldown(int expCooldownMinutes) => (DateTime.UtcNow - LastExpAwardedAt).TotalMinutes < expCooldownMinutes;
     }

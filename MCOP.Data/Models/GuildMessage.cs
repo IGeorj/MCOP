@@ -13,7 +13,7 @@ namespace MCOP.Data.Models
 
         public ulong ChannelId { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
         public ICollection<ImageHash> ImageHashes { get; set; } = [];
 
