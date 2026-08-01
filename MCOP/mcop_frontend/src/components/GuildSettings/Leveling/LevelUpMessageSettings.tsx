@@ -43,11 +43,21 @@ export function LevelUpMessageSettings({ guildId }: { guildId: string }) {
 
     const { mutate: saveSettings, isPending: isSaving } = useMutation({
         mutationFn: async (settings: { enabled?: boolean; template?: string | null }) => {
-            const body = {
+            const body: {
+                enabled: boolean;
+                template?: string | null;
+                templateProvided?: boolean;
+            } = {
                 enabled: settings.enabled ?? messageSettings?.enabled ?? true,
-                template: settings.template?.trim() === "" ? null : settings.template,
-                templateProvided: true,
             };
+
+            if (settings.template !== undefined) {
+                body.template = settings.template?.trim() === "" ? null : settings.template;
+                body.templateProvided = true; 
+            } else {
+                // Tell backend "Do not change the template, keep the current one"
+                body.templateProvided = false;
+            }
 
             const resp = await fetch(`${config.API_URL}/guilds/${guildId}/leveling/message-settings`, {
                 method: "POST",
@@ -69,7 +79,7 @@ export function LevelUpMessageSettings({ guildId }: { guildId: string }) {
     };
 
     const handleTemplateBlur = () => {
-        if (hasUnsavedChanges && localTemplate !== messageSettings?.template) {
+        if (hasUnsavedChanges) {
             saveSettings({ template: localTemplate });
         }
     };

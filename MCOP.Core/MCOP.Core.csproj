@@ -13,15 +13,14 @@
     <PackageReference Include="Humanizer" Version="3.0.10" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.6.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="10.0.9" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Serilog" Version="4.4.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="SkiaSharp" Version="3.119.4" />
-    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
   </ItemGroup>
 
   <ItemGroup>

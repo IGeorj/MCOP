@@ -13,7 +13,6 @@ namespace MCOP.Data
         public virtual DbSet<ImageVerificationChannel> ImageVerificationChannels { get; protected set; }
         public virtual DbSet<BotStatus> BotStatuses { get; protected set; }
         public virtual DbSet<GuildRole> GuildRoles { get; protected set; }
-        public virtual DbSet<ApiUsage> ApiUsages { get; protected set; }
         public virtual DbSet<AppUser> AppUsers { get; protected set; }
         public virtual DbSet<GuildMessageReaction> GuildMessageReactions { get; protected set; }
 
@@ -23,10 +22,10 @@ namespace MCOP.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            ConfigurationService configurationService = new ConfigurationService();
-            AsyncExecutionService asyncExecution = new AsyncExecutionService();
+            ConfigurationService configurationService = new();
+            AsyncExecutionService asyncExecution = new();
             BotConfiguration config = asyncExecution.Execute(configurationService.LoadConfigAsync());
-            optionsBuilder.UseSqlite($"Data Source={config.DatabaseConfig.DatabaseName}.db;");
+            optionsBuilder.UseNpgsql($"Host=localhost;Port=5432;Database={config.DatabaseConfig.DatabaseName};Username={config.DatabaseConfig.Username};Password={config.DatabaseConfig.Password}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

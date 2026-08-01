@@ -45,7 +45,7 @@ namespace MCOP.Controllers
 
                 await _appUserService.StoreTokensAsync(user.Id.ToString(), tokenResponse.AccessToken, tokenResponse.RefreshToken, tokenResponse.ExpiresAt);
 
-                SetAuthCookies(sessionToken, user.Id.ToString());
+                SetAuthCookies(sessionToken);
 
                 return Ok(new
                 {
@@ -61,13 +61,13 @@ namespace MCOP.Controllers
             }
         }
 
-        private void SetAuthCookies(string sessionToken, string userId)
+        private void SetAuthCookies(string sessionToken)
         {
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Strict,
                 Expires = DateTime.UtcNow.AddDays(7),
             };
 

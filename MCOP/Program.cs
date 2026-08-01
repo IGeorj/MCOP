@@ -19,6 +19,7 @@ using MCOP.Services;
 using MCOP.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
 using Serilog;
@@ -61,7 +62,9 @@ builder.Services
     .AddMemoryCache()
     .AddSingleton(config)
     .AddSingleton(Log.Logger)
-    .AddDbContextFactory<McopDbContext>(options => options.UseSqlite($"Data Source={config.CurrentConfiguration.DatabaseConfig.DatabaseName}.db;Foreign Keys=True"))
+    .AddDbContextFactory<McopDbContext>(options => {
+        options.UseNpgsql($"Host=localhost;Port=5432;Database={config.CurrentConfiguration.DatabaseConfig.DatabaseName};Username={config.CurrentConfiguration.DatabaseConfig.Username};Password={config.CurrentConfiguration.DatabaseConfig.Password}");
+    })
     .AddScoped<MessageListeners>()
     .AddScoped<ClientListeners>()
     .AddScoped<CommandListeners>()
@@ -75,7 +78,6 @@ builder.Services
         setup.LogUnknownEvents = false;
     })
     .AddScoped<IDiscordOAuthService, DiscordOAuthService>()
-    .AddScoped<IApiLimitService, ApiLimitService>()
     .AddScoped<IBotStatusesService, BotStatusesService>()
     .AddScoped<IGuildConfigService, GuildConfigService>()
     .AddScoped<IDiscordMessageService, DiscordMessageService>()

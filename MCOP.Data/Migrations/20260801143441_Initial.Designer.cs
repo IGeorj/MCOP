@@ -5,54 +5,72 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace MCOP.Data.Migrations
 {
     [DbContext(typeof(McopDbContext))]
-    [Migration("20251110150537_GuildMessageCreateAt")]
-    partial class GuildMessageCreateAt
+    [Migration("20260801143441_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            modelBuilder.Entity("MCOP.Data.Models.ApiUsage", b =>
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("MCOP.Data.GuildUserStatsProjection", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("AvatarHash")
+                        .HasColumnType("text");
 
-                    b.Property<int>("Count")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("DuelLose")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Date")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("DuelWin")
+                        .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.Property<int>("Exp")
+                        .HasColumnType("integer");
 
-                    b.ToTable("ApiUsages");
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<int>("Likes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UserId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("text");
+
+                    b.ToTable((string)null);
+
+                    b.ToView(null, (string)null);
                 });
 
             modelBuilder.Entity("MCOP.Data.Models.AppUser", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("DiscordAccessToken")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("DiscordRefreshToken")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("DiscordTokenExpiresAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -63,15 +81,17 @@ namespace MCOP.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Activity")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
@@ -80,36 +100,36 @@ namespace MCOP.Data.Migrations
 
             modelBuilder.Entity("MCOP.Data.Models.GuildConfig", b =>
                 {
-                    b.Property<ulong>("GuildId")
+                    b.Property<decimal>("GuildId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("LevelUpMessageTemplate")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<bool>("LevelUpMessagesEnabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
-                    b.Property<ulong?>("LewdChannelId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal?>("LewdChannelId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("LikeEmojiId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("LikeEmojiId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("LikeEmojiName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ulong?>("LogChannelId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal?>("LogChannelId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("Prefix")
                         .IsRequired()
                         .HasMaxLength(8)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("character varying(8)");
 
                     b.Property<bool>("ReactionTrackingEnabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.HasKey("GuildId");
 
@@ -118,20 +138,20 @@ namespace MCOP.Data.Migrations
 
             modelBuilder.Entity("MCOP.Data.Models.GuildMessage", b =>
                 {
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("Id")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("Id")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("ChannelId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("ChannelId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<ulong>("UserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("UserId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.HasKey("GuildId", "Id");
 
@@ -140,26 +160,26 @@ namespace MCOP.Data.Migrations
 
             modelBuilder.Entity("MCOP.Data.Models.GuildMessageReaction", b =>
                 {
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("MessageId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("MessageId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("CreatedByUserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("CreatedByUserId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<int>("HistoricalIndex")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
-                    b.Property<ulong>("EmojiId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("EmojiId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("Emoji")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("GuildId", "MessageId", "CreatedByUserId", "HistoricalIndex", "EmojiId", "Emoji");
 
@@ -168,20 +188,20 @@ namespace MCOP.Data.Migrations
 
             modelBuilder.Entity("MCOP.Data.Models.GuildRole", b =>
                 {
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("Id")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("Id")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<bool>("IsGainExpBlocked")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("LevelToGetRole")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("LevelUpMessageTemplate")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.HasKey("GuildId", "Id");
 
@@ -190,32 +210,32 @@ namespace MCOP.Data.Migrations
 
             modelBuilder.Entity("MCOP.Data.Models.GuildUserStats", b =>
                 {
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("UserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("UserId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<string>("AvatarHash")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("DuelLose")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("DuelWin")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Exp")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("LastExpAwardedAt")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Likes")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Username")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.HasKey("GuildId", "UserId");
 
@@ -224,19 +244,19 @@ namespace MCOP.Data.Migrations
 
             modelBuilder.Entity("MCOP.Data.Models.ImageHash", b =>
                 {
-                    b.Property<ulong>("Id")
+                    b.Property<decimal>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("numeric(20,0)");
 
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<byte[]>("Hash")
                         .IsRequired()
-                        .HasColumnType("BLOB");
+                        .HasColumnType("bytea");
 
-                    b.Property<ulong>("MessageId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("MessageId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.HasKey("Id");
 
@@ -249,13 +269,15 @@ namespace MCOP.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
-                    b.Property<ulong>("ChannelId")
-                        .HasColumnType("INTEGER");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<ulong>("GuildId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("ChannelId")
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<decimal>("GuildId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.HasKey("Id");
 

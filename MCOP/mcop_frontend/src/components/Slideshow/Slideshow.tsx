@@ -32,7 +32,7 @@ export const SlideShow = () => {
         refetchOnWindowFocus: false,
     });
 
-    const fetchMoreImages = async () => {
+    const fetchMoreImages = useCallback(async () => {
         const newImages = await authFetch<ImageInfo[]>(`/images/random?count=${50}`);
         queryClient.setQueryData<ImageInfo[]>(['randomImages'], (prev = []) => {
             const combined = [...prev, ...newImages];
@@ -40,7 +40,7 @@ export const SlideShow = () => {
                 unique.some(img => img.path === item.path) ? unique : [...unique, item], 
             [] as ImageInfo[]);
         });
-    };
+    }, [queryClient]);
 
     const {
         currentImageSrc,
@@ -59,10 +59,11 @@ export const SlideShow = () => {
         if (isPlaying && currentIndex >= loadedImages.length - 5 && loadedImages.length > 0) {
             fetchMoreImages();
         }
-    }, [currentIndex, isPlaying, loadedImages.length]);
+    }, [fetchMoreImages, currentIndex, isPlaying, loadedImages.length]);
 
     if (isLoading) return <div className="flex items-center justify-center h-screen">Loading slideshow...</div>;
     if (!loadedImages.length) return <div className="flex items-center justify-center h-screen">No images found</div>;
+    
     return (
         <div className="relative h-screen touch-none select-none">
             <div

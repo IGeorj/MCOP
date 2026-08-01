@@ -18,15 +18,50 @@ namespace MCOP.Controllers
 
         private static readonly string[] VideoExtensions = [".mp4", ".webm", ".mkv", ".avi", ".mov", ".m4v"];
 
+        [HttpGet("folders")]
+        [AuthorizeUserId(226810751308791809)]
+        public IActionResult GetFolders()
+        {
+            if (string.IsNullOrEmpty(_rootPath)) return NotFound();
+            try
+            {
+                var directories = Directory.GetDirectories(_rootPath)
+                    .Select(dir => new DirectoryInfo(dir).Name)
+                    .ToList();
+                return Ok(directories);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         [HttpGet("random")]
         [AuthorizeUserId(226810751308791809)]
-        public IActionResult GetRandomVideos([FromQuery] int count = 10)
+        public IActionResult GetRandomVideos([FromQuery] int count = 10, [FromQuery] string? folder = null)
         {
             if (string.IsNullOrEmpty(_rootPath)) return NotFound();
 
+            string searchRoot = _rootPath;
+            if (!string.IsNullOrEmpty(folder))
+            {
+                if (folder.Contains("..") || folder.Contains(':') || folder.Contains("//") || Path.IsPathRooted(folder))
+                    return BadRequest("Invalid folder.");
+
+                var combined = Path.Combine(_rootPath, folder);
+                var fullPath = Path.GetFullPath(combined);
+                if (!fullPath.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
+                    return BadRequest("Invalid folder.");
+
+                if (!Directory.Exists(fullPath))
+                    return NotFound($"Folder '{folder}' not found.");
+
+                searchRoot = fullPath;
+            }
+
             try
             {
-                var allVideos = Directory.EnumerateFiles(_rootPath, "*.*", SearchOption.AllDirectories)
+                var allVideos = Directory.EnumerateFiles(searchRoot, "*.*", SearchOption.AllDirectories)
                     .Where(file => VideoExtensions.Any(ext => file.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
 

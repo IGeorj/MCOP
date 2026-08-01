@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 
 export const usePersistentVolume = () => {
-  const [volume, setVolume] = useState(() => {
+  const [volume, setVolume] = useState<number>(() => {
     const saved = localStorage.getItem('video-player-volume');
-    return saved !== null ? JSON.parse(saved) : 1;
+    return saved !== null ? Number(JSON.parse(saved)) : 1;
   });
 
-  const [muted, setMuted] = useState(() => {
+  const [muted, setMuted] = useState<boolean>(() => {
     const saved = localStorage.getItem('video-player-muted');
-    return saved !== null ? JSON.parse(saved) : false;
+    return saved !== null ? Boolean(JSON.parse(saved)) : false;
   });
 
   useEffect(() => {
