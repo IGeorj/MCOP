@@ -236,6 +236,7 @@ namespace MCOP.Core.Services.Scoped
             var userStats = await context.GuildUserStats
                 .AsNoTracking()
                 .FirstOrDefaultAsync(us => us.GuildId == guildId && us.UserId == userId);
+
             if (userStats != null)
                 historicalLikeCount = userStats.Likes;
 

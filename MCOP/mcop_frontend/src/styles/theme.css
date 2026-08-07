@@ -152,7 +152,7 @@ body, html {
 #app-content .card, #app-content .section {
   box-shadow: 0 2px 8px rgba(44, 44, 64, 0.07);
   border-radius: 0.75rem;
-  background-color: #fff;
+  background-color: var(--color-secondary);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -168,22 +168,22 @@ body, html {
   font-weight: 600;
 }
 
-#app-content .bg-primary { background-color: var(--color-bg); }
-#app-content .bg-color-primary { background-color: var(--color-primary); }
-#app-content .border-primary { border-color: var(--color-primary); }
-#app-content .bg-secondary { background-color: var(--color-secondary); }
-#app-content .bg-navbar { background-color: var(--color-navbar); }
-#app-content .fill-navbar { fill: var(--color-navbar); }
-#app-content .fill-bg { fill: var(--color-bg); }
-#app-content .text-primary { color: var(--color-primary); }
-#app-content .accent-color-primary { accent-color: var(--color-primary); }
-#app-content .text-primary:hover { color: var(--color-accent-foreground); }
-#app-content .text-default { color: var(--color-text); }
-#app-content .text-primary-reversed { color: var(--color-text); }
-#app-content .text-primary-reversed:hover { color: var(--color-primary); }
-#app-content .text-secondary { color: var(--color-secondary); }
-#app-content .selected { background-color: var(--color-selected); }
-#app-content .bg-hover:hover { background-color: var(--color-hover); }
+.bg-primary { background-color: var(--color-bg); }
+.bg-color-primary { background-color: var(--color-primary); }
+.border-primary { border-color: var(--color-primary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.bg-navbar { background-color: var(--color-navbar); }
+.fill-navbar { fill: var(--color-navbar); }
+.fill-bg { fill: var(--color-bg); }
+.text-primary { color: var(--color-primary); }
+.accent-color-primary { accent-color: var(--color-primary); }
+.text-primary:hover { color: var(--color-accent-foreground); }
+.text-default { color: var(--color-text); }
+.text-primary-reversed { color: var(--color-text); }
+.text-primary-reversed:hover { color: var(--color-primary); }
+.text-secondary { color: var(--color-secondary); }
+.selected { background-color: var(--color-selected); }
+.bg-hover:hover { background-color: var(--color-hover); }
 
 #app-content th, #app-content td {
   padding: 0.75rem 1rem;
